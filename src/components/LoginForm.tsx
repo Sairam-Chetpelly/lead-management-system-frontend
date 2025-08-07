@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { authAPI } from '@/lib/auth';
+import GlobalLoader from './GlobalLoader';
 
 interface LoginFormProps {
   onLogin: (user: any) => void;
@@ -37,6 +38,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   const togglePassword = () => {
     setShowPassword(!showPassword);
   };
+
+  if (loading) {
+    return <GlobalLoader />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden">
@@ -107,10 +112,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full p-3 sm:p-4 bg-gray-800 text-white border-none rounded-lg text-sm sm:text-base font-medium cursor-pointer transition-all duration-300 mt-4 hover:bg-gray-600 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:translate-y-0 disabled:opacity-50"
+              className="w-full p-3 sm:p-4 bg-gray-800 text-white border-none rounded-lg text-sm sm:text-base font-medium cursor-pointer transition-all duration-300 mt-4 hover:bg-gray-600 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:translate-y-0"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              Login
             </button>
           </form>
         </div>

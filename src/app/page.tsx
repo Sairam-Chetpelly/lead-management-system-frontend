@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import LoginForm from '@/components/LoginForm';
 import UserManagement from '@/components/UserManagement';
+import GlobalLoader from '@/components/GlobalLoader';
 import { authAPI } from '@/lib/auth';
 
 export default function Home() {
@@ -48,11 +49,7 @@ export default function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Initializing system...</div>
-      </div>
-    );
+    return <GlobalLoader />;
   }
 
   if (!user) {

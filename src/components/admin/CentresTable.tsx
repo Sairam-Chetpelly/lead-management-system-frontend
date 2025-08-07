@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
 import { downloadExcel } from '@/lib/exportUtils';
 import Modal from '../Modal';
+import ModernLoader from '../ModernLoader';
 import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import PaginationFooter from '../PaginationFooter';
@@ -135,7 +136,7 @@ export default function CentresTable() {
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col h-[600px]">
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <ModernLoader size="lg" variant="secondary" />
           </div>
         )}
         

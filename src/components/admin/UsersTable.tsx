@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
 import { downloadExcel } from '@/lib/exportUtils';
 import Modal from '../Modal';
-import { Search, Filter, ChevronLeft, ChevronRight, FileSpreadsheet, Eye, Edit, Trash2 } from 'lucide-react';
+import ModernLoader from '../ModernLoader';
+import { Search, ChevronLeft, ChevronRight, FileSpreadsheet, Eye, Edit, Trash2, Filter } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface User {
@@ -30,6 +31,7 @@ export default function UsersTable() {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
   // Pagination and filters
   const [pagination, setPagination] = useState({
@@ -176,52 +178,65 @@ export default function UsersTable() {
   };
 
 
-
   return (
     <div className="p-4 lg:p-8 space-y-6 min-h-full">
       {/* Filters */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="relative lg:col-span-2">
-            <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            />
+        {/* Mobile Filter Button */}
+        <div className={`md:hidden ${showFilters ? 'mb-4' : ''}`}>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm hover:bg-blue-200 transition-all"
+          >
+            <Filter size={16} />
+            <span>Filters</span>
+          </button>
+        </div>
+        
+        {/* Filter Controls */}
+        <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="relative lg:col-span-2">
+              <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              />
+            </div>
+            <select
+              value={filters.role}
+              onChange={(e) => handleFilterChange('role', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">All Roles</option>
+              {roles.map(role => (
+                <option key={role._id} value={role._id}>{role.name}</option>
+              ))}
+            </select>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">All Statuses</option>
+              {statuses.map(status => (
+                <option key={status._id} value={status._id}>{status.name}</option>
+              ))}
+            </select>
+            <select
+              value={filters.centre}
+              onChange={(e) => handleFilterChange('centre', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">All Centres</option>
+              {centres.map(centre => (
+                <option key={centre._id} value={centre._id}>{centre.name}</option>
+              ))}
+            </select>
           </div>
-          <select
-            value={filters.role}
-            onChange={(e) => handleFilterChange('role', e.target.value)}
-            className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-          >
-            <option value="">All Roles</option>
-            {roles.map(role => (
-              <option key={role._id} value={role._id}>{role.name}</option>
-            ))}
-          </select>
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-          >
-            <option value="">All Statuses</option>
-            {statuses.map(status => (
-              <option key={status._id} value={status._id}>{status.name}</option>
-            ))}
-          </select>
-          <select
-            value={filters.centre}
-            onChange={(e) => handleFilterChange('centre', e.target.value)}
-            className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-          >
-            <option value="">All Centres</option>
-            {centres.map(centre => (
-              <option key={centre._id} value={centre._id}>{centre.name}</option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -256,7 +271,7 @@ export default function UsersTable() {
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <ModernLoader size="lg" variant="primary" />
           </div>
         )}
         
@@ -264,10 +279,12 @@ export default function UsersTable() {
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
           <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">User</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Role</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Status</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">User</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Centre</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Languages</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Role</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Status</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
@@ -275,7 +292,7 @@ export default function UsersTable() {
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {users.map((user, index) => (
                 <div key={user._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 animate-stagger ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`} style={{animationDelay: `${index * 0.05}s`}}>
-                  <div className="col-span-3 flex items-center space-x-3">
+                  <div className="col-span-2 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
                       {user.name.charAt(0)}
                     </div>
@@ -284,22 +301,39 @@ export default function UsersTable() {
                       <div className="text-slate-600 text-sm truncate">{user.designation}</div>
                     </div>
                   </div>
-                  <div className="col-span-3 flex flex-col justify-center min-w-0">
+                  <div className="col-span-2 flex flex-col justify-center min-w-0">
                     <div className="text-slate-700 font-medium truncate">{user.email}</div>
                     <div className="text-slate-500 text-sm truncate">{user.mobileNumber}</div>
                   </div>
                   <div className="col-span-2 flex items-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-blue-100 text-blue-800 truncate">
-                      {user.roleId.name}
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 truncate">
+                      {user.centreId?.name || '--'}
                     </span>
                   </div>
                   <div className="col-span-2 flex items-center">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold ${
+                    <div className="flex flex-wrap gap-1">
+                      {user.languageIds?.slice(0, 2).map(lang => (
+                        <span key={lang._id} className="inline-flex px-2 py-1 text-xs font-semibold rounded-lg bg-blue-100 text-blue-700">
+                          {lang.name}
+                        </span>
+                      )) || <span className="text-gray-400 text-xs">--</span>}
+                      {user.languageIds && user.languageIds.length > 2 && (
+                        <span className="text-xs text-gray-500">+{user.languageIds.length - 2}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800 truncate">
+                      {user.roleId.name}
+                    </span>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold ${
                       user.statusId.slug === 'active' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      <div className={`w-2 h-2 rounded-full mr-2 ${
+                      <div className={`w-2 h-2 rounded-full mr-1 ${
                         user.statusId.slug === 'active' ? 'bg-green-500' : 'bg-red-500'
                       }`}></div>
                       {user.statusId.name}
