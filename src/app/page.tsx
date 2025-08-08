@@ -29,6 +29,11 @@ export default function Home() {
     
     if (token && savedUser) {
       setUser(JSON.parse(savedUser));
+      // Preserve current page on refresh
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/' && currentPath !== '/login') {
+        localStorage.setItem('lastVisitedPage', currentPath);
+      }
     }
     
     if (!initialized) {
@@ -45,6 +50,9 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('activeSection');
+    localStorage.removeItem('lastVisitedPage');
+    localStorage.removeItem('currentPage');
     setUser(null);
   };
 

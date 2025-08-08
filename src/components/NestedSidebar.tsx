@@ -13,9 +13,14 @@ import {
   Activity,
   Shield,
   UserCheck,
-  Building
+  Building,
+  Waypoints,
+  Phone,
+  House,
+  HandCoinsIcon,
+  ListCollapse
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MenuItem {
   id: string;
@@ -33,8 +38,49 @@ interface NestedSidebarProps {
 
 export default function NestedSidebar({ activeSection, onSectionChange, user, onLogout }: NestedSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>(['user-management', 'lead-management']);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Preserve active section and expand parent on refresh
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const pathToSection: { [key: string]: string } = {
+      '/users': 'users',
+      '/leads': 'leads',
+      '/roles': 'roles',
+      '/lead-sources': 'lead-sources',
+      '/lead-activities': 'lead-activities',
+      '/call-logs': 'call-logs',
+      '/project-house-types': 'project-house-types',
+      '/centres': 'centres',
+      '/languages': 'languages',
+      '/statuses': 'statuses'
+    };
+    
+    const section = pathToSection[currentPath] || activeSection;
+    if (section !== activeSection) {
+      onSectionChange(section);
+    }
+
+    // Auto-expand parent section based on active child
+    const sectionToParent: { [key: string]: string } = {
+      'users': 'user-management',
+      'roles': 'user-management',
+      'leads': 'lead-management',
+      'lead-sources': 'lead-management',
+      'lead-activities': 'lead-management',
+      'call-logs': 'lead-management',
+      'project-house-types': 'lead-management',
+      'centres': 'settings',
+      'languages': 'settings',
+      'statuses': 'settings'
+    };
+    
+    const parentSection = sectionToParent[section];
+    if (parentSection && !expandedItems.includes(parentSection)) {
+      setExpandedItems([parentSection]);
+    }
+  }, [activeSection]);
 
   const menuItems: MenuItem[] = [
     {
@@ -51,11 +97,11 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       name: 'Lead Management',
       icon: UserCheck,
       children: [
-        { id: 'leads', name: 'Leads', icon: Users },
-        { id: 'lead-sources', name: 'Lead Sources', icon: Globe },
+        { id: 'leads', name: 'Leads', icon: HandCoinsIcon },
         { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
-        { id: 'call-logs', name: 'Call Logs', icon: User },
-        { id: 'project-house-types', name: 'Project & House Types', icon: Building }
+        { id: 'call-logs', name: 'Call Logs', icon: Phone },
+        { id: 'lead-sources', name: 'Lead Sources', icon: Waypoints },
+        { id: 'project-house-types', name: 'Project & House Types', icon: House }
       ]
     },
     {
@@ -73,8 +119,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
       prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
+        ? []
+        : [itemId]
     );
   };
 
@@ -176,7 +222,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         onClick={() => setIsMobileMenuOpen(true)}
         className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-slate-900 text-white rounded-2xl shadow-lg"
       >
-        <Menu size={20} />
+        <ListCollapse size={20} />
       </button>
 
       {/* Mobile Overlay */}
@@ -215,7 +261,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden lg:block p-2 text-white/70 hover:text-white transition-colors"
           >
-            <Menu size={16} />
+            <ListCollapse size={16} />
           </button>
         </div>
 

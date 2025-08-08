@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import NestedSidebar from './NestedSidebar';
 import UsersTable from './admin/UsersTable';
@@ -21,8 +21,17 @@ interface UserManagementProps {
 }
 
 export default function UserManagement({ user, onLogout }: UserManagementProps) {
-  const [activeSection, setActiveSection] = useState('users');
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('activeSection') || 'users';
+    }
+    return 'users';
+  });
   const [viewingLeadId, setViewingLeadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('activeSection', activeSection);
+  }, [activeSection]);
 
   const getSectionTitle = () => {
     if (viewingLeadId && activeSection === 'leads') {
@@ -55,6 +64,7 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
 
   const handleSectionChange = (section: string) => {
     setActiveSection(section);
+    localStorage.setItem('activeSection', section);
     setViewingLeadId(null); // Reset lead view when changing sections
   };
 

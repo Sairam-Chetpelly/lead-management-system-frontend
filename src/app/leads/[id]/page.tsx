@@ -285,7 +285,10 @@ export default function LeadViewPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => {
+                  localStorage.setItem('returnToLeads', 'true');
+                  router.push('/leads');
+                }}
                 className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 <i className="fas fa-arrow-left text-gray-600"></i>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LeadsTable from '@/components/leads/LeadsTable';
 import NestedSidebar from '@/components/NestedSidebar';
@@ -8,6 +8,11 @@ import NestedSidebar from '@/components/NestedSidebar';
 export default function LeadsPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('leads');
+  
+  useEffect(() => {
+    localStorage.setItem('currentPage', 'leads');
+    localStorage.setItem('lastVisitedPage', '/leads');
+  }, []);
   
   const handleLogout = () => {
     localStorage.removeItem('token');

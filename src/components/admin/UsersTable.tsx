@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
-import { downloadExcel } from '@/lib/exportUtils';
+
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
 import { Search, ChevronLeft, ChevronRight, FileSpreadsheet, Eye, Edit, Trash2, Filter } from 'lucide-react';
@@ -248,9 +248,11 @@ export default function UsersTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.exportUsers();
-                downloadExcel(response.data, 'users.xlsx');
+                const { downloadCSV } = await import('@/lib/exportUtils');
+                downloadCSV(response.data, 'users.csv');
               } catch (error) {
                 console.error('Export failed:', error);
+                alert(`Export failed: ${error.response?.data?.error || error.message}`);
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -561,7 +563,7 @@ export default function UsersTable() {
                   required
                 >
                   <option value="">Select Status</option>
-                  {statuses.map(status => (
+                  {statuses.filter(status => status.type === 'status').map(status => (
                     <option key={status._id} value={status._id}>{status.name}</option>
                   ))}
                 </select>

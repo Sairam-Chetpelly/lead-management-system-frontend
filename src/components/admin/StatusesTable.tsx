@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
-import { downloadExcel } from '@/lib/exportUtils';
+
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
-import { Search, FileSpreadsheet, Activity, Edit, Trash2 } from 'lucide-react';
-import { usePagination } from '@/hooks/usePagination';
-import PaginationFooter from '../PaginationFooter';
+import { Search, FileSpreadsheet, Activity, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface Status {
@@ -25,7 +23,24 @@ export default function StatusesTable() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const { pagination, setPagination, handlePageChange, handleLimitChange, resetPagination } = usePagination();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0,
+    limit: 10
+  });
+  
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, current: page }));
+  };
+  
+  const handleLimitChange = (limit: number) => {
+    setPagination(prev => ({ ...prev, limit, current: 1 }));
+  };
+  
+  const resetPagination = () => {
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
   const [formData, setFormData] = useState<{ type: 'status' | 'leadStatus' | 'leadSubStatus', name: string, slug: string, description: string }>({ type: 'status', name: '', slug: '', description: '' });
 
   useEffect(() => {
@@ -92,7 +107,7 @@ export default function StatusesTable() {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6">
+    <div className="p-4 lg:p-8 space-y-6 min-h-full">
       {/* Search */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
         <div className="relative max-w-md">
@@ -114,9 +129,11 @@ export default function StatusesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.admin.exportStatuses();
-                downloadExcel(response.data, 'statuses.xlsx');
+                const { downloadCSV } = await import('@/lib/exportUtils');
+                downloadCSV(response.data, 'statuses.csv');
               } catch (error) {
                 console.error('Export failed:', error);
+                alert('Export failed. Please try again.');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -137,7 +154,7 @@ export default function StatusesTable() {
       </div>
 
       {/* Modern Table Card */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col h-[600px]">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
             <ModernLoader size="lg" variant="accent" />
@@ -233,12 +250,60 @@ export default function StatusesTable() {
           </div>
         </div>
 
-        <PaginationFooter 
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onLimitChange={handleLimitChange}
-          itemName="statuses"
-        />
+        {/* Enhanced Footer */}
+        <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200 px-4 lg:px-8 py-6 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <select 
+                value={pagination.limit}
+                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                className="px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-slate-600 font-medium text-sm lg:text-base">Records per page</span>
+            </div>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+              <span className="text-slate-600 font-medium text-sm lg:text-base">
+                Showing {((pagination.current - 1) * pagination.limit) + 1}-{Math.min(pagination.current * pagination.limit, pagination.total)} of {pagination.total} statuses
+              </span>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handlePageChange(pagination.current - 1)}
+                  disabled={pagination.current === 1}
+                  className="w-10 h-10 flex items-center justify-center bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                  const page = Math.max(1, Math.min(pagination.current - 2 + i, pagination.pages - 4 + i));
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
+                        pagination.current === page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white border border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+                <button 
+                  onClick={() => handlePageChange(pagination.current + 1)}
+                  disabled={pagination.current === pagination.pages}
+                  className="w-10 h-10 flex items-center justify-center bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Modal
