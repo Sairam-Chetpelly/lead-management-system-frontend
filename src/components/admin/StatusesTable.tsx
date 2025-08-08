@@ -12,8 +12,10 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 interface Status {
   _id: string;
+  type: 'status' | 'leadStatus' | 'leadSubStatus';
   name: string;
   slug: string;
+  description: string;
 }
 
 export default function StatusesTable() {
@@ -24,7 +26,7 @@ export default function StatusesTable() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const { pagination, setPagination, handlePageChange, handleLimitChange, resetPagination } = usePagination();
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState<{ type: 'status' | 'leadStatus' | 'leadSubStatus', name: string, slug: string, description: string }>({ type: 'status', name: '', slug: '', description: '' });
 
   useEffect(() => {
     fetchStatuses();
@@ -79,12 +81,12 @@ export default function StatusesTable() {
 
   const handleEdit = (status: Status) => {
     setEditStatus(status);
-    setFormData({ name: status.name, slug: status.slug });
+    setFormData({ type: status.type, name: status.name, slug: status.slug, description: status.description });
     setShowModal(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '' });
+    setFormData({ type: 'status', name: '', slug: '', description: '' });
     setEditStatus(null);
     setShowModal(false);
   };
@@ -146,9 +148,11 @@ export default function StatusesTable() {
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
           <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-6 text-left font-semibold text-sm uppercase tracking-wider">Status Name</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Type</div>
+              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Name</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Slug</div>
+              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Description</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -159,18 +163,30 @@ export default function StatusesTable() {
                   className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 transition-all duration-200 animate-fadeInUp ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="col-span-6 flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
-                      <Activity size={20} />
+                  <div className="col-span-2 flex items-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      status.type === 'leadStatus' ? 'bg-blue-100 text-blue-800' :
+                      status.type === 'leadSubStatus' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {status.type}
+                    </span>
+                  </div>
+                  <div className="col-span-3 flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
+                      <Activity size={16} />
                     </div>
                     <div className="text-slate-900 font-bold truncate">{status.name}</div>
                   </div>
-                  <div className="col-span-3 flex items-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 truncate">
+                  <div className="col-span-2 flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 truncate">
                       {status.slug}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center space-x-2">
+                  <div className="col-span-3 flex items-center">
+                    <span className="text-slate-600 text-sm truncate">{status.description}</span>
+                  </div>
+                  <div className="col-span-2 flex items-center space-x-2">
                     <button onClick={() => handleEdit(status)} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all">
                       <Edit size={14} />
                     </button>
@@ -232,6 +248,19 @@ export default function StatusesTable() {
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Type</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+              className="w-full px-5 py-4 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              required
+            >
+              <option value="status">Status</option>
+              <option value="leadStatus">Lead Status</option>
+              <option value="leadSubStatus">Lead Sub Status</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-semibold text-slate-700 mb-3">Status Name</label>
             <input
               type="text"
@@ -250,6 +279,17 @@ export default function StatusesTable() {
               onChange={(e) => setFormData({...formData, slug: e.target.value})}
               className="w-full px-5 py-4 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
               placeholder="Enter status identifier (slug)"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              className="w-full px-5 py-4 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              placeholder="Enter status description"
+              rows={3}
               required
             />
           </div>

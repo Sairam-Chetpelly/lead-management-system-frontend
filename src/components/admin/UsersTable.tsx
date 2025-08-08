@@ -10,6 +10,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 interface User {
   _id: string;
+  userId?: string;
   name: string;
   email: string;
   mobileNumber: string;
@@ -298,7 +299,8 @@ export default function UsersTable() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-slate-900 font-bold truncate">{user.name}</div>
-                      <div className="text-slate-600 text-sm truncate">{user.designation}</div>
+                      <div className="text-slate-600 text-sm truncate">{user.userId || 'N/A'}</div>
+                      <div className="text-slate-500 text-xs truncate">{user.designation}</div>
                     </div>
                   </div>
                   <div className="col-span-2 flex flex-col justify-center min-w-0">
@@ -368,7 +370,8 @@ export default function UsersTable() {
                     </div>
                     <div>
                       <div className="font-bold text-slate-900">{user.name}</div>
-                      <div className="text-sm text-slate-600">{user.designation}</div>
+                      <div className="text-sm text-slate-600">{user.userId || 'N/A'}</div>
+                      <div className="text-xs text-slate-500">{user.designation}</div>
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-xl text-xs font-semibold ${

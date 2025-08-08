@@ -33,7 +33,7 @@ interface NestedSidebarProps {
 
 export default function NestedSidebar({ activeSection, onSectionChange, user, onLogout }: NestedSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>(['user-management']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['user-management', 'lead-management']);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems: MenuItem[] = [
@@ -44,6 +44,18 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       children: [
         { id: 'users', name: 'Users', icon: User },
         { id: 'roles', name: 'Roles', icon: Shield }
+      ]
+    },
+    {
+      id: 'lead-management',
+      name: 'Lead Management',
+      icon: UserCheck,
+      children: [
+        { id: 'leads', name: 'Leads', icon: Users },
+        { id: 'lead-sources', name: 'Lead Sources', icon: Globe },
+        { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
+        { id: 'call-logs', name: 'Call Logs', icon: User },
+        { id: 'project-house-types', name: 'Project & House Types', icon: Building }
       ]
     },
     {

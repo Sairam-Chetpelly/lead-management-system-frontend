@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import NestedSidebar from './NestedSidebar';
 import UsersTable from './admin/UsersTable';
 import RolesTable from './admin/RolesTable';
 import CentresTable from './admin/CentresTable';
 import LanguagesTable from './admin/LanguagesTable';
 import StatusesTable from './admin/StatusesTable';
+import LeadsTable from './leads/LeadsTable';
+import LeadDetailView from './leads/LeadDetailView';
+import LeadSourcesTable from './leads/LeadSourcesTable';
+import CallLogsTable from './leads/CallLogsTable';
+import LeadActivitiesTable from './leads/LeadActivitiesTable';
+import ProjectHouseTypesTable from './leads/ProjectHouseTypesTable';
 
 interface UserManagementProps {
   user: any;
@@ -15,16 +22,40 @@ interface UserManagementProps {
 
 export default function UserManagement({ user, onLogout }: UserManagementProps) {
   const [activeSection, setActiveSection] = useState('users');
+  const [viewingLeadId, setViewingLeadId] = useState<string | null>(null);
 
   const getSectionTitle = () => {
+    if (viewingLeadId && activeSection === 'leads') {
+      return 'Lead Details';
+    }
     const titles = {
       users: 'Users',
       roles: 'Roles', 
       centres: 'Centres',
       languages: 'Languages',
-      statuses: 'Statuses'
+      statuses: 'Statuses',
+      leads: 'Leads',
+      'lead-sources': 'Lead Sources',
+      'lead-activities': 'Lead Activities',
+      'call-logs': 'Call Logs',
+      'project-house-types': 'Project & House Types'
     };
     return titles[activeSection as keyof typeof titles] || 'Users';
+  };
+
+  const handleViewLead = (leadId: string) => {
+    console.log('UserManagement: Setting viewing lead ID to:', leadId);
+    setViewingLeadId(leadId);
+  };
+
+  const handleBackToLeads = () => {
+    console.log('UserManagement: Going back to leads list');
+    setViewingLeadId(null);
+  };
+
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
+    setViewingLeadId(null); // Reset lead view when changing sections
   };
 
   const renderContent = () => {
@@ -39,6 +70,20 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         return <LanguagesTable />;
       case 'statuses':
         return <StatusesTable />;
+      case 'leads':
+        console.log('Rendering leads section, viewingLeadId:', viewingLeadId);
+        if (viewingLeadId) {
+          return <LeadDetailView leadId={viewingLeadId} onBack={handleBackToLeads} />;
+        }
+        return <LeadsTable onViewLead={handleViewLead} />;
+      case 'lead-sources':
+        return <LeadSourcesTable />;
+      case 'lead-activities':
+        return <LeadActivitiesTable />;
+      case 'call-logs':
+        return <CallLogsTable />;
+      case 'project-house-types':
+        return <ProjectHouseTypesTable />;
       default:
         return <UsersTable />;
     }
@@ -48,7 +93,7 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
       <NestedSidebar 
         activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
+        onSectionChange={handleSectionChange} 
         user={user}
         onLogout={onLogout}
       />
