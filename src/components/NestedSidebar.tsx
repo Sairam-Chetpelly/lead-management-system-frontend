@@ -151,9 +151,10 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
             }}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
               isActive
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                ? 'text-white shadow-lg'
                 : 'text-purple-200 hover:bg-white/10 hover:text-white'
             } ${level > 0 ? 'ml-3' : ''}`}
+            style={isActive ? {backgroundColor: '#0f172a', border: '2px solid #3b82f6'} : {}}
           >
             <div className="flex items-center space-x-3">
               <div className={`p-1.5 rounded-lg transition-colors ${
@@ -173,7 +174,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
           </button>
           
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 px-2 py-1 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50" style={{backgroundColor: '#0f172a'}}>
               {item.name}
             </div>
           )}
@@ -186,7 +187,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         )}
         
         {hasChildren && isCollapsed && (
-          <div className="absolute left-full top-0 ml-2 bg-gray-900 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+          <div className="absolute left-full top-0 ml-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto z-50" style={{backgroundColor: '#0f172a'}}>
             <div className="p-2 space-y-1 min-w-48">
               <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 {item.name}
@@ -199,9 +200,20 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
                     onClick={() => handleMenuClick(child.id)}
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       activeSection === child.id
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'text-white'
+                        : 'text-gray-300 hover:text-white'
                     }`}
+                    style={activeSection === child.id ? {backgroundColor: '#0f172a', border: '1px solid #3b82f6'} : {backgroundColor: 'transparent'}}
+                    onMouseEnter={(e) => {
+                      if (activeSection !== child.id) {
+                        e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.7)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeSection !== child.id) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
                   >
                     <ChildIcon size={16} />
                     <span>{child.name}</span>
@@ -220,7 +232,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-slate-900 text-white rounded-2xl shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 text-white rounded-2xl shadow-lg"
+        style={{backgroundColor: '#0f172a'}}
       >
         <ListCollapse size={20} />
       </button>
@@ -234,9 +247,9 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       )}
 
       {/* Sidebar */}
-      <div className={`fixed lg:relative inset-y-0 left-0 z-50 h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col shadow-2xl transform transition-all duration-300 lg:transform-none overflow-hidden ${
+      <div className={`fixed lg:relative inset-y-0 left-0 z-50 h-screen text-white flex flex-col shadow-2xl transform transition-all duration-300 lg:transform-none overflow-hidden ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      } ${isCollapsed ? 'w-20' : 'w-72'}`}>
+      } ${isCollapsed ? 'w-20' : 'w-72'}`} style={{backgroundColor: '#0f172a'}}>
         
         {/* Mobile Close Button */}
         <button
@@ -273,20 +286,21 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         </nav>
 
         {/* User Profile & Logout */}
-        <div className="p-4 border-t border-white/10 bg-black/20">
+        <div className="p-4 border-t border-white/10" style={{backgroundColor: 'rgba(15, 23, 42, 0.3)'}}>
           <button 
             onClick={onLogout}
-            className={`w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 transition-all duration-300 shadow-lg mb-3 ${
+            className={`w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-xl text-white hover:opacity-80 transition-all duration-300 shadow-lg mb-3 ${
               isCollapsed ? 'px-2' : ''
             }`}
+            style={{backgroundColor: '#0f172a'}}
           >
             <LogOut size={18} />
             {!isCollapsed && <span className="font-semibold text-sm">Logout</span>}
           </button>
           
-          <div className={`flex items-center space-x-3 px-3 py-3 rounded-xl bg-white/5 backdrop-blur-sm ${
+          <div className={`flex items-center space-x-3 px-3 py-3 rounded-xl backdrop-blur-sm ${
             isCollapsed ? 'justify-center px-2' : ''
-          }`}>
+          }`} style={{backgroundColor: 'rgba(15, 23, 42, 0.5)'}}>
             <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <User size={18} className="text-white" />
             </div>

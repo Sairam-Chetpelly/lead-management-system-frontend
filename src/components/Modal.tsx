@@ -14,7 +14,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-7xl max-h-[95vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col animate-in fade-in zoom-in duration-300">
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-slate-200 flex-shrink-0">
           <h3 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">{title}</h3>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Pencil, Trash2, Plus, Search, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react';
 import Modal from '../Modal';
+import ModernLoader from '../ModernLoader';
 import { authAPI } from '@/lib/auth';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -268,7 +269,7 @@ export default function LeadActivitiesTable() {
     setIsModalOpen(true);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div>Loading...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-64"><ModernLoader size="lg" variant="primary" /></div>;
 
   return (
     <div className="p-4 lg:p-8 space-y-6 min-h-full">
@@ -328,7 +329,8 @@ export default function LeadActivitiesTable() {
           </button>
           <button 
             onClick={() => openModal()}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <Plus size={20} />
             <span className="font-semibold">Add Activity</span>
@@ -340,7 +342,7 @@ export default function LeadActivitiesTable() {
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Lead</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
@@ -467,9 +469,10 @@ export default function LeadActivitiesTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -736,7 +739,8 @@ export default function LeadActivitiesTable() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+              className="text-white px-6 py-3 rounded-lg font-semibold hover:opacity-80 hover:shadow-lg transition-all duration-300"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editingActivity ? 'Update Activity' : 'Create Activity'}
             </button>

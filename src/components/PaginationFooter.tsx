@@ -55,9 +55,10 @@ export default function PaginationFooter({
                   onClick={() => onPageChange(page)}
                   className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                     pagination.current === page
-                      ? 'bg-blue-600 text-white'
+                      ? 'text-white'
                       : 'bg-white border border-slate-300 hover:bg-slate-50'
                   }`}
+                  style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                 >
                   {page}
                 </button>

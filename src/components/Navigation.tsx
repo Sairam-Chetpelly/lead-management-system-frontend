@@ -44,7 +44,8 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
             <span className="text-sm text-gray-700 mr-4">Welcome, {user?.name}</span>
             <button
               onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600"
+              className="text-white px-4 py-2 rounded text-sm hover:opacity-80 transition-all duration-200"
+              style={{backgroundColor: '#0f172a'}}
             >
               Logout
             </button>

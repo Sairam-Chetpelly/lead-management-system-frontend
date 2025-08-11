@@ -142,7 +142,8 @@ export default function LanguagesTable() {
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-2xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <div className="w-5 h-5">🌐</div>
             <span className="font-semibold">Add Language</span>
@@ -160,7 +161,7 @@ export default function LanguagesTable() {
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Language Name</div>
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
@@ -274,9 +275,10 @@ export default function LanguagesTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -337,7 +339,8 @@ export default function LanguagesTable() {
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-2xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="flex-1 text-white py-4 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editLanguage ? '🌐 Update Language' : '✨ Create Language'}
             </button>

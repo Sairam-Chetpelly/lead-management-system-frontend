@@ -143,7 +143,8 @@ export default function StatusesTable() {
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-2xl hover:from-orange-700 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <div className="w-5 h-5">
               <Activity size={20} className="text-white" />
@@ -157,17 +158,17 @@ export default function StatusesTable() {
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
-            <ModernLoader size="lg" variant="accent" />
+            <ModernLoader size="lg" variant="primary" />
           </div>
         )}
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Type</div>
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Name</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Slug</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Type</div>
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Description</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
@@ -180,15 +181,6 @@ export default function StatusesTable() {
                   className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 transition-all duration-200 animate-fadeInUp ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="col-span-2 flex items-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      status.type === 'leadStatus' ? 'bg-blue-100 text-blue-800' :
-                      status.type === 'leadSubStatus' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {status.type}
-                    </span>
-                  </div>
                   <div className="col-span-3 flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
                       <Activity size={16} />
@@ -198,6 +190,15 @@ export default function StatusesTable() {
                   <div className="col-span-2 flex items-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 truncate">
                       {status.slug}
+                    </span>
+                  </div>
+                  <div className="col-span-2 flex items-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      status.type === 'leadStatus' ? 'bg-blue-100 text-blue-800' :
+                      status.type === 'leadSubStatus' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {status.type}
                     </span>
                   </div>
                   <div className="col-span-3 flex items-center">
@@ -285,9 +286,10 @@ export default function StatusesTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -361,7 +363,8 @@ export default function StatusesTable() {
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-4 rounded-2xl hover:from-orange-700 hover:to-red-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="flex-1 text-white py-4 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editStatus ? '📊 Update Status' : '✨ Create Status'}
             </button>

@@ -400,11 +400,11 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               <div className="space-y-2">
                 <div>
                   <span className="text-gray-500 text-sm">Sales:</span>
-                  <span className="ml-2 font-medium">{lead.salesUserId.name}</span>
+                  <span className="ml-2 font-medium">{lead?.salesUserId?.name}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 text-sm">Presales:</span>
-                  <span className="ml-2 font-medium">{lead.presalesUserId.name}</span>
+                  <span className="ml-2 font-medium">{lead?.presalesUserId?.name}</span>
                 </div>
               </div>
             </div>

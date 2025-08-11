@@ -13,30 +13,30 @@ export default function ModernLoader({ size = 'md', variant = 'primary' }: Moder
   };
 
   const variantClasses = {
-    primary: 'from-blue-500 to-purple-600',
-    secondary: 'from-emerald-500 to-teal-600',
-    accent: 'from-orange-500 to-pink-600'
+    primary: '#0f172a',
+    secondary: '#0f172a',
+    accent: '#0f172a'
   };
 
   return (
     <div className="flex items-center justify-center">
       <div className={`${sizeClasses[size]} relative`}>
         {/* Outer ring */}
-        <div className={`absolute inset-0 rounded-full bg-gradient-to-r ${variantClasses[variant]} opacity-20 animate-ping`}></div>
+        <div className="absolute inset-0 rounded-full opacity-20 animate-ping" style={{backgroundColor: variantClasses[variant]}}></div>
         
         {/* Middle ring */}
-        <div className={`absolute inset-1 rounded-full bg-gradient-to-r ${variantClasses[variant]} opacity-40 animate-pulse`}></div>
+        <div className="absolute inset-1 rounded-full opacity-40 animate-pulse" style={{backgroundColor: variantClasses[variant]}}></div>
         
         {/* Inner spinning ring */}
-        <div className={`absolute inset-2 rounded-full border-2 border-transparent bg-gradient-to-r ${variantClasses[variant]} animate-spin`} 
+        <div className="absolute inset-2 rounded-full border-2 border-transparent animate-spin" 
              style={{
-               background: `conic-gradient(from 0deg, transparent, currentColor, transparent)`,
+               background: `conic-gradient(from 0deg, transparent, ${variantClasses[variant]}, transparent)`,
                borderRadius: '50%'
              }}>
         </div>
         
         {/* Center dot */}
-        <div className={`absolute inset-4 rounded-full bg-gradient-to-r ${variantClasses[variant]} animate-bounce`}></div>
+        <div className="absolute inset-4 rounded-full animate-bounce" style={{backgroundColor: variantClasses[variant]}}></div>
       </div>
     </div>
   );

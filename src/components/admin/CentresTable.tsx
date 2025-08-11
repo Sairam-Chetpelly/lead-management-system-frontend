@@ -141,7 +141,8 @@ export default function CentresTable() {
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-2xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <div className="w-5 h-5">🏢</div>
             <span className="font-semibold">Add Centre</span>
@@ -153,13 +154,13 @@ export default function CentresTable() {
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
-            <ModernLoader size="lg" variant="secondary" />
+            <ModernLoader size="lg" variant="primary" />
           </div>
         )}
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-5 text-left font-semibold text-sm uppercase tracking-wider">Centre Name</div>
               <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
@@ -259,9 +260,10 @@ export default function CentresTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -311,7 +313,8 @@ export default function CentresTable() {
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-2xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="flex-1 text-white py-4 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editCentre ? '🏢 Update Centre' : '✨ Create Centre'}
             </button>

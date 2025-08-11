@@ -112,7 +112,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
             <button
               type="submit"
-              className="w-full p-3 sm:p-4 bg-gray-800 text-white border-none rounded-lg text-sm sm:text-base font-medium cursor-pointer transition-all duration-300 mt-4 hover:bg-gray-600 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:translate-y-0"
+              className="w-full p-3 sm:p-4 text-white border-none rounded-lg text-sm sm:text-base font-medium cursor-pointer transition-all duration-300 mt-4 hover:opacity-80 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:translate-y-0"
+              style={{backgroundColor: '#0f172a'}}
             >
               Login
             </button>

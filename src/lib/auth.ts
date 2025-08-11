@@ -55,7 +55,7 @@ export const authAPI = {
   
   getCentres: () => api.get('/api/setup/centres'),
   
-  initSystem: () => api.post('/api/setup/init'),
+
 
   // Admin CRUD operations
   admin: {

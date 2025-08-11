@@ -9,20 +9,8 @@ import { authAPI } from '@/lib/auth';
 export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Initialize system on first load
-    const initSystem = async () => {
-      try {
-        await authAPI.initSystem();
-        setInitialized(true);
-      } catch (error) {
-        console.error('System initialization error:', error);
-        setInitialized(true); // Continue even if init fails
-      }
-    };
-
     // Check for existing login
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -36,12 +24,8 @@ export default function Home() {
       }
     }
     
-    if (!initialized) {
-      initSystem();
-    }
-    
     setLoading(false);
-  }, [initialized]);
+  }, []);
 
   const handleLogin = (userData: any) => {
     setUser(userData);

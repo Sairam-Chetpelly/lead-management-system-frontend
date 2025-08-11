@@ -262,7 +262,8 @@ export default function UsersTable() {
           </button>
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <div className="w-5 h-5">➕</div>
             <span className="font-semibold">Add User</span>
@@ -280,7 +281,7 @@ export default function UsersTable() {
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">User</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
@@ -439,9 +440,10 @@ export default function UsersTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -652,7 +654,8 @@ export default function UsersTable() {
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200">
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-8 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+              className="flex-1 text-white py-4 px-8 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editUser ? '✏️ Update User' : '✨ Create User'}
             </button>

@@ -372,7 +372,8 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
           </button>
           <button 
             onClick={() => openModal()}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <Plus size={20} />
             <span className="font-semibold">Add Lead</span>
@@ -390,7 +391,7 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Lead Info</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
@@ -533,9 +534,10 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -559,216 +561,227 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
         onClose={() => setIsModalOpen(false)}
         title={editingLead ? 'Edit Lead' : 'Add Lead'}
       >
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto">
-          {/* Basic Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <input
-              type="text"
-              placeholder="Contact Number"
-              value={formData.contactNumber}
-              onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <input
-              type="text"
-              placeholder="Alternate Contact Number"
-              value={formData.alternateContactNumber}
-              onChange={(e) => setFormData({ ...formData, alternateContactNumber: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+        <div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Essential Information */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-sm font-semibold text-blue-800 mb-3">Essential Information</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Full Name *"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Contact Number *"
+                  value={formData.contactNumber}
+                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email Address *"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Alternate Contact"
+                  value={formData.alternateContactNumber}
+                  onChange={(e) => setFormData({ ...formData, alternateContactNumber: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
 
-          {/* Address Information */}
-          <textarea
-            placeholder="Address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            rows={2}
-          />
-          
-          <div className="grid grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="City"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="State"
-              value={formData.state}
-              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Pincode"
-              value={formData.pincode}
-              onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            {/* Assignment & Status */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="text-sm font-semibold text-green-800 mb-3">Assignment & Status</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={formData.sourceId}
+                  onChange={(e) => setFormData({ ...formData, sourceId: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select Source *</option>
+                  {sources && sources.map ? sources.map(source => (
+                    <option key={source._id} value={source._id}>{source.name}</option>
+                  )) : null}
+                </select>
+                <select
+                  value={formData.leadStatusId}
+                  onChange={(e) => setFormData({ ...formData, leadStatusId: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select Status *</option>
+                  {statuses && statuses.filter ? statuses.filter(s => s.type === 'leadStatus').map(status => (
+                    <option key={status._id} value={status._id}>{status.name}</option>
+                  )) : null}
+                </select>
+                <select
+                  value={formData.salesUserId}
+                  onChange={(e) => setFormData({ ...formData, salesUserId: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Assign Sales User</option>
+                  {users && users.map ? users.map(user => (
+                    <option key={user._id} value={user._id}>{user.name}</option>
+                  )) : null}
+                </select>
+                <select
+                  value={formData.presalesUserId}
+                  onChange={(e) => setFormData({ ...formData, presalesUserId: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Assign Presales User</option>
+                  {users && users.map ? users.map(user => (
+                    <option key={user._id} value={user._id}>{user.name}</option>
+                  )) : null}
+                </select>
+              </div>
+            </div>
 
-          {/* Professional Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Occupation"
-              value={formData.occupation}
-              onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Company"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Designation"
-              value={formData.designation}
-              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Annual Income"
-              value={formData.annualIncome}
-              onChange={(e) => setFormData({ ...formData, annualIncome: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            {/* Location & Professional Details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-purple-800 mb-3">Location</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="State"
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      value={formData.pincode}
+                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                      className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <select
+                    value={formData.centerId}
+                    onChange={(e) => setFormData({ ...formData, centerId: e.target.value })}
+                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Center</option>
+                    {centers && centers.map ? centers.map(center => (
+                      <option key={center._id} value={center._id}>{center.name}</option>
+                    )) : null}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-orange-800 mb-3">Professional</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Occupation"
+                    value={formData.occupation}
+                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Company"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Designation"
+                      value={formData.designation}
+                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                      className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Annual Income"
+                      value={formData.annualIncome}
+                      onChange={(e) => setFormData({ ...formData, annualIncome: e.target.value })}
+                      className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          {/* Lead Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Lead Source Details"
-              value={formData.leadSource}
-              onChange={(e) => setFormData({ ...formData, leadSource: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Referred By"
-              value={formData.referredBy}
-              onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            {/* Additional Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Additional Information</h3>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Lead Source Details"
+                  value={formData.leadSource}
+                  onChange={(e) => setFormData({ ...formData, leadSource: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Referred By"
+                  value={formData.referredBy}
+                  onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <textarea
+                placeholder="Address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
+                rows={2}
+              />
+              <textarea
+                placeholder="Notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={2}
+              />
+            </div>
 
-          {/* Assignments */}
-          <div className="grid grid-cols-3 gap-4">
-            <select
-              value={formData.sourceId}
-              onChange={(e) => setFormData({ ...formData, sourceId: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select Source</option>
-              {sources && sources.map ? sources.map(source => (
-                <option key={source._id} value={source._id}>{source.name}</option>
-              )) : null}
-            </select>
-            <select
-              value={formData.salesUserId}
-              onChange={(e) => setFormData({ ...formData, salesUserId: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select Sales User</option>
-              {users && users.map ? users.map(user => (
-                <option key={user._id} value={user._id}>{user.name}</option>
-              )) : null}
-            </select>
-            <select
-              value={formData.presalesUserId}
-              onChange={(e) => setFormData({ ...formData, presalesUserId: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select Presales User</option>
-              {users && users.map ? users.map(user => (
-                <option key={user._id} value={user._id}>{user.name}</option>
-              )) : null}
-            </select>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <select
-              value={formData.leadStatusId}
-              onChange={(e) => setFormData({ ...formData, leadStatusId: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select Lead Status</option>
-              {statuses && statuses.filter ? statuses.filter(s => s.type === 'leadStatus').map(status => (
-                <option key={status._id} value={status._id}>{status.name}</option>
-              )) : null}
-            </select>
-            <select
-              value={formData.centerId}
-              onChange={(e) => setFormData({ ...formData, centerId: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select Center</option>
-              {centers && centers.map ? centers.map(center => (
-                <option key={center._id} value={center._id}>{center.name}</option>
-              )) : null}
-            </select>
-          </div>
-
-          {/* Notes */}
-          <textarea
-            placeholder="Notes"
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            rows={3}
-          />
-          <div className="flex gap-4 pt-4">
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
-            >
-              {editingLead ? 'Update Lead' : 'Create Lead'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              <button
+                type="submit"
+                className="flex-1 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-all duration-300"
+                style={{backgroundColor: '#0f172a'}}
+              >
+                {editingLead ? 'Update Lead' : 'Create Lead'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </Modal>
     </div>
   );

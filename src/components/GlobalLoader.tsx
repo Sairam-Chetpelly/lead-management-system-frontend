@@ -4,7 +4,7 @@ import ModernLoader from './ModernLoader';
 
 export default function GlobalLoader() {
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{backgroundColor: '#0f172a'}}>
       <div className="text-center">
         <div className="mb-8">
           <img 

@@ -201,7 +201,8 @@ export default function LeadSourcesTable() {
           </button>
           <button 
             onClick={() => openModal()}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{backgroundColor: '#0f172a'}}
           >
             <Plus size={20} />
             <span className="font-semibold">Add Lead Source</span>
@@ -219,7 +220,7 @@ export default function LeadSourcesTable() {
         
         {/* Desktop Table */}
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Source Name</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
@@ -344,9 +345,10 @@ export default function LeadSourcesTable() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
                         pagination.current === page
-                          ? 'bg-blue-600 text-white'
+                          ? 'text-white'
                           : 'bg-white border border-slate-300 hover:bg-slate-50'
                       }`}
+                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
                     >
                       {page}
                     </button>
@@ -407,7 +409,8 @@ export default function LeadSourcesTable() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+              className="text-white px-6 py-3 rounded-lg font-semibold hover:opacity-80 hover:shadow-lg transition-all duration-300"
+              style={{backgroundColor: '#0f172a'}}
             >
               {editingSource ? 'Update Source' : 'Create Source'}
             </button>
