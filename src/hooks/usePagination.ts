@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 
 interface PaginationState {
@@ -7,15 +9,15 @@ interface PaginationState {
   limit: number;
 }
 
-interface UsePaginationReturn {
-  pagination: PaginationState;
-  setPagination: React.Dispatch<React.SetStateAction<PaginationState>>;
-  handlePageChange: (page: number) => void;
-  handleLimitChange: (limit: number) => void;
-  resetPagination: () => void;
+interface UsePaginationProps {
+  initialLimit?: number;
+  onDataFetch?: (pagination: PaginationState, filters?: any) => void;
 }
 
-export const usePagination = (initialLimit: number = 10): UsePaginationReturn => {
+export function usePagination({ 
+  initialLimit = 10, 
+  onDataFetch 
+}: UsePaginationProps = {}) {
   const [pagination, setPagination] = useState<PaginationState>({
     current: 1,
     pages: 1,
@@ -31,15 +33,20 @@ export const usePagination = (initialLimit: number = 10): UsePaginationReturn =>
     setPagination(prev => ({ ...prev, limit, current: 1 }));
   }, []);
 
+  const updatePagination = useCallback((newPagination: Partial<PaginationState>) => {
+    setPagination(prev => ({ ...prev, ...newPagination }));
+  }, []);
+
   const resetPagination = useCallback(() => {
     setPagination(prev => ({ ...prev, current: 1 }));
   }, []);
 
   return {
     pagination,
-    setPagination,
     handlePageChange,
     handleLimitChange,
-    resetPagination
+    updatePagination,
+    resetPagination,
+    setPagination
   };
-};
+}

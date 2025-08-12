@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
-
+import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
-import { Search, ChevronLeft, ChevronRight, FileSpreadsheet, Eye, Edit, Trash2, Filter } from 'lucide-react';
+import PaginationFooter from '../PaginationFooter';
+import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface User {
@@ -35,12 +36,7 @@ export default function UsersTable() {
   const [showFilters, setShowFilters] = useState(false);
   
   // Pagination and filters
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pages: 1,
-    total: 0,
-    limit: 10
-  });
+  const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [filters, setFilters] = useState({
     search: '',
     role: '',
@@ -76,7 +72,7 @@ export default function UsersTable() {
         ...debouncedFilters
       });
       setUsers(response.data.data);
-      setPagination(prev => ({ ...prev, ...response.data.pagination }));
+      updatePagination(response.data.pagination);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -104,15 +100,7 @@ export default function UsersTable() {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, current: 1 }));
-  };
-  
-  const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, current: page }));
-  };
-  
-  const handleLimitChange = (limit: number) => {
-    setPagination(prev => ({ ...prev, limit, current: 1 }));
+    handlePageChange(1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -405,61 +393,12 @@ export default function UsersTable() {
           </div>
         </div>
 
-        {/* Enhanced Footer */}
-        <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200 px-4 lg:px-8 py-6 flex-shrink-0">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div className="flex items-center space-x-4">
-              <select 
-                value={pagination.limit}
-                onChange={(e) => handleLimitChange(Number(e.target.value))}
-                className="px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-              <span className="text-slate-600 font-medium text-sm lg:text-base">Records per page</span>
-            </div>
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-              <span className="text-slate-600 font-medium text-sm lg:text-base">
-                Showing {((pagination.current - 1) * pagination.limit) + 1}-{Math.min(pagination.current * pagination.limit, pagination.total)} of {pagination.total} users
-              </span>
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => handlePageChange(pagination.current - 1)}
-                  disabled={pagination.current === 1}
-                  className="w-10 h-10 flex items-center justify-center bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                  const page = Math.max(1, Math.min(pagination.current - 2 + i, pagination.pages - 4 + i));
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 shadow-sm text-sm font-medium ${
-                        pagination.current === page
-                          ? 'text-white'
-                          : 'bg-white border border-slate-300 hover:bg-slate-50'
-                      }`}
-                      style={pagination.current === page ? {backgroundColor: '#0f172a'} : {}}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-                <button 
-                  onClick={() => handlePageChange(pagination.current + 1)}
-                  disabled={pagination.current === pagination.pages}
-                  className="w-10 h-10 flex items-center justify-center bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PaginationFooter
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+          itemName="users"
+        />
       </div>
 
       <Modal
