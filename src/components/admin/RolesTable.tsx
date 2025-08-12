@@ -105,7 +105,7 @@ export default function RolesTable() {
       </div>
 
       {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={async () => {
@@ -132,7 +132,7 @@ export default function RolesTable() {
             <span className="font-semibold">Add Role</span>
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* Modern Table Card */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
@@ -146,34 +146,34 @@ export default function RolesTable() {
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-5 text-left font-semibold text-sm uppercase tracking-wider">Role Name</div>
-              <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
+              <div className="col-span-6 text-left font-semibold text-sm uppercase tracking-wider">Role Name</div>
+              <div className="col-span-6 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
+              {/* <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div> */}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {roles.map((role, index) => (
                 <div key={role._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                  <div className="col-span-5 flex items-center space-x-3">
+                  <div className="col-span-6 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
                       🎭
                     </div>
                     <div className="text-slate-900 font-bold truncate">{role.name}</div>
                   </div>
-                  <div className="col-span-4 flex items-center">
+                  <div className="col-span-6 flex items-center">
                     <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 truncate">
                       {role.slug}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center space-x-2">
+                  {/* <div className="col-span-3 flex items-center space-x-2">
                     <button onClick={() => handleEdit(role)} className="p-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all">
                       <Edit size={14} />
                     </button>
                     <button onClick={() => handleDelete(role._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               ))}
             </div>
@@ -200,9 +200,9 @@ export default function RolesTable() {
                   <button onClick={() => handleEdit(role)} className="flex-1 flex items-center justify-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(role._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  {/* <button onClick={() => handleDelete(role._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}

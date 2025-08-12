@@ -170,9 +170,9 @@ export default function CentresTable() {
                     <button onClick={() => handleEdit(centre)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    <button onClick={() => handleDelete(centre._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    {/* <button onClick={() => handleDelete(centre._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}
@@ -200,9 +200,9 @@ export default function CentresTable() {
                   <button onClick={() => handleEdit(centre)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(centre._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  {/* <button onClick={() => handleDelete(centre._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}

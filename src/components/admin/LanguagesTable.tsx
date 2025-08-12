@@ -181,9 +181,9 @@ export default function LanguagesTable() {
                     <button onClick={() => handleEdit(language)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    <button onClick={() => handleDelete(language._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    {/* <button onClick={() => handleDelete(language._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}

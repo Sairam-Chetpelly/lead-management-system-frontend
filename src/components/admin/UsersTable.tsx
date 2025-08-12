@@ -339,9 +339,9 @@ export default function UsersTable() {
                     <button onClick={() => handleEdit(user)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    <button onClick={() => handleDelete(user._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    {/* <button onClick={() => handleDelete(user._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}

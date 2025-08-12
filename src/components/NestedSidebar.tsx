@@ -67,13 +67,13 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       'users': 'user-management',
       'roles': 'user-management',
       'leads': 'lead-management',
-      'lead-sources': 'lead-management',
       'lead-activities': 'lead-management',
       'call-logs': 'lead-management',
-      'project-house-types': 'lead-management',
       'centres': 'settings',
       'languages': 'settings',
-      'statuses': 'settings'
+      'statuses': 'settings',
+      'lead-sources': 'settings',
+      'project-house-types': 'settings'
     };
     
     const parentSection = sectionToParent[section];
@@ -84,6 +84,16 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
 
   const menuItems: MenuItem[] = [
     {
+      id: 'lead-management',
+      name: 'Lead Management',
+      icon: UserCheck,
+      children: [
+        { id: 'leads', name: 'Leads', icon: HandCoinsIcon },
+        { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
+        { id: 'call-logs', name: 'Call Logs', icon: Phone }
+      ]
+    },
+    {
       id: 'user-management',
       name: 'User Management',
       icon: Users,
@@ -93,25 +103,15 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       ]
     },
     {
-      id: 'lead-management',
-      name: 'Lead Management',
-      icon: UserCheck,
-      children: [
-        { id: 'leads', name: 'Leads', icon: HandCoinsIcon },
-        { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
-        { id: 'call-logs', name: 'Call Logs', icon: Phone },
-        { id: 'lead-sources', name: 'Lead Sources', icon: Waypoints },
-        { id: 'project-house-types', name: 'Project & House Types', icon: House }
-      ]
-    },
-    {
       id: 'settings',
       name: 'Settings',
       icon: Settings,
       children: [
         { id: 'centres', name: 'Centres', icon: Building },
         { id: 'languages', name: 'Languages', icon: Globe },
-        { id: 'statuses', name: 'Statuses', icon: Activity }
+        { id: 'statuses', name: 'Statuses', icon: Activity },
+        { id: 'lead-sources', name: 'Sources', icon: Waypoints },
+        { id: 'project-house-types', name: 'Project & House Types', icon: House }
       ]
     }
   ];

@@ -433,9 +433,9 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                     <button onClick={() => openModal(lead)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Edit">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(lead._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete">
+                    {/* <button onClick={() => handleDelete(lead._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete">
                       <Trash2 size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}
