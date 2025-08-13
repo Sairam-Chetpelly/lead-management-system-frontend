@@ -120,6 +120,9 @@ export default function UsersTable() {
 
   const handleEdit = (user: User) => {
     setEditUser(user);
+    const selectedRole = roles.find(r => r._id === user.roleId._id);
+    const mainBranch = centres.find(c => c.name.toLowerCase().includes('main'));
+    
     setFormData({
       name: user.name,
       email: user.email,
@@ -128,7 +131,9 @@ export default function UsersTable() {
       designation: user.designation,
       roleId: user.roleId._id || '',
       statusId: user.statusId._id || '',
-      centreId: user.centreId?._id || '',
+      centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
+        ? mainBranch._id
+        : user.centreId?._id || '',
       languageIds: user.languageIds?.map(lang => lang._id) || [],
       qualification: user.qualification
     });
@@ -238,7 +243,7 @@ export default function UsersTable() {
                 const response = await authAPI.exportUsers();
                 const { downloadCSV } = await import('@/lib/exportUtils');
                 downloadCSV(response.data, 'users.csv');
-              } catch (error) {
+              } catch (error: any) {
                 console.error('Export failed:', error);
                 alert(`Export failed: ${error.response?.data?.error || error.message}`);
               }
@@ -249,7 +254,10 @@ export default function UsersTable() {
             <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
           </button>
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             style={{backgroundColor: '#0f172a'}}
           >
@@ -280,7 +288,7 @@ export default function UsersTable() {
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {users.map((user, index) => (
                 <div key={user._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 animate-stagger ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`} style={{animationDelay: `${index * 0.05}s`}}>
@@ -406,56 +414,56 @@ export default function UsersTable() {
         onClose={resetForm}
         title={editUser ? '✏️ Edit User' : '➕ Add New User'}
       >
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-2xl border border-blue-100">
-            <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <span className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm mr-3">👤</span>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs mr-2">👤</span>
               Personal Information
             </h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Full Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter full name"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Email Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter email address"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Mobile Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
                 <input
                   type="tel"
                   value={formData.mobileNumber}
                   onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter mobile number"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">
-                  Password {editUser ? <span className="text-slate-500 text-xs">(leave blank to keep current)</span> : '*'}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password {editUser ? <span className="text-gray-500 text-xs">(leave blank to keep current)</span> : '*'}
                 </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter password"
                   required={!editUser}
                 />
@@ -475,17 +483,28 @@ export default function UsersTable() {
           </div>
 
           {/* Role & Access Section */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-100">
-            <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <span className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm mr-3">🔐</span>
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs mr-2">🔐</span>
               Role & Access
             </h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-3">Role *</label>
                 <select
                   value={formData.roleId}
-                  onChange={(e) => setFormData({...formData, roleId: e.target.value})}
+                  onChange={(e) => {
+                    const selectedRole = roles.find(r => r._id === e.target.value);
+                    const mainBranch = centres.find(c => c.name.toLowerCase().includes('main'));
+                    
+                    setFormData({
+                      ...formData, 
+                      roleId: e.target.value,
+                      centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
+                        ? mainBranch._id
+                        : ''
+                    });
+                  }}
                   className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
                   required
                 >
@@ -514,12 +533,34 @@ export default function UsersTable() {
                 <select
                   value={formData.centreId}
                   onChange={(e) => setFormData({...formData, centreId: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  disabled={(() => {
+                    const selectedRole = roles.find(r => r._id === formData.roleId);
+                    return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
+                  })()}
+                  className={`w-full px-5 py-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium ${
+                    (() => {
+                      const selectedRole = roles.find(r => r._id === formData.roleId);
+                      return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug)
+                        ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                        : 'bg-white'
+                    })()
+                  }`}
                 >
                   <option value="">Select Centre</option>
-                  {centres.map(centre => (
-                    <option key={centre._id} value={centre._id}>{centre.name}</option>
-                  ))}
+                  {(() => {
+                    const selectedRole = roles.find(r => r._id === formData.roleId);
+                    const isRestrictedRole = selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
+                    
+                    if (isRestrictedRole) {
+                      return centres.map(centre => (
+                        <option key={centre._id} value={centre._id}>{centre.name}</option>
+                      ));
+                    } else {
+                      return centres.filter(centre => !centre.name.toLowerCase().includes('main')).map(centre => (
+                        <option key={centre._id} value={centre._id}>{centre.name}</option>
+                      ));
+                    }
+                  })()}
                 </select>
               </div>
               <div>
@@ -538,70 +579,83 @@ export default function UsersTable() {
           </div>
 
           {/* Languages Section */}
-          <div className="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-2xl border border-green-100">
-            <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <span className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm mr-3">🌐</span>
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+              <span className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs mr-2">🌐</span>
               Languages
             </h4>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-3">Select Languages</label>
-              <select
-                value=""
-                onChange={(e) => {
-                  if (e.target.value && !formData.languageIds.includes(e.target.value)) {
-                    setFormData(prev => ({
-                      ...prev,
-                      languageIds: [...prev.languageIds, e.target.value]
-                    }));
-                  }
-                }}
-                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium mb-4"
-              >
-                <option value="">Add Language</option>
-                {languages.filter(lang => !formData.languageIds.includes(lang._id)).map(language => (
-                  <option key={language._id} value={language._id}>{language.name}</option>
-                ))}
-              </select>
               
+              {/* Available Languages */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 max-h-48 overflow-y-auto scrollbar-hide">
+                <div className="text-sm font-medium text-slate-600 mb-3">Available Languages:</div>
+                <div className="flex flex-wrap gap-2">
+                  {languages.filter(lang => !formData.languageIds.includes(lang._id)).map(language => (
+                    <button
+                      key={language._id}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          languageIds: [...prev.languageIds, language._id]
+                        }));
+                      }}
+                      className="inline-flex items-center px-3 py-2 rounded-xl text-sm bg-slate-100 hover:bg-green-100 text-slate-700 hover:text-green-800 border border-slate-200 hover:border-green-300 transition-all duration-200 cursor-pointer"
+                    >
+                      <span className="mr-2">+</span>
+                      {language.name}
+                    </button>
+                  ))}
+                  {languages.filter(lang => !formData.languageIds.includes(lang._id)).length === 0 && (
+                    <span className="text-slate-400 text-sm italic">All languages selected</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Selected Languages */}
               {formData.languageIds.length > 0 && (
-                <div className="flex flex-wrap gap-3">
-                  {formData.languageIds.map(langId => {
-                    const language = languages.find(l => l._id === langId);
-                    return (
-                      <span key={langId} className="inline-flex items-center px-4 py-2 rounded-2xl text-sm bg-white border border-green-200 text-green-800 shadow-sm">
-                        <span className="mr-2">🌐</span>
-                        {language?.name}
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({
-                            ...prev,
-                            languageIds: prev.languageIds.filter(id => id !== langId)
-                          }))}
-                          className="ml-3 text-green-600 hover:text-green-800 font-bold"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
+                <div>
+                  <div className="text-sm font-medium text-slate-600 mb-3">Selected Languages:</div>
+                  <div className="flex flex-wrap gap-3">
+                    {formData.languageIds.map(langId => {
+                      const language = languages.find(l => l._id === langId);
+                      return (
+                        <span key={langId} className="inline-flex items-center px-4 py-2 rounded-2xl text-sm bg-white border border-green-200 text-green-800 shadow-sm">
+                          <span className="mr-2">🌐</span>
+                          {language?.name}
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              languageIds: prev.languageIds.filter(id => id !== langId)
+                            }))}
+                            className="ml-3 text-green-600 hover:text-green-800 font-bold transition-colors"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
             <button
               type="submit"
-              className="flex-1 text-white py-4 px-8 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+              className="flex-1 text-white py-3 px-6 rounded-lg hover:opacity-90 transition-all font-medium flex items-center justify-center"
               style={{backgroundColor: '#0f172a'}}
             >
-              {editUser ? '✏️ Update User' : '✨ Create User'}
+              {editUser ? 'Update User' : 'Create User'}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="flex-1 bg-slate-200 text-slate-700 py-4 px-8 rounded-2xl hover:bg-slate-300 transition-all duration-200 font-semibold text-lg flex items-center justify-center"
+              className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-all font-medium flex items-center justify-center"
             >
               Cancel
             </button>

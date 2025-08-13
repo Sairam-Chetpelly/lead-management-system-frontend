@@ -14,6 +14,7 @@ import LeadSourcesTable from './leads/LeadSourcesTable';
 import CallLogsTable from './leads/CallLogsTable';
 import LeadActivitiesTable from './leads/LeadActivitiesTable';
 import ProjectHouseTypesTable from './leads/ProjectHouseTypesTable';
+import Dashboard from './Dashboard';
 
 interface UserManagementProps {
   user: any;
@@ -23,9 +24,9 @@ interface UserManagementProps {
 export default function UserManagement({ user, onLogout }: UserManagementProps) {
   const [activeSection, setActiveSection] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('activeSection') || 'users';
+      return localStorage.getItem('activeSection') || 'dashboard';
     }
-    return 'users';
+    return 'dashboard';
   });
   const [viewingLeadId, setViewingLeadId] = useState<string | null>(null);
 
@@ -38,6 +39,7 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       return 'Lead Details';
     }
     const titles = {
+      dashboard: 'Dashboard',
       users: 'Users',
       roles: 'Roles', 
       centres: 'Centres',
@@ -70,6 +72,19 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'dashboard':
+        return <Dashboard 
+          user={user} 
+          onCallLead={(lead) => {
+            setActiveSection('leads');
+            handleViewLead(lead._id);
+          }} 
+          onViewLead={handleViewLead} 
+          onEditLead={(lead) => {
+            setActiveSection('leads');
+            handleViewLead(lead._id);
+          }}
+        />;
       case 'users':
         return <UsersTable />;
       case 'roles':
@@ -95,12 +110,12 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       case 'project-house-types':
         return <ProjectHouseTypesTable />;
       default:
-        return <UsersTable />;
+        return <Dashboard user={user} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <NestedSidebar 
         activeSection={activeSection} 
         onSectionChange={handleSectionChange} 
@@ -108,17 +123,17 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         onLogout={onLogout}
       />
       
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-4 flex-shrink-0 animate-fade-in-up">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
+        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-3 sm:p-4 flex-shrink-0 animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent truncate">
                 {getSectionTitle()}
               </h1>
-              <p className="text-slate-600 mt-1 font-medium text-xs">Manage your {getSectionTitle().toLowerCase()} efficiently</p>
+              <p className="text-slate-600 mt-1 font-medium text-xs hidden sm:block">Manage your {getSectionTitle().toLowerCase()} efficiently</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 flex-shrink-0">
               <div className="px-2 py-1 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg border border-green-200 animate-pulse">
                 <span className="text-green-700 font-semibold text-xs">System Online</span>
               </div>
@@ -127,8 +142,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 bg-white/30 backdrop-blur-sm overflow-y-auto custom-scrollbar scroll-smooth">
-          <div className="animate-fade-in-up">
+        <div className="flex-1 bg-white/30 backdrop-blur-sm overflow-y-auto scrollbar-hide min-h-0">
+          <div className="animate-fade-in-up h-full">
             {renderContent()}
           </div>
         </div>

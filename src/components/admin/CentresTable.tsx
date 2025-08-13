@@ -151,7 +151,7 @@ export default function CentresTable() {
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {centres.map((centre, index) => (
                 <div key={centre._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-teal-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>

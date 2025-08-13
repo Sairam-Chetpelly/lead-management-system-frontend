@@ -157,7 +157,7 @@ export default function StatusesTable() {
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {statuses.map((status, index) => (
                 <div 
@@ -203,7 +203,7 @@ export default function StatusesTable() {
         </div>
         
         {/* Mobile Cards */}
-        <div className="lg:hidden flex-1 overflow-y-auto custom-scrollbar p-4">
+        <div className="lg:hidden flex-1 overflow-y-auto scrollbar-hide p-4">
           <div className={`space-y-4 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
             {statuses.map((status, index) => (
               <div 

@@ -4,18 +4,30 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LeadsTable from '@/components/leads/LeadsTable';
 import NestedSidebar from '@/components/NestedSidebar';
+import GlobalLoader from '@/components/GlobalLoader';
+import InactiveUserNotification from '@/components/InactiveUserNotification';
+import { useUserStatus } from '@/hooks/useUserStatus';
 
 export default function LeadsPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('leads');
+  const [user, setUser] = useState<any>(null);
+  const { isActive, loading } = useUserStatus();
   
   useEffect(() => {
     localStorage.setItem('currentPage', 'leads');
     localStorage.setItem('lastVisitedPage', '/leads');
+    
+    // Get user from localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
   }, []);
   
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     router.push('/');
   };
 
@@ -23,12 +35,25 @@ export default function LeadsPage() {
     setActiveSection(section);
   };
 
+  if (loading) {
+    return <GlobalLoader />;
+  }
+
+  if (!user) {
+    router.push('/');
+    return <GlobalLoader />;
+  }
+
+  if (!isActive) {
+    return <InactiveUserNotification onLogout={handleLogout} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
       <NestedSidebar 
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        user={{ name: 'Admin User', role: 'Administrator' }}
+        user={user}
         onLogout={handleLogout}
       />
       
