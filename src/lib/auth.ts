@@ -1,24 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-url.com' 
-  : 'http://localhost:5000';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from './api';
 
 interface PaginationParams {
   page?: number;
@@ -32,6 +12,10 @@ interface PaginationParams {
 export const authAPI = {
   login: (credentials: { email: string; password: string }) =>
     api.post('/api/auth/login', credentials),
+  
+  checkStatus: () => api.get('/api/auth/status'),
+  
+  get: (url: string) => api.get(url),
   
   getUsers: (params: PaginationParams = {}) => {
     const queryParams = new URLSearchParams();

@@ -1,1 +1,52 @@
-'use client';\n\nimport { useState, useEffect } from 'react';\nimport { Button } from '@/components/ui/button';\nimport { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';\nimport { Badge } from '@/components/ui/badge';\n\ninterface Lead {\n  _id: string;\n  name: string;\n  email: string;\n  contactNumber: string;\n  currentStage: string;\n  assignmentType: string;\n  leadValue?: string;\n  isQualified: boolean;\n  outcome: string;\n}\n\ninterface WorkflowProps {\n  leadId: string;\n}\n\nexport default function LeadWorkflow({ leadId }: WorkflowProps) {\n  const [lead, setLead] = useState<Lead | null>(null);\n  const [loading, setLoading] = useState(false);\n\n  useEffect(() => {\n    fetchLeadWorkflow();\n  }, [leadId]);\n\n  const fetchLeadWorkflow = async () => {\n    try {\n      const response = await fetch(`/api/leads/${leadId}/workflow`);\n      const data = await response.json();\n      setLead(data.lead);\n    } catch (error) {\n      console.error('Error fetching workflow:', error);\n    }\n  };\n\n  const handleLanguageEvaluation = async (isComfortable: boolean) => {\n    setLoading(true);\n    try {\n      await fetch(`/api/leads/${leadId}/evaluate-language`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({\n          isComfortable,\n          languageId: '507f1f77bcf86cd799439011', // Example ID\n          centerId: '507f1f77bcf86cd799439012', // Example ID\n          leadValue: 'high value'\n        })\n      });\n      fetchLeadWorkflow();\n    } catch (error) {\n      console.error('Error:', error);\n    }\n    setLoading(false);\n  };\n\n  const handleQualification = async (isQualified: boolean) => {\n    setLoading(true);\n    try {\n      await fetch(`/api/leads/${leadId}/qualify`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ isQualified })\n      });\n      fetchLeadWorkflow();\n    } catch (error) {\n      console.error('Error:', error);\n    }\n    setLoading(false);\n  };\n\n  const handleSiteVisit = async (siteVisit: boolean) => {\n    setLoading(true);\n    try {\n      await fetch(`/api/leads/${leadId}/site-visit`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ \n          siteVisit,\n          siteVisitDate: siteVisit ? new Date().toISOString() : null\n        })\n      });\n      fetchLeadWorkflow();\n    } catch (error) {\n      console.error('Error:', error);\n    }\n    setLoading(false);\n  };\n\n  const handleSelectionCentre = async (centerVisit: boolean) => {\n    setLoading(true);\n    try {\n      await fetch(`/api/leads/${leadId}/selection-centre`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ \n          centerVisit,\n          centerVisitDate: centerVisit ? new Date().toISOString() : null,\n          virtualMeeting: centerVisit,\n          virtualMeetingDate: centerVisit ? new Date().toISOString() : null\n        })\n      });\n      fetchLeadWorkflow();\n    } catch (error) {\n      console.error('Error:', error);\n    }\n    setLoading(false);\n  };\n\n  const handleOutcome = async (outcome: string) => {\n    setLoading(true);\n    try {\n      await fetch(`/api/leads/${leadId}/outcome`, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ outcome })\n      });\n      fetchLeadWorkflow();\n    } catch (error) {\n      console.error('Error:', error);\n    }\n    setLoading(false);\n  };\n\n  if (!lead) return <div>Loading...</div>;\n\n  const getStageColor = (stage: string) => {\n    switch (stage) {\n      case 'lead_generation': return 'bg-blue-100 text-blue-800';\n      case 'pre_sales': return 'bg-yellow-100 text-yellow-800';\n      case 'qualified_hot': return 'bg-orange-100 text-orange-800';\n      case 'sales': return 'bg-green-100 text-green-800';\n      case 'completed': return 'bg-gray-100 text-gray-800';\n      default: return 'bg-gray-100 text-gray-800';\n    }\n  };\n\n  return (\n    <Card className=\"w-full max-w-4xl mx-auto\">\n      <CardHeader>\n        <CardTitle className=\"flex items-center justify-between\">\n          <span>Lead Workflow: {lead.name}</span>\n          <Badge className={getStageColor(lead.currentStage)}>\n            {lead.currentStage.replace('_', ' ').toUpperCase()}\n          </Badge>\n        </CardTitle>\n      </CardHeader>\n      <CardContent className=\"space-y-6\">\n        {/* Lead Info */}\n        <div className=\"grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg\">\n          <div><strong>Email:</strong> {lead.email}</div>\n          <div><strong>Phone:</strong> {lead.contactNumber}</div>\n          <div><strong>Source:</strong> {lead.assignmentType}</div>\n          <div><strong>Value:</strong> {lead.leadValue || 'Not set'}</div>\n        </div>\n\n        {/* Workflow Actions */}\n        {lead.currentStage === 'pre_sales' && (\n          <div className=\"space-y-4\">\n            <h3 className=\"text-lg font-semibold\">Pre-Sales Evaluation</h3>\n            <div className=\"flex gap-2\">\n              <Button \n                onClick={() => handleLanguageEvaluation(true)}\n                disabled={loading}\n                className=\"bg-green-600 hover:bg-green-700\"\n              >\n                Language Comfortable\n              </Button>\n              <Button \n                onClick={() => handleLanguageEvaluation(false)}\n                disabled={loading}\n                variant=\"outline\"\n              >\n                Reassign for Language\n              </Button>\n            </div>\n          </div>\n        )}\n\n        {lead.currentStage === 'pre_sales' && lead.leadValue && (\n          <div className=\"space-y-4\">\n            <h3 className=\"text-lg font-semibold\">Qualification Check</h3>\n            <div className=\"flex gap-2\">\n              <Button \n                onClick={() => handleQualification(true)}\n                disabled={loading}\n                className=\"bg-green-600 hover:bg-green-700\"\n              >\n                Qualified to Proceed\n              </Button>\n              <Button \n                onClick={() => handleQualification(false)}\n                disabled={loading}\n                className=\"bg-red-600 hover:bg-red-700\"\n              >\n                Mark as Lost\n              </Button>\n            </div>\n          </div>\n        )}\n\n        {lead.currentStage === 'qualified_hot' && (\n          <div className=\"space-y-4\">\n            <h3 className=\"text-lg font-semibold\">Site Visit</h3>\n            <div className=\"flex gap-2\">\n              <Button \n                onClick={() => handleSiteVisit(true)}\n                disabled={loading}\n                className=\"bg-blue-600 hover:bg-blue-700\"\n              >\n                Schedule Site Visit\n              </Button>\n              <Button \n                onClick={() => handleSiteVisit(false)}\n                disabled={loading}\n                variant=\"outline\"\n              >\n                Skip Site Visit\n              </Button>\n            </div>\n          </div>\n        )}\n\n        {lead.currentStage === 'sales' && (\n          <div className=\"space-y-4\">\n            <h3 className=\"text-lg font-semibold\">Selection Centre</h3>\n            <div className=\"flex gap-2\">\n              <Button \n                onClick={() => handleSelectionCentre(true)}\n                disabled={loading}\n                className=\"bg-purple-600 hover:bg-purple-700\"\n              >\n                Selected for Centre\n              </Button>\n              <Button \n                onClick={() => handleSelectionCentre(false)}\n                disabled={loading}\n                variant=\"outline\"\n              >\n                Not Selected\n              </Button>\n            </div>\n          </div>\n        )}\n\n        {lead.currentStage === 'sales' && (\n          <div className=\"space-y-4\">\n            <h3 className=\"text-lg font-semibold\">Final Outcome</h3>\n            <div className=\"flex gap-2\">\n              <Button \n                onClick={() => handleOutcome('won')}\n                disabled={loading}\n                className=\"bg-green-600 hover:bg-green-700\"\n              >\n                Won\n              </Button>\n              <Button \n                onClick={() => handleOutcome('lost')}\n                disabled={loading}\n                className=\"bg-red-600 hover:bg-red-700\"\n              >\n                Lost\n              </Button>\n            </div>\n          </div>\n        )}\n\n        {lead.currentStage === 'completed' && (\n          <div className=\"p-4 bg-gray-100 rounded-lg text-center\">\n            <h3 className=\"text-lg font-semibold\">Workflow Completed</h3>\n            <p className=\"text-gray-600\">Final Outcome: <strong>{lead.outcome}</strong></p>\n          </div>\n        )}\n      </CardContent>\n    </Card>\n  );\n}
+'use client';
+
+import { useState, useEffect } from 'react';
+
+interface Lead {
+  _id: string;
+  name: string;
+  email: string;
+  contactNumber: string;
+  currentStage: string;
+  assignmentType: string;
+  leadValue?: string;
+  isQualified: boolean;
+  outcome: string;
+}
+
+interface WorkflowProps {
+  leadId: string;
+}
+
+export default function LeadWorkflow({ leadId }: WorkflowProps) {
+  const [lead, setLead] = useState<Lead | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchLeadWorkflow();
+  }, [leadId]);
+
+  const fetchLeadWorkflow = async () => {
+    try {
+      const response = await fetch(`/api/leads/${leadId}/workflow`);
+      const data = await response.json();
+      setLead(data.lead);
+    } catch (error) {
+      console.error('Error fetching workflow:', error);
+    }
+  };
+
+  if (!lead) return <div>Loading...</div>;
+
+  return (
+    <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold mb-4">Lead Workflow: {lead.name}</h2>
+      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div><strong>Email:</strong> {lead.email}</div>
+        <div><strong>Phone:</strong> {lead.contactNumber}</div>
+        <div><strong>Source:</strong> {lead.assignmentType}</div>
+        <div><strong>Value:</strong> {lead.leadValue || 'Not set'}</div>
+      </div>
+    </div>
+  );
+}

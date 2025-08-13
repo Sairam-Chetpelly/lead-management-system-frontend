@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import Modal from '../Modal';
+import { Phone, ArrowLeft, Plus, User, ChartLine, Users, Calendar, PhoneCall, ClipboardList } from 'lucide-react';
 
 interface Lead {
   _id: string;
@@ -11,9 +12,10 @@ interface Lead {
   contactNumber: string;
   email: string;
   sourceId: { _id: string; name: string };
-  salesUserId: { _id: string; name: string };
-  presalesUserId: { _id: string; name: string };
+  salesUserId?: { _id: string; name: string };
+  presalesUserId?: { _id: string; name: string };
   leadStatusId: { _id: string; name: string };
+  languageId?: { _id: string; name: string };
   centerId?: { _id: string; name: string };
   createdAt: string;
 }
@@ -22,7 +24,21 @@ interface CallLog {
   _id: string;
   userId: { _id: string; name: string };
   leadId: string;
-  dateTime: string;
+  callDateTime: string;
+  callDuration: number;
+  callStatus: string;
+  callOutcome?: string;
+  followUpAction?: string;
+  nextCallDateTime?: string;
+  cifDateTime?: string;
+  originalLanguageId?: { _id: string; name: string };
+  updatedLanguageId?: { _id: string; name: string };
+  languageId?: { _id: string; name: string };
+  assignedUserId?: { _id: string; name: string };
+  leadValue?: string;
+  centerId?: { _id: string; name: string };
+  apartmentTypeId?: { _id: string; name: string };
+  notes?: string;
   createdAt: string;
 }
 
@@ -36,24 +52,10 @@ interface LeadActivity {
   salesUserId?: { _id: string; name: string };
   updatedPerson?: { _id: string; name: string };
   leadStatusId?: { _id: string; name: string };
-  leadSubStatusId?: { _id: string; name: string };
   languageId?: { _id: string; name: string };
   sourceId: { _id: string; name: string };
-  projectTypeId?: { _id: string; name: string };
-  houseTypeId?: { _id: string; name: string };
   projectValue?: string;
-  apartmentName?: string;
-  expectedPossessionDate?: string;
   leadValue?: string;
-  paymentMethod?: string;
-  siteVisit?: boolean;
-  siteVisitDate?: string;
-  centerVisit?: boolean;
-  centerVisitDate?: string;
-  virtualMeeting?: boolean;
-  virtualMeetingDate?: string;
-  isCompleted?: boolean;
-  isCompletedDate?: string;
   notes?: string;
   centerId?: { _id: string; name: string };
   createdAt: string;
@@ -71,6 +73,27 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
   const [loading, setLoading] = useState(true);
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('calls');
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [callTimer, setCallTimer] = useState(0);
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [callNotes, setCallNotes] = useState('');
+  const [callStatus, setCallStatus] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [callForm, setCallForm] = useState({
+    cifOption: '',
+    customCifDateTime: '',
+    languageId: '',
+    originalLanguageId: '',
+    updatedLanguageId: '',
+    assignedUserId: '',
+    leadValue: '',
+    centerId: '',
+    apartmentTypeId: '',
+    followUpAction: '',
+    callOutcome: ''
+  });
+
+  const [apartmentTypes, setApartmentTypes] = useState<any[]>([]);
   
   // Dropdown data
   const [users, setUsers] = useState<any[]>([]);
@@ -78,7 +101,6 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
   const [statuses, setStatuses] = useState<any[]>([]);
   const [centers, setCenters] = useState<any[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
-  const [projectTypes, setProjectTypes] = useState<any[]>([]);
 
   // Activity form data
   const [activityFormData, setActivityFormData] = useState({
@@ -88,43 +110,49 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
     presalesUserId: '',
     salesUserId: '',
     leadStatusId: '',
-    leadSubStatusId: '',
     languageId: '',
     sourceId: '',
-    projectTypeId: '',
     projectValue: '',
-    apartmentName: '',
-    houseTypeId: '',
-    expectedPossessionDate: '',
     leadValue: '',
-    paymentMethod: '',
-    siteVisit: false,
-    siteVisitDate: '',
-    centerVisit: false,
-    centerVisitDate: '',
-    virtualMeeting: false,
-    virtualMeetingDate: '',
-    isCompleted: false,
-    isCompletedDate: '',
     notes: '',
     centerId: ''
   });
 
   useEffect(() => {
-    console.log('LeadDetailView mounted with leadId:', leadId);
     if (leadId) {
       fetchLeadDetails();
       fetchDropdownData();
     }
+    
+    // Get current user
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setCurrentUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
   }, [leadId]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isCallActive) {
+      interval = setInterval(() => {
+        setCallTimer(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isCallActive]);
 
   const fetchDropdownData = async () => {
     try {
-      const [usersRes, sourcesRes, statusesRes, centersRes, languagesRes, projectTypesRes] = await Promise.all([
+      const [usersRes, sourcesRes, statusesRes, centersRes, languagesRes, apartmentTypesRes] = await Promise.all([
         authAPI.admin.getUsers(),
         authAPI.leads.getLeadSources(),
         authAPI.admin.getStatuses(),
-        authAPI.admin.getCentres(),
+        authAPI.admin.getAllCentres(),
         authAPI.admin.getLanguages(),
         authAPI.leads.getProjectHouseTypes()
       ]);
@@ -134,7 +162,8 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
       setStatuses(Array.isArray(statusesRes.data) ? statusesRes.data : statusesRes.data.data || []);
       setCenters(Array.isArray(centersRes.data) ? centersRes.data : centersRes.data.data || []);
       setLanguages(Array.isArray(languagesRes.data) ? languagesRes.data : languagesRes.data.data || []);
-      setProjectTypes(Array.isArray(projectTypesRes.data) ? projectTypesRes.data : projectTypesRes.data.data || []);
+      const apartmentTypesData = Array.isArray(apartmentTypesRes.data) ? apartmentTypesRes.data : apartmentTypesRes.data.data || [];
+      setApartmentTypes(apartmentTypesData.filter((t: any) => t.type === 'house'));
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
     }
@@ -142,44 +171,27 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
 
   const fetchLeadDetails = async () => {
     try {
-      console.log('Fetching lead details for:', leadId);
       const response = await authAPI.leads.getLeadDetails(leadId);
-      console.log('Lead details response:', response.data);
+      
       setLead(response.data.lead);
       setCallLogs(response.data.callLogs || []);
       setLeadActivities(response.data.activities || []);
       
-      // Pre-fill form with latest activity or lead data
-      const latest = response.data.activities?.[0];
+      // Pre-fill form with lead data
       const leadData = response.data.lead;
-      
       setActivityFormData({
-        name: latest?.name || leadData.name || '',
-        email: latest?.email || leadData.email || '',
-        contactNumber: latest?.contactNumber || leadData.contactNumber || '',
-        presalesUserId: latest?.presalesUserId?._id || leadData.presalesUserId._id || '',
-        salesUserId: latest?.salesUserId?._id || leadData.salesUserId._id || '',
-        leadStatusId: latest?.leadStatusId?._id || leadData.leadStatusId._id || '',
-        leadSubStatusId: latest?.leadSubStatusId?._id || '',
-        languageId: latest?.languageId?._id || '',
-        sourceId: latest?.sourceId._id || leadData.sourceId._id || '',
-        projectTypeId: latest?.projectTypeId?._id || '',
-        projectValue: latest?.projectValue || '',
-        apartmentName: latest?.apartmentName || '',
-        houseTypeId: latest?.houseTypeId?._id || '',
-        expectedPossessionDate: latest?.expectedPossessionDate ? latest.expectedPossessionDate.split('T')[0] : '',
-        leadValue: latest?.leadValue || '',
-        paymentMethod: latest?.paymentMethod || '',
-        siteVisit: latest?.siteVisit || false,
-        siteVisitDate: latest?.siteVisitDate ? latest.siteVisitDate.split('T')[0] : '',
-        centerVisit: latest?.centerVisit || false,
-        centerVisitDate: latest?.centerVisitDate ? latest.centerVisitDate.split('T')[0] : '',
-        virtualMeeting: latest?.virtualMeeting || false,
-        virtualMeetingDate: latest?.virtualMeetingDate ? latest.virtualMeetingDate.split('T')[0] : '',
-        isCompleted: latest?.isCompleted || false,
-        isCompletedDate: latest?.isCompletedDate ? latest.isCompletedDate.split('T')[0] : '',
+        name: leadData.name || '',
+        email: leadData.email || '',
+        contactNumber: leadData.contactNumber || '',
+        presalesUserId: leadData.presalesUserId?._id || '',
+        salesUserId: leadData.salesUserId?._id || '',
+        leadStatusId: leadData.leadStatusId._id || '',
+        languageId: leadData.languageId?._id || '',
+        sourceId: leadData.sourceId._id || '',
+        projectValue: '',
+        leadValue: '',
         notes: '',
-        centerId: latest?.centerId?._id || leadData.centerId?._id || ''
+        centerId: leadData.centerId?._id || ''
       });
     } catch (error) {
       console.error('Error fetching lead details:', error);
@@ -188,20 +200,10 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
     }
   };
 
-  const handleCall = async () => {
-    try {
-      await authAPI.leads.createCallLog({ leadId: leadId });
-      fetchLeadDetails();
-      alert('Call log created successfully!');
-    } catch (error) {
-      console.error('Error creating call log:', error);
-      alert('Error creating call log');
-    }
-  };
-
   const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       const payload = {
         leadId,
         name: activityFormData.name,
@@ -210,41 +212,151 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
         presalesUserId: activityFormData.presalesUserId || null,
         salesUserId: activityFormData.salesUserId || null,
         leadStatusId: activityFormData.leadStatusId || null,
-        leadSubStatusId: activityFormData.leadSubStatusId || null,
         languageId: activityFormData.languageId || null,
         sourceId: activityFormData.sourceId,
-        projectTypeId: activityFormData.projectTypeId || null,
         projectValue: activityFormData.projectValue || null,
-        apartmentName: activityFormData.apartmentName || null,
-        houseTypeId: activityFormData.houseTypeId || null,
-        expectedPossessionDate: activityFormData.expectedPossessionDate || null,
         leadValue: activityFormData.leadValue || null,
-        paymentMethod: activityFormData.paymentMethod || null,
-        siteVisit: activityFormData.siteVisit,
-        siteVisitDate: activityFormData.siteVisitDate || null,
-        centerVisit: activityFormData.centerVisit,
-        centerVisitDate: activityFormData.centerVisitDate || null,
-        virtualMeeting: activityFormData.virtualMeeting,
-        virtualMeetingDate: activityFormData.virtualMeetingDate || null,
-        isCompleted: activityFormData.isCompleted,
-        isCompletedDate: activityFormData.isCompletedDate || null,
         notes: activityFormData.notes || null,
-        centerId: activityFormData.centerId || null
+        centerId: activityFormData.centerId || null,
+        updatedPerson: currentUser._id || currentUser.id
       };
       
-      // Remove empty string ObjectIds
+      // Remove empty strings
       Object.keys(payload).forEach(key => {
-        if (payload[key] === '') {
-          payload[key] = null;
+        if ((payload as any)[key] === '') {
+          (payload as any)[key] = null;
         }
       });
       
       await authAPI.leads.createLeadActivity(payload);
       fetchLeadDetails();
       setIsActivityModalOpen(false);
+      alert('Activity created successfully!');
     } catch (error) {
       console.error('Error creating lead activity:', error);
       alert('Error creating lead activity');
+    }
+  };
+
+
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getCifDateTime = () => {
+    const now = new Date();
+    if (callForm.cifOption === '30mins') {
+      return new Date(now.getTime() + 30 * 60000).toISOString();
+    } else if (callForm.cifOption === '60mins') {
+      return new Date(now.getTime() + 60 * 60000).toISOString();
+    } else if (callForm.cifOption === '2hours') {
+      return new Date(now.getTime() + 2 * 60 * 60000).toISOString();
+    } else if (callForm.cifOption === 'tomorrow') {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString();
+    } else if (callForm.cifOption === 'custom' && callForm.customCifDateTime) {
+      return new Date(callForm.customCifDateTime).toISOString();
+    }
+    return null;
+  };
+
+  const handleCallFormChange = (field: string, value: string) => {
+    setCallForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const openCallModal = () => {
+    if (!lead) return;
+    setIsCallModalOpen(true);
+    setCallTimer(0);
+    setCallNotes('');
+    setCallStatus('');
+    setCallForm({
+      cifOption: '',
+      customCifDateTime: '',
+      languageId: lead.languageId?._id || '',
+      originalLanguageId: lead.languageId?._id || '',
+      updatedLanguageId: '',
+      assignedUserId: '',
+      leadValue: '',
+      centerId: lead.centerId?._id || '',
+      apartmentTypeId: '',
+      followUpAction: '',
+      callOutcome: ''
+    });
+  };
+
+  const startCall = () => {
+    setIsCallActive(true);
+    setCallTimer(0);
+  };
+
+  const endCall = async () => {
+    setIsCallActive(false);
+    
+    // Validation
+    if (!callStatus) {
+      alert('Please select call status');
+      return;
+    }
+    
+    if (callStatus === 'connected' && callForm.followUpAction === 'qualified') {
+      if (!callForm.leadValue || !callForm.centerId) {
+        alert('Lead Value and Center are required for qualified leads');
+        return;
+      }
+    }
+    
+    if (callStatus && lead && currentUser) {
+      try {
+        const userId = currentUser._id || currentUser.id;
+        if (!userId) {
+          throw new Error('User ID not found. Please login again.');
+        }
+        
+        const nextCallDateTime = getCifDateTime();
+        
+        const callLogData = {
+          userId: userId,
+          leadId: lead._id,
+          callDuration: callTimer,
+          callStatus,
+          callOutcome: callForm.callOutcome || null,
+          notes: callNotes || '',
+          nextCallDateTime,
+          languageId: callForm.languageId || null,
+          originalLanguageId: callForm.originalLanguageId || null,
+          updatedLanguageId: callForm.updatedLanguageId || null,
+          assignedUserId: callForm.assignedUserId || null,
+          leadValue: callForm.leadValue || null,
+          centerId: callForm.centerId || null,
+          apartmentTypeId: callForm.apartmentTypeId || null
+        };
+
+
+
+        console.log('Sending call log data:', callLogData);
+        const response = await authAPI.leads.createCallLog(callLogData);
+        console.log('Call log response:', response);
+        
+        setIsCallModalOpen(false);
+        setCallTimer(0);
+        setCallNotes('');
+        setCallStatus('');
+        fetchLeadDetails(); // Refresh data
+        alert('Call log saved successfully!');
+      } catch (error: any) {
+        console.error('Error saving call log:', error);
+        console.error('Error details:', error.response?.data);
+        alert(`Failed to save call log: ${error.response?.data?.message || error.message}`);
+        setIsCallActive(true);
+      }
+    } else {
+      console.log('Missing required data:', { callStatus, lead: !!lead, currentUser: !!currentUser });
+      alert('Missing required information. Please try again.');
     }
   };
 
@@ -266,6 +378,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
 
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -273,7 +386,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               onClick={onBack}
               className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
             >
-              <i className="fas fa-arrow-left text-gray-600"></i>
+              <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Lead Details</h1>
@@ -282,17 +395,17 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
           </div>
           <div className="flex gap-3">
             <button
-              onClick={handleCall}
+              onClick={openCallModal}
               className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:shadow-lg transition-all duration-300 font-semibold"
             >
-              <i className="fas fa-phone"></i>
+              <Phone size={20} />
               Make Call
             </button>
             <button
               onClick={() => setIsActivityModalOpen(true)}
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:shadow-lg transition-all duration-300 font-semibold"
             >
-              <i className="fas fa-plus"></i>
+              <Plus size={20} />
               Add Activity
             </button>
           </div>
@@ -309,11 +422,11 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
                 <span className="px-3 py-1 bg-white/30 backdrop-blur-sm rounded-full text-sm font-mono font-bold">{lead.leadId || 'N/A'}</span>
               </div>
               <div className="flex gap-2 mb-3">
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">Qualified</span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">{lead.leadStatusId.name}</span>
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">Active</span>
               </div>
               <div className="flex items-center gap-2 text-blue-100">
-                <i className="far fa-calendar"></i>
+                <Calendar size={16} />
                 <span className="text-sm">
                   Created on {new Date(lead.createdAt).toLocaleDateString('en-US', { 
                     year: 'numeric', 
@@ -325,7 +438,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             </div>
             <div className="text-right">
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <i className="fas fa-user text-3xl"></i>
+                <User size={32} />
               </div>
             </div>
           </div>
@@ -336,7 +449,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-user text-blue-600"></i>
+                  <User size={20} className="text-blue-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Contact Info</h3>
@@ -362,7 +475,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-chart-line text-green-600"></i>
+                  <ChartLine size={20} className="text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Lead Status</h3>
@@ -378,6 +491,12 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
                   <span className="text-gray-500 text-sm">Source:</span>
                   <span className="ml-2 font-medium">{lead.sourceId.name}</span>
                 </div>
+                {lead.languageId && (
+                  <div>
+                    <span className="text-gray-500 text-sm">Language:</span>
+                    <span className="ml-2 font-medium">{lead.languageId.name}</span>
+                  </div>
+                )}
                 {lead.centerId && (
                   <div>
                     <span className="text-gray-500 text-sm">Center:</span>
@@ -390,7 +509,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-users text-purple-600"></i>
+                  <Users size={20} className="text-purple-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Assigned Team</h3>
@@ -400,11 +519,11 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               <div className="space-y-2">
                 <div>
                   <span className="text-gray-500 text-sm">Sales:</span>
-                  <span className="ml-2 font-medium">{lead?.salesUserId?.name}</span>
+                  <span className="ml-2 font-medium">{lead?.salesUserId?.name || 'Not assigned'}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 text-sm">Presales:</span>
-                  <span className="ml-2 font-medium">{lead?.presalesUserId?.name}</span>
+                  <span className="ml-2 font-medium">{lead?.presalesUserId?.name || 'Not assigned'}</span>
                 </div>
               </div>
             </div>
@@ -423,7 +542,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             }`}
             onClick={() => setActiveTab('calls')}
           >
-            <i className="fas fa-phone mr-2"></i>
+            <PhoneCall size={16} className="inline mr-2" />
             Call Logs ({callLogs.length})
           </button>
           <button 
@@ -434,7 +553,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
             }`}
             onClick={() => setActiveTab('activities')}
           >
-            <i className="fas fa-clipboard-list mr-2"></i>
+            <ClipboardList size={16} className="inline mr-2" />
             Activity Logs ({leadActivities.length})
           </button>
         </div>
@@ -446,26 +565,103 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
                 <div key={log._id} className="bg-green-50 p-4 rounded-lg border border-green-200 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
-                        <i className="fas fa-phone text-sm"></i>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                        log.callStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'
+                      }`}>
+                        <Phone size={16} />
                       </div>
                       <div>
                         <div className="font-semibold text-green-800">{log.userId.name}</div>
-                        <div className="text-sm text-green-600">Call made</div>
+                        <div className={`text-sm font-medium ${
+                          log.callStatus === 'connected' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          Call {log.callStatus}
+                        </div>
                       </div>
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(log.dateTime).toLocaleString()}
+                      {new Date(log.callDateTime).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-700">
-                    Call completed successfully - Follow up scheduled
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3">
+                    <div><span className="font-medium text-gray-700">Duration:</span> {formatTime(log.callDuration)}</div>
+                    {log.callOutcome && (
+                      <div><span className="font-medium text-gray-700">Outcome:</span> 
+                        <span className="ml-1 capitalize">{log.callOutcome.replace('_', ' ')}</span>
+                      </div>
+                    )}
+                    {log.followUpAction && (
+                      <div><span className="font-medium text-gray-700">Follow Up:</span> 
+                        <span className="ml-1 capitalize">{log.followUpAction.replace('_', ' ')}</span>
+                      </div>
+                    )}
+                    {log.leadValue && (
+                      <div><span className="font-medium text-gray-700">Lead Value:</span> 
+                        <span className={`ml-1 px-2 py-1 rounded text-xs font-semibold ${
+                          log.leadValue === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {log.leadValue.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    {log.languageId && (
+                      <div><span className="font-medium text-gray-700">Language:</span> {log.languageId.name}</div>
+                    )}
+                    {log.assignedUserId && (
+                      <div><span className="font-medium text-gray-700">Assigned To:</span> {log.assignedUserId.name}</div>
+                    )}
+                    {log.centerId && (
+                      <div><span className="font-medium text-gray-700">Center:</span> {log.centerId.name}</div>
+                    )}
+                    {log.apartmentTypeId && (
+                      <div><span className="font-medium text-gray-700">Apartment Type:</span> {log.apartmentTypeId.name}</div>
+                    )}
                   </div>
+                  
+                  {(log.nextCallDateTime || log.cifDateTime) && (
+                    <div className="bg-yellow-50 p-3 rounded border mb-3">
+                      <div className="text-sm font-medium text-yellow-800 mb-1">Scheduling:</div>
+                      {log.nextCallDateTime && (
+                        <div className="text-sm text-yellow-700">
+                          <span className="font-medium">Next Call:</span> {new Date(log.nextCallDateTime).toLocaleString()}
+                        </div>
+                      )}
+                      {log.cifDateTime && (
+                        <div className="text-sm text-yellow-700">
+                          <span className="font-medium">CIF:</span> {new Date(log.cifDateTime).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {(log.originalLanguageId || log.updatedLanguageId) && (
+                    <div className="bg-blue-50 p-3 rounded border mb-3">
+                      <div className="text-sm font-medium text-blue-800 mb-1">Language Changes:</div>
+                      {log.originalLanguageId && (
+                        <div className="text-sm text-blue-700">
+                          <span className="font-medium">Original:</span> {log.originalLanguageId.name}
+                        </div>
+                      )}
+                      {log.updatedLanguageId && (
+                        <div className="text-sm text-blue-700">
+                          <span className="font-medium">Updated:</span> {log.updatedLanguageId.name}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {log.notes && (
+                    <div className="bg-white p-3 rounded border text-sm">
+                      <span className="font-medium text-gray-700">Notes:</span>
+                      <div className="mt-1 text-gray-600 whitespace-pre-wrap">{log.notes}</div>
+                    </div>
+                  )}
                 </div>
               ))}
               {callLogs.length === 0 && (
                 <div className="text-center py-12">
-                  <i className="fas fa-phone text-4xl text-gray-300 mb-4"></i>
+                  <Phone size={48} className="mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-500">No call logs found</p>
                 </div>
               )}
@@ -521,7 +717,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               ))}
               {leadActivities.length === 0 && (
                 <div className="text-center py-12">
-                  <i className="fas fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
+                  <ClipboardList size={48} className="mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-500">No activities found</p>
                 </div>
               )}
@@ -536,7 +732,7 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
         onClose={() => setIsActivityModalOpen(false)}
         title="Add Lead Activity"
       >
-        <form onSubmit={handleCreateActivity} className="space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleCreateActivity} className="space-y-4 max-h-[80vh] overflow-y-auto scrollbar-hide">
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
@@ -570,10 +766,9 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               value={activityFormData.salesUserId}
               onChange={(e) => setActivityFormData({ ...activityFormData, salesUserId: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
             >
               <option value="">Select Sales User</option>
-              {users.map(user => (
+              {users.filter(u => u.roleId?.slug === 'sales_agent').map(user => (
                 <option key={user._id} value={user._id}>{user.name}</option>
               ))}
             </select>
@@ -581,10 +776,9 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               value={activityFormData.presalesUserId}
               onChange={(e) => setActivityFormData({ ...activityFormData, presalesUserId: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
             >
               <option value="">Select Presales User</option>
-              {users.map(user => (
+              {users.filter(u => u.roleId?.slug === 'presales_agent').map(user => (
                 <option key={user._id} value={user._id}>{user.name}</option>
               ))}
             </select>
@@ -603,6 +797,19 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               ))}
             </select>
             <select
+              value={activityFormData.languageId}
+              onChange={(e) => setActivityFormData({ ...activityFormData, languageId: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select Language</option>
+              {languages.map(language => (
+                <option key={language._id} value={language._id}>{language.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <select
               value={activityFormData.sourceId}
               onChange={(e) => setActivityFormData({ ...activityFormData, sourceId: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -612,6 +819,35 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
               {sources.map(source => (
                 <option key={source._id} value={source._id}>{source.name}</option>
               ))}
+            </select>
+            <select
+              value={activityFormData.centerId}
+              onChange={(e) => setActivityFormData({ ...activityFormData, centerId: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select Center</option>
+              {centers.map(center => (
+                <option key={center._id} value={center._id}>{center.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Project Value"
+              value={activityFormData.projectValue}
+              onChange={(e) => setActivityFormData({ ...activityFormData, projectValue: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <select
+              value={activityFormData.leadValue}
+              onChange={(e) => setActivityFormData({ ...activityFormData, leadValue: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select Lead Value</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
             </select>
           </div>
 
@@ -640,6 +876,249 @@ export default function LeadDetailView({ leadId, onBack }: LeadDetailViewProps) 
           </div>
         </form>
       </Modal>
+
+      {/* Call Activity Modal */}
+      <Modal
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        title={`Call Activity - ${lead?.name}`}
+      >
+        <div className="space-y-4">
+          <div className="text-center border-b pb-4">
+            <div className="text-sm text-gray-600">Caller: {currentUser?.name}</div>
+            <div className="text-xl font-bold text-blue-600">{lead?.contactNumber}</div>
+            <div className="text-3xl font-mono font-bold text-gray-800 my-2">{formatTime(callTimer)}</div>
+            {!isCallActive ? (
+              <button onClick={startCall} className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
+                <Phone size={16} className="inline mr-2" />Start Call
+              </button>
+            ) : (
+              <div className="text-green-600 font-semibold">Call in Progress...</div>
+            )}
+          </div>
+
+          {isCallActive && (
+            <div className="space-y-4">
+              {/* Call Status */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Call Status *</label>
+                <select
+                  value={callStatus}
+                  onChange={(e) => setCallStatus(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                  required
+                >
+                  <option value="">Select Call Status</option>
+                  <option value="connected">Connected</option>
+                  <option value="not_connected">Not Connected</option>
+                </select>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Call Duration (seconds)</label>
+                <input
+                  type="number"
+                  value={callTimer}
+                  onChange={(e) => setCallTimer(parseInt(e.target.value) || 0)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Duration in seconds"
+                />
+              </div>
+
+              {/* Not Connected Options */}
+              {callStatus === 'not_connected' && (
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-red-800 mb-3">Not Connected Reason</h4>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Reason *</label>
+                    <select
+                      value={callForm.callOutcome}
+                      onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
+                      className="w-full p-2 border rounded-lg mb-2"
+                      required
+                    >
+                      <option value="">Select Reason</option>
+                      <option value="not_reachable">Not Reachable</option>
+                      <option value="incorrect_number">Incorrect Mobile No.</option>
+                      <option value="not_picking">Not Picking</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Schedule Next Call</label>
+                    <select
+                      value={callForm.cifOption}
+                      onChange={(e) => handleCallFormChange('cifOption', e.target.value)}
+                      className="w-full p-2 border rounded-lg mb-2"
+                    >
+                      <option value="">Select Next Call Time</option>
+                      <option value="30mins">Call in 30 Minutes</option>
+                      <option value="60mins">Call in 60 Minutes</option>
+                      <option value="custom">Custom Date & Time</option>
+                    </select>
+                    {callForm.cifOption === 'custom' && (
+                      <input
+                        type="datetime-local"
+                        value={callForm.customCifDateTime}
+                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
+                        className="w-full p-2 border rounded-lg"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Connected Options */}
+              {callStatus === 'connected' && (
+                <div className="bg-green-50 p-4 rounded-lg space-y-4">
+                  <h4 className="font-medium text-green-800 mb-3">Connected - What Happened?</h4>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Call Outcome *</label>
+                    <select
+                      value={callForm.callOutcome}
+                      onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
+                      className="w-full p-2 border rounded-lg"
+                      required
+                    >
+                      <option value="">Select Outcome</option>
+                      <option value="not_interested">Customer Not Interested → Lead Lost</option>
+                      <option value="language_mismatch">Language Do Not Match</option>
+                      <option value="follow_up">Need Follow Up Call</option>
+                      <option value="qualified">Qualified → Move to Sales</option>
+                    </select>
+                  </div>
+
+                  {/* Language Mismatch */}
+                  {callForm.callOutcome === 'language_mismatch' && (
+                    <div className="bg-yellow-100 p-3 rounded space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Update Customer Language *</label>
+                        <select
+                          value={callForm.updatedLanguageId}
+                          onChange={(e) => handleCallFormChange('updatedLanguageId', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          required
+                        >
+                          <option value="">Select Correct Language</option>
+                          {languages.map(lang => (
+                            <option key={lang._id} value={lang._id}>{lang.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Reassign to Presales Agent *</label>
+                        <select
+                          value={callForm.assignedUserId}
+                          onChange={(e) => handleCallFormChange('assignedUserId', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          required
+                        >
+                          <option value="">Select Presales Agent</option>
+                          {users.filter(u => u.roleId?.slug === 'presales_agent').map(user => (
+                            <option key={user._id} value={user._id}>{user.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Follow Up */}
+                  {callForm.callOutcome === 'follow_up' && (
+                    <div className="bg-blue-100 p-3 rounded">
+                      <label className="block text-sm font-medium mb-2">Next Call Date & Time *</label>
+                      <input
+                        type="datetime-local"
+                        value={callForm.customCifDateTime}
+                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {/* Qualification */}
+                  {callForm.callOutcome === 'qualified' && (
+                    <div className="space-y-3 bg-blue-50 p-3 rounded">
+                      <h5 className="font-medium text-blue-800">Qualification Details (All Required)</h5>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Lead Value *</label>
+                          <select
+                            value={callForm.leadValue}
+                            onChange={(e) => handleCallFormChange('leadValue', e.target.value)}
+                            className="w-full p-2 border rounded-lg"
+                            required
+                          >
+                            <option value="">Select Value</option>
+                            <option value="high_value">High Value</option>
+                            <option value="low_value">Low Value</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Selection Center *</label>
+                          <select
+                            value={callForm.centerId}
+                            onChange={(e) => handleCallFormChange('centerId', e.target.value)}
+                            className="w-full p-2 border rounded-lg"
+                            required
+                          >
+                            <option value="">Select Center</option>
+                            {centers.map(center => (
+                              <option key={center._id} value={center._id}>{center.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Language *</label>
+                        <select
+                          value={callForm.languageId}
+                          onChange={(e) => handleCallFormChange('languageId', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          required
+                        >
+                          <option value="">Select Language</option>
+                          {languages.map(lang => (
+                            <option key={lang._id} value={lang._id}>{lang.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <textarea
+                  value={callNotes}
+                  onChange={(e) => setCallNotes(e.target.value)}
+                  className="w-full p-2 border rounded-lg h-20"
+                  placeholder="Call notes..."
+                />
+              </div>
+
+              {/* End Call Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('End call button clicked');
+                  endCall();
+                }}
+                disabled={!callStatus}
+                className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 disabled:opacity-50"
+              >
+                End Call & Save
+              </button>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+
     </div>
   );
 }

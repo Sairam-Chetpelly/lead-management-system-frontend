@@ -10,11 +10,11 @@ export default function GlobalLoader() {
           <img 
             src="/ReminiscentWhiteLogo.png" 
             alt="Reminiscent Logo" 
-            className="w-48 h-16 object-contain mx-auto mb-4 animate-pulse"
+            className="w-80 h-60 object-contain mx-auto mb-2 animate-pulse"
           />
         </div>
         <ModernLoader size="lg" variant="primary" />
-        <p className="text-white/80 mt-6 text-lg font-medium animate-pulse">Loading...</p>
+        <p className="text-white/80 text-lg font-medium animate-pulse">Loading...</p>
       </div>
     </div>
   );

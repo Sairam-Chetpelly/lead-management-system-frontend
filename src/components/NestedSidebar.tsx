@@ -18,7 +18,8 @@ import {
   Phone,
   House,
   HandCoinsIcon,
-  ListCollapse
+  ListCollapse,
+  BarChart3
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -82,39 +83,75 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
     }
   }, [activeSection]);
 
-  const menuItems: MenuItem[] = [
-    {
-      id: 'lead-management',
-      name: 'Lead Management',
-      icon: UserCheck,
-      children: [
-        { id: 'leads', name: 'Leads', icon: HandCoinsIcon },
-        { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
-        { id: 'call-logs', name: 'Call Logs', icon: Phone }
-      ]
-    },
-    {
-      id: 'user-management',
-      name: 'User Management',
-      icon: Users,
-      children: [
-        { id: 'users', name: 'Users', icon: User },
-        { id: 'roles', name: 'Roles', icon: Shield }
-      ]
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      icon: Settings,
-      children: [
-        { id: 'centres', name: 'Centres', icon: Building },
-        { id: 'languages', name: 'Languages', icon: Globe },
-        { id: 'statuses', name: 'Statuses', icon: Activity },
-        { id: 'lead-sources', name: 'Sources', icon: Waypoints },
-        { id: 'project-house-types', name: 'Project & House Types', icon: House }
-      ]
+  const getMenuItems = (): MenuItem[] => {
+    const userRole = user?.role || '';
+    
+    // Base items for all users
+    const baseItems: MenuItem[] = [
+      {
+        id: 'dashboard',
+        name: 'Dashboard',
+        icon: BarChart3
+      }
+    ];
+    
+    // Lead management for agents and above
+    if (['presales_agent', 'sales_agent', 'manager_presales', 'sales_manager', 'hod_presales', 'hod_sales', 'admin'].includes(userRole)) {
+      baseItems.push({
+        id: 'lead-management',
+        name: 'Lead Management',
+        icon: UserCheck,
+        children: [
+          { id: 'leads', name: 'Leads', icon: HandCoinsIcon }
+        ]
+      });
     }
-  ];
+    
+    // Admin and management features
+    if (['admin', 'hod_presales', 'hod_sales', 'manager_presales', 'sales_manager'].includes(userRole)) {
+      // Add full lead management
+      const leadMgmt = baseItems.find(item => item.id === 'lead-management');
+      if (leadMgmt && leadMgmt.children) {
+        leadMgmt.children.push(
+          { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
+          { id: 'call-logs', name: 'Call Logs', icon: Phone }
+        );
+      }
+      
+      // User management for admin and HODs
+      if (['admin', 'hod_presales', 'hod_sales'].includes(userRole)) {
+        baseItems.push({
+          id: 'user-management',
+          name: 'User Management',
+          icon: Users,
+          children: [
+            { id: 'users', name: 'Users', icon: User },
+            { id: 'roles', name: 'Roles', icon: Shield }
+          ]
+        });
+      }
+      
+      // Settings for admin only
+      if (userRole === 'admin') {
+        baseItems.push({
+          id: 'settings',
+          name: 'Settings',
+          icon: Settings,
+          children: [
+            { id: 'centres', name: 'Centres', icon: Building },
+            { id: 'languages', name: 'Languages', icon: Globe },
+            { id: 'statuses', name: 'Statuses', icon: Activity },
+            { id: 'lead-sources', name: 'Sources', icon: Waypoints },
+            { id: 'project-house-types', name: 'Project & House Types', icon: House }
+          ]
+        });
+      }
+    }
+    
+    return baseItems;
+  };
+  
+  const menuItems = getMenuItems();
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -247,7 +284,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       )}
 
       {/* Sidebar */}
-      <div className={`fixed lg:relative inset-y-0 left-0 z-50 h-screen text-white flex flex-col shadow-2xl transform transition-all duration-300 lg:transform-none overflow-hidden ${
+      <div className={`fixed lg:static inset-y-0 left-0 z-50 h-screen text-white flex flex-col shadow-2xl transform transition-all duration-300 lg:transform-none ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       } ${isCollapsed ? 'w-20' : 'w-72'}`} style={{backgroundColor: '#0f172a'}}>
         
@@ -279,7 +316,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 pt-6 px-4">
+        <nav className="flex-1 pt-6 px-4 overflow-y-auto scrollbar-hide">
           <div className="space-y-3">
             {menuItems.map(item => renderMenuItem(item))}
           </div>

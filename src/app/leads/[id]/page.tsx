@@ -241,8 +241,8 @@ export default function LeadViewPage() {
       
       // Remove empty string ObjectIds
       Object.keys(payload).forEach(key => {
-        if (payload[key] === '') {
-          payload[key] = null;
+        if ((payload as any)[key] === '') {
+          (payload as any)[key] = null;
         }
       });
       
@@ -562,15 +562,15 @@ export default function LeadViewPage() {
         onClose={() => setIsActivityModalOpen(false)}
         title="Add Lead Activity"
       >
-        <form onSubmit={handleCreateActivity} className="space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleCreateActivity} className="space-y-4">
           {/* Basic Information */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Name"
               value={activityFormData.name}
               onChange={(e) => setActivityFormData({ ...activityFormData, name: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
             <input
@@ -578,7 +578,7 @@ export default function LeadViewPage() {
               placeholder="Contact Number"
               value={activityFormData.contactNumber}
               onChange={(e) => setActivityFormData({ ...activityFormData, contactNumber: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
@@ -588,7 +588,7 @@ export default function LeadViewPage() {
             placeholder="Email"
             value={activityFormData.email}
             onChange={(e) => setActivityFormData({ ...activityFormData, email: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
 
@@ -865,17 +865,17 @@ export default function LeadViewPage() {
           />
 
           {/* Form Actions */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button
               type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all"
             >
               Create Activity
             </button>
             <button
               type="button"
               onClick={() => setIsActivityModalOpen(false)}
-              className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+              className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
