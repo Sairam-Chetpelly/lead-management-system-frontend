@@ -6,7 +6,7 @@ import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
-import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter } from 'lucide-react';
+import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface User {
@@ -57,6 +57,8 @@ export default function UsersTable() {
     languageIds: [] as string[],
     qualification: 'high_value'
   });
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -106,11 +108,20 @@ export default function UsersTable() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let userId;
       if (editUser) {
         await authAPI.updateUser(editUser._id, formData);
+        userId = editUser._id;
       } else {
-        await authAPI.createUser(formData);
+        const response = await authAPI.createUser(formData);
+        userId = response.data._id;
       }
+      
+      // Upload profile image if selected
+      if (profileImage && userId) {
+        await authAPI.uploadProfileImage(userId, profileImage);
+      }
+      
       resetForm();
       fetchUsers();
     } catch (error) {
@@ -154,7 +165,21 @@ export default function UsersTable() {
       qualification: 'high_value'
     });
     setEditUser(null);
+    setProfileImage(null);
+    setImagePreview(null);
     setShowModal(false);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleView = (user: User) => {
@@ -293,9 +318,17 @@ export default function UsersTable() {
               {users.map((user, index) => (
                 <div key={user._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 animate-stagger ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`} style={{animationDelay: `${index * 0.05}s`}}>
                   <div className="col-span-2 flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
-                      {user.name.charAt(0)}
-                    </div>
+                    {user.profileImage ? (
+                      <img 
+                        src={`http://localhost:5000/api/users/profile-image/${user.profileImage}`}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-xl object-cover shadow-lg flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
+                        {user.name.charAt(0)}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <div className="text-slate-900 font-bold truncate">{user.name}</div>
                       <div className="text-slate-600 text-sm truncate">{user.userId || 'N/A'}</div>
@@ -364,9 +397,17 @@ export default function UsersTable() {
               <div key={user._id} className="bg-white rounded-2xl p-4 shadow-lg border border-slate-100">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
-                      {user.name.charAt(0)}
-                    </div>
+                    {user.profileImage ? (
+                      <img 
+                        src={`http://localhost:5000/api/users/profile-image/${user.profileImage}`}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-xl object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
+                        {user.name.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <div className="font-bold text-slate-900">{user.name}</div>
                       <div className="text-sm text-slate-600">{user.userId || 'N/A'}</div>
@@ -421,6 +462,40 @@ export default function UsersTable() {
               <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs mr-2">👤</span>
               Personal Information
             </h4>
+            
+            {/* Profile Image Upload */}
+            <div className="mb-6 flex flex-col items-center">
+              <div className="relative">
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview} 
+                    alt="Profile preview" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : editUser?.profileImage ? (
+                  <img 
+                    src={`http://localhost:5000/api/users/profile-image/${editUser.profileImage}`}
+                    alt="Current profile" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg">
+                    {formData.name.charAt(0) || '?'}
+                  </div>
+                )}
+                <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
+                  <Camera size={16} />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">Click camera icon to upload profile image</p>
+            </div>
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>

@@ -29,6 +29,16 @@ export const authAPI = {
   
   updateUser: (id: string, userData: any) => api.put(`/api/users/${id}`, userData),
   
+  uploadProfileImage: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('profileImage', file);
+    return api.post(`/api/users/${id}/profile-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
   deleteUser: (id: string) => api.delete(`/api/users/${id}`),
   
   exportUsers: () => api.get('/api/users/export'),
@@ -175,6 +185,20 @@ export const authAPI = {
     createLeadActivity: (data: any) => api.post('/api/lead-activities', data),
     updateLeadActivity: (id: string, data: any) => api.put(`/api/lead-activities/${id}`, data),
     deleteLeadActivity: (id: string) => api.delete(`/api/lead-activities/${id}`),
+    
+    // Bulk upload functions
+    bulkUploadLeads: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.post('/api/leads/bulk-upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    },
+    downloadLeadsTemplate: () => api.get('/api/leads/bulk-upload/template', {
+      responseType: 'blob',
+    }),
     
     // Export functions
     exportLeads: () => api.get('/api/leads/export'),
