@@ -131,7 +131,7 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
   useEffect(() => {
     // Prevent any redirect attempts
     const preventRedirect = () => {
-      if (window.location.pathname === '/leads') {
+      if (typeof window !== 'undefined' && window.location.pathname === '/leads') {
         localStorage.setItem('currentPage', 'leads');
         localStorage.setItem('lastVisitedPage', '/leads');
       }
@@ -141,22 +141,24 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     window.addEventListener('beforeunload', preventRedirect);
     
     // Restore scroll position
-    const savedScrollPosition = localStorage.getItem('leadsScrollPosition');
-    if (savedScrollPosition) {
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedScrollPosition));
-      }, 100);
+    if (typeof window !== 'undefined') {
+      const savedScrollPosition = localStorage.getItem('leadsScrollPosition');
+      if (savedScrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScrollPosition));
+        }, 100);
+      }
+
+      const handleScroll = () => {
+        localStorage.setItem('leadsScrollPosition', window.scrollY.toString());
+      };
+
+      window.addEventListener('scroll', handleScroll);
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('beforeunload', preventRedirect);
+      };
     }
-
-    const handleScroll = () => {
-      localStorage.setItem('leadsScrollPosition', window.scrollY.toString());
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('beforeunload', preventRedirect);
-    };
   }, []);
 
   useEffect(() => {

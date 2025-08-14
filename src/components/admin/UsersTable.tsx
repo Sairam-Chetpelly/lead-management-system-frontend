@@ -21,6 +21,7 @@ interface User {
   centreId?: { _id: string; name: string };
   languageIds?: { _id: string; name: string }[];
   qualification: string;
+  profileImage?: string;
 }
 
 export default function UsersTable() {
