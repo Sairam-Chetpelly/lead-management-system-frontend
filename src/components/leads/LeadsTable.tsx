@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Trash2, Plus, Phone, Eye, Search, FileSpreadsheet, Filter, UserPen } from 'lucide-react';
+import { Pencil, Trash2, Plus, Phone, Eye, Search, FileSpreadsheet, Filter, UserPen, Upload, PhoneCall } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePagination } from '@/hooks/usePagination';
 import ModernLoader from '../ModernLoader';
 import Modal from '../Modal';
 import PaginationFooter from '../PaginationFooter';
+import BulkUploadModal from './BulkUploadModal';
 import { authAPI } from '@/lib/auth';
 
 interface Lead {
@@ -99,6 +100,8 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     languageId: ''
   });
   const [manualSourceId, setManualSourceId] = useState<string>('');
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isManualCallLogOpen, setIsManualCallLogOpen] = useState(false);
 
   useEffect(() => {
     // Prevent redirect on refresh
@@ -169,6 +172,27 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
   const openCallModal = (lead: Lead) => {
     setCurrentLead(lead);
     setIsCallModalOpen(true);
+    setCallTimer(0);
+    setCallNotes('');
+    setCallStatus('');
+    setCallForm({
+      cifOption: '',
+      customCifDateTime: '',
+      languageId: lead.languageId?._id || '',
+      originalLanguageId: lead.languageId?._id || '',
+      updatedLanguageId: '',
+      assignedUserId: '',
+      leadValue: '',
+      centerId: lead.centerId?._id || '',
+      apartmentTypeId: '',
+      followUpAction: '',
+      callOutcome: ''
+    });
+  };
+
+  const openManualCallModal = (lead: Lead) => {
+    setCurrentLead(lead);
+    setIsManualCallLogOpen(true);
     setCallTimer(0);
     setCallNotes('');
     setCallStatus('');
@@ -631,6 +655,13 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           <button 
+            onClick={() => setIsBulkUploadOpen(true)}
+            className="flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 bg-white/80 backdrop-blur-sm border border-blue-200 rounded-xl sm:rounded-2xl hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl group text-sm sm:text-base"
+          >
+            <Upload size={18} className="text-blue-600 group-hover:scale-110 transition-transform" />
+            <span className="text-blue-700 font-semibold">Bulk Upload</span>
+          </button>
+          <button 
             onClick={async () => {
               try {
                 const response = await authAPI.leads.exportLeads();
@@ -713,6 +744,9 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                     <button onClick={() => openModal(lead)} className="p-1.5 xl:p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Edit">
                       <Pencil size={14} />
                     </button>
+                    <button onClick={() => openManualCallModal(lead)} className="p-1.5 xl:p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Manual Call Log">
+                      <UserPen size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -744,15 +778,18 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                   <div className="truncate"><span className="font-medium">Email:</span> {lead.email}</div>
                   <div className="truncate"><span className="font-medium">Source:</span> {lead.sourceId?.name || '--'}</div>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-3 sm:mt-4">
                   <button onClick={() => openCallModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-green-100 text-green-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
-                    <Phone size={14} className="mr-1" /> Call
+                    <Phone size={12} className="mr-1" /> Call
+                  </button>
+                  <button onClick={() => openManualCallModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-orange-100 text-orange-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
+                    <PhoneCall size={12} className="mr-1" /> Manual
                   </button>
                   <button onClick={() => openViewPage(lead._id)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-blue-100 text-blue-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
-                    <Eye size={14} className="mr-1" /> View
+                    <Eye size={12} className="mr-1" /> View
                   </button>
                   <button onClick={() => openModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-purple-100 text-purple-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
-                    <Pencil size={14} className="mr-1" /> Edit
+                    <Pencil size={12} className="mr-1" /> Edit
                   </button>
                 </div>
               </div>
@@ -1182,6 +1219,137 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
           )}
         </div>
       </Modal>
+
+      {/* Manual Call Log Modal */}
+      <Modal
+        isOpen={isManualCallLogOpen}
+        onClose={() => setIsManualCallLogOpen(false)}
+        title={`Manual Call Log - ${currentLead?.name}`}
+      >
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="text-sm text-gray-600 mb-2">Caller: {currentUser?.name}</div>
+            <div className="text-xl font-bold text-blue-600">{currentLead?.contactNumber}</div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Call Status *</label>
+              <select
+                value={callStatus}
+                onChange={(e) => setCallStatus(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+                required
+              >
+                <option value="">Select Call Status</option>
+                <option value="connected">Connected</option>
+                <option value="not_connected">Not Connected</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Call Duration (minutes)</label>
+              <input
+                type="number"
+                value={Math.floor(callTimer / 60)}
+                onChange={(e) => setCallTimer(parseInt(e.target.value) * 60 || 0)}
+                className="w-full p-2 border rounded-lg"
+                placeholder="Duration in minutes"
+              />
+            </div>
+
+            {callStatus === 'not_connected' && (
+              <div className="bg-red-50 p-4 rounded-lg">
+                <label className="block text-sm font-medium mb-2">Reason *</label>
+                <select
+                  value={callForm.callOutcome}
+                  onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  required
+                >
+                  <option value="">Select Reason</option>
+                  <option value="not_reachable">Not Reachable</option>
+                  <option value="incorrect_number">Incorrect Mobile No.</option>
+                  <option value="not_picking">Not Picking</option>
+                </select>
+              </div>
+            )}
+
+            {callStatus === 'connected' && (
+              <div className="bg-green-50 p-4 rounded-lg">
+                <label className="block text-sm font-medium mb-2">Call Outcome *</label>
+                <select
+                  value={callForm.callOutcome}
+                  onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  required
+                >
+                  <option value="">Select Outcome</option>
+                  <option value="not_interested">Not Interested</option>
+                  <option value="follow_up">Follow Up Required</option>
+                  <option value="qualified">Qualified</option>
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Call Notes</label>
+              <textarea
+                value={callNotes}
+                onChange={(e) => setCallNotes(e.target.value)}
+                className="w-full p-2 border rounded-lg h-20"
+                placeholder="Add your call notes here..."
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t">
+              <button
+                onClick={async () => {
+                  if (!callStatus) {
+                    alert('Please select call status');
+                    return;
+                  }
+                  try {
+                    const callLogData = {
+                      userId: currentUser?.id || currentUser?._id,
+                      leadId: currentLead?._id,
+                      callDuration: callTimer,
+                      callStatus,
+                      callOutcome: callForm.callOutcome || null,
+                      notes: callNotes || ''
+                    };
+                    await authAPI.leads.createCallLog(callLogData);
+                    alert('Call log saved successfully!');
+                    setIsManualCallLogOpen(false);
+                    fetchLeads();
+                  } catch (error: any) {
+                    alert('Failed to save call log: ' + (error.response?.data?.message || error.message));
+                  }
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+              >
+                Save Call Log
+              </button>
+              <button
+                onClick={() => setIsManualCallLogOpen(false)}
+                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        onSuccess={() => {
+          fetchLeads();
+          setIsBulkUploadOpen(false);
+        }}
+      />
     </div>
   );
 }

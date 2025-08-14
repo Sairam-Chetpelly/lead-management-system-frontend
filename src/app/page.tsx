@@ -11,6 +11,7 @@ import { useUserStatus } from '@/hooks/useUserStatus';
 export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const { isActive, loading: statusLoading } = useUserStatus();
 
   useEffect(() => {
@@ -39,6 +40,9 @@ export default function Home() {
 
   const handleLogin = (userData: any) => {
     setUser(userData);
+    setJustLoggedIn(true);
+    // Clear the flag after a longer delay to avoid race condition
+    setTimeout(() => setJustLoggedIn(false), 5000);
   };
 
   const handleLogout = () => {
@@ -48,6 +52,7 @@ export default function Home() {
     localStorage.removeItem('lastVisitedPage');
     localStorage.removeItem('currentPage');
     setUser(null);
+    setJustLoggedIn(false);
   };
 
   if (loading) {
@@ -56,6 +61,11 @@ export default function Home() {
 
   if (!user) {
     return <LoginForm onLogin={handleLogin} />;
+  }
+
+  // If user just logged in, skip status check for a moment to avoid race condition
+  if (justLoggedIn) {
+    return <UserManagement user={user} onLogout={handleLogout} />;
   }
 
   // Only check status if we have a user and status loading is complete
