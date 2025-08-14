@@ -2,28 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import LeadsTable from '@/components/leads/LeadsTable';
+import dynamic from 'next/dynamic';
 import NestedSidebar from '@/components/NestedSidebar';
 import GlobalLoader from '@/components/GlobalLoader';
 import InactiveUserNotification from '@/components/InactiveUserNotification';
 import { useUserStatus } from '@/hooks/useUserStatus';
 
+const LeadsTable = dynamic(() => import('@/components/leads/LeadsTable'), {
+  ssr: false,
+  loading: () => <GlobalLoader />
+});
+
 export default function LeadsPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('leads');
   const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const { isActive, loading } = useUserStatus();
   
   useEffect(() => {
-    localStorage.setItem('currentPage', 'leads');
-    localStorage.setItem('lastVisitedPage', '/leads');
-    
-    // Get user from localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentPage', 'leads');
+      localStorage.setItem('lastVisitedPage', '/leads');
+      
+      // Get user from localStorage
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
     }
   }, []);
+  
+  if (!mounted) {
+    return <GlobalLoader />;
+  }
   
   const handleLogout = () => {
     localStorage.removeItem('token');
