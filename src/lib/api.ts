@@ -5,6 +5,7 @@ export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api',
   TIMEOUT: 10000,
+  API_KEY: process.env.NEXT_PUBLIC_API_KEY || 'lms-secure-api-key-2024',
 };
 
 // Create axios instance
@@ -13,6 +14,7 @@ const api = axios.create({
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
+    'x-api-key': API_CONFIG.API_KEY,
   },
 });
 
