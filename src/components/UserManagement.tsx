@@ -10,6 +10,7 @@ import StatusesTable from './admin/StatusesTable';
 import LeadSourcesTable from './admin/LeadSourcesTable';
 import ProjectHouseTypesTable from './admin/ProjectHouseTypesTable';
 import Dashboard from './Dashboard';
+import LeadsManagement from './LeadsManagement';
 
 interface UserManagementProps {
   user: any;
@@ -37,7 +38,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       languages: 'Languages',
       statuses: 'Statuses',
       'lead-sources': 'Lead Sources',
-      'project-house-types': 'Project & House Types'
+      'project-house-types': 'Project & House Types',
+      'leads': 'Leads Management'
     };
     return titles[activeSection as keyof typeof titles] || 'Users';
   };
@@ -65,6 +67,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         return <LeadSourcesTable />;
       case 'project-house-types':
         return <ProjectHouseTypesTable />;
+      case 'leads':
+        return <LeadsManagement />;
       default:
         return <Dashboard user={user} />;
     }

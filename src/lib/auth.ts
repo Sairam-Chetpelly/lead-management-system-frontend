@@ -77,6 +77,9 @@ export const authAPI = {
     
     // Users
     getUsers: adminServices.users.getAll,
+    
+    // Lead Sources
+    getAllLeadSources: () => api.get('/api/lead-sources'),
   },
   
   // Lead Sources CRUD
@@ -92,6 +95,26 @@ export const authAPI = {
   updateProjectHouseType: leadServices.projectHouseTypes.update,
   deleteProjectHouseType: leadServices.projectHouseTypes.delete,
   exportProjectHouseTypes: leadServices.projectHouseTypes.export,
+  
+  // Leads CRUD
+  getLeads: (params: PaginationParams = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    return api.get(`/api/leads${queryString ? `?${queryString}` : ''}`);
+  },
+  createLead: (leadData: any) => api.post('/api/leads', leadData),
+  updateLead: (id: string, leadData: any) => api.put(`/api/leads/${id}`, leadData),
+  deleteLead: (id: string) => api.delete(`/api/leads/${id}`),
+  createCallLog: (leadId: string) => api.post(`/api/leads/${leadId}/call`),
+  createActivityLog: (leadId: string, type: 'call' | 'manual', comment: string) => 
+    api.post(`/api/leads/${leadId}/activity`, { type, comment }),
+  exportLeads: () => api.get('/api/leads/export'),
+  getLeadFormData: () => api.get('/api/leads/form/data'),
 };
 
 export default api;

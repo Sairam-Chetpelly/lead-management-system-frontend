@@ -13,7 +13,8 @@ import {
   Shield,
   Building,
   ListCollapse,
-  BarChart3
+  BarChart3,
+  UserPlus
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -46,7 +47,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       '/languages': 'languages',
       '/statuses': 'statuses',
       '/lead-sources': 'lead-sources',
-      '/project-house-types': 'project-house-types'
+      '/project-house-types': 'project-house-types',
+      '/leads': 'leads'
     };
     
     const section = pathToSection[currentPath] || activeSection;
@@ -62,7 +64,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       'languages': 'settings',
       'statuses': 'settings',
       'lead-sources': 'settings',
-      'project-house-types': 'settings'
+      'project-house-types': 'settings',
+      'leads': 'leads'
     };
     
     const parentSection = sectionToParent[section];
@@ -80,6 +83,11 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         id: 'dashboard',
         name: 'Dashboard',
         icon: BarChart3
+      },
+      {
+        id: 'leads',
+        name: 'Leads Management',
+        icon: UserPlus
       }
     ];
     
