@@ -23,6 +23,7 @@ interface User {
   centreId?: { _id: string; name: string };
   languageIds?: { _id: string; name: string }[];
   qualification: string;
+  userType?: string;
   profileImage?: string;
 }
 
@@ -60,7 +61,8 @@ export default function UsersTable() {
     statusId: '',
     centreId: '',
     languageIds: [] as string[],
-    qualification: 'high_value'
+    qualification: 'high_value',
+    userType: ''
   });
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -163,7 +165,8 @@ export default function UsersTable() {
         ? mainBranch._id
         : user.centreId?._id || '',
       languageIds: user.languageIds?.map(lang => lang._id) || [],
-      qualification: user.qualification
+      qualification: user.qualification,
+      userType: user.userType || ''
     });
     setShowModal(true);
   };
@@ -179,7 +182,8 @@ export default function UsersTable() {
       statusId: '',
       centreId: '',
       languageIds: [],
-      qualification: 'high_value'
+      qualification: 'high_value',
+      userType: ''
     });
     setEditUser(null);
     setProfileImage(null);
@@ -340,7 +344,7 @@ export default function UsersTable() {
                   <div className="col-span-2 flex items-center space-x-3">
                     {user.profileImage ? (
                       <img 
-                        src={`http://localhost:5000/api/users/profile-image/${user.profileImage}`}
+                        src={`http://localhost:5000/uploads/profiles/${user.profileImage}`}
                         alt={user.name}
                         className="w-10 h-10 rounded-xl object-cover shadow-lg flex-shrink-0"
                       />
@@ -419,7 +423,7 @@ export default function UsersTable() {
                   <div className="flex items-center space-x-3">
                     {user.profileImage ? (
                       <img 
-                        src={`http://localhost:5000/api/users/profile-image/${user.profileImage}`}
+                        src={`http://localhost:5000/uploads/profiles/${user.profileImage}`}
                         alt={user.name}
                         className="w-12 h-12 rounded-xl object-cover shadow-lg"
                       />
@@ -494,7 +498,7 @@ export default function UsersTable() {
                   />
                 ) : editUser?.profileImage ? (
                   <img 
-                    src={`http://localhost:5000/api/users/profile-image/${editUser.profileImage}`}
+                    src={`http://localhost:5000/uploads/profiles/${editUser.profileImage}`}
                     alt="Current profile" 
                     className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                   />
@@ -597,7 +601,8 @@ export default function UsersTable() {
                       roleId: e.target.value,
                       centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
                         ? mainBranch._id
-                        : ''
+                        : '',
+                      userType: selectedRole?.slug === 'presales_agent' ? formData.userType : ''
                     });
                   }}
                   className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
@@ -670,6 +675,24 @@ export default function UsersTable() {
                   <option value="low_value">Low Value</option>
                 </select>
               </div>
+              {(() => {
+                const selectedRole = roles.find(r => r._id === formData.roleId);
+                return selectedRole?.slug === 'presales_agent' ? (
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">User Type *</label>
+                    <select
+                      value={formData.userType}
+                      onChange={(e) => setFormData({...formData, userType: e.target.value})}
+                      className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
+                      required
+                    >
+                      <option value="">Select User Type</option>
+                      <option value="regular">Regular</option>
+                      <option value="cp_presales">CP Presales</option>
+                    </select>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
 
@@ -766,6 +789,20 @@ export default function UsersTable() {
       >
         {viewUser && (
           <div className="space-y-4">
+            {/* Profile Image */}
+            <div className="flex justify-center mb-6">
+              {viewUser.profileImage ? (
+                <img 
+                  src={`http://localhost:5000/uploads/profiles/${viewUser.profileImage}`}
+                  alt={viewUser.name}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg">
+                  {viewUser.name.charAt(0)}
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -806,6 +843,12 @@ export default function UsersTable() {
                 <p className="text-sm text-gray-900">{viewUser.qualification}</p>
               </div>
             </div>
+            {viewUser.roleId.slug === 'presales_agent' && viewUser.userType && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">User Type</label>
+                <p className="text-sm text-gray-900">{viewUser.userType === 'cp_presales' ? 'CP Presales' : 'Regular'}</p>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700">Languages</label>
               <div className="flex flex-wrap gap-2 mt-1">
