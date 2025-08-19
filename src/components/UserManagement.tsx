@@ -1,19 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import NestedSidebar from './NestedSidebar';
 import UsersTable from './admin/UsersTable';
 import RolesTable from './admin/RolesTable';
 import CentresTable from './admin/CentresTable';
 import LanguagesTable from './admin/LanguagesTable';
 import StatusesTable from './admin/StatusesTable';
-import LeadsTable from './leads/LeadsTable';
-import LeadDetailView from './leads/LeadDetailView';
-import LeadSourcesTable from './leads/LeadSourcesTable';
-import CallLogsTable from './leads/CallLogsTable';
-import LeadActivitiesTable from './leads/LeadActivitiesTable';
-import ProjectHouseTypesTable from './leads/ProjectHouseTypesTable';
+import LeadSourcesTable from './admin/LeadSourcesTable';
+import ProjectHouseTypesTable from './admin/ProjectHouseTypesTable';
 import Dashboard from './Dashboard';
 
 interface UserManagementProps {
@@ -28,16 +23,12 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
     }
     return 'dashboard';
   });
-  const [viewingLeadId, setViewingLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('activeSection', activeSection);
   }, [activeSection]);
 
   const getSectionTitle = () => {
-    if (viewingLeadId && activeSection === 'leads') {
-      return 'Lead Details';
-    }
     const titles = {
       dashboard: 'Dashboard',
       users: 'Users',
@@ -45,46 +36,21 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       centres: 'Centres',
       languages: 'Languages',
       statuses: 'Statuses',
-      leads: 'Leads',
       'lead-sources': 'Lead Sources',
-      'lead-activities': 'Lead Activities',
-      'call-logs': 'Call Logs',
       'project-house-types': 'Project & House Types'
     };
     return titles[activeSection as keyof typeof titles] || 'Users';
   };
 
-  const handleViewLead = (leadId: string) => {
-    console.log('UserManagement: Setting viewing lead ID to:', leadId);
-    setViewingLeadId(leadId);
-  };
-
-  const handleBackToLeads = () => {
-    console.log('UserManagement: Going back to leads list');
-    setViewingLeadId(null);
-  };
-
   const handleSectionChange = (section: string) => {
     setActiveSection(section);
     localStorage.setItem('activeSection', section);
-    setViewingLeadId(null); // Reset lead view when changing sections
   };
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <Dashboard 
-          user={user} 
-          onCallLead={(lead) => {
-            setActiveSection('leads');
-            handleViewLead(lead._id);
-          }} 
-          onViewLead={handleViewLead} 
-          onEditLead={(lead) => {
-            setActiveSection('leads');
-            handleViewLead(lead._id);
-          }}
-        />;
+        return <Dashboard user={user} />;
       case 'users':
         return <UsersTable />;
       case 'roles':
@@ -95,18 +61,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         return <LanguagesTable />;
       case 'statuses':
         return <StatusesTable />;
-      case 'leads':
-        console.log('Rendering leads section, viewingLeadId:', viewingLeadId);
-        if (viewingLeadId) {
-          return <LeadDetailView leadId={viewingLeadId} onBack={handleBackToLeads} />;
-        }
-        return <LeadsTable onViewLead={handleViewLead} />;
       case 'lead-sources':
         return <LeadSourcesTable />;
-      case 'lead-activities':
-        return <LeadActivitiesTable />;
-      case 'call-logs':
-        return <CallLogsTable />;
       case 'project-house-types':
         return <ProjectHouseTypesTable />;
       default:
@@ -125,8 +81,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       
       <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-3 sm:p-4 flex-shrink-0 animate-fade-in-up">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-3 sm:p-4 flex-shrink-0 animate-fade-in-up ml-0 lg:ml-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pl-16 lg:pl-0">
             <div className="min-w-0">
               <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent truncate">
                 {getSectionTitle()}

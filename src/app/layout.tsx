@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ToastProvider } from '@/contexts/ToastContext'
 
 export const metadata: Metadata = {
   title: 'Reminiscent',
-  description: 'Lead Management System',
+  description: 'User Management System',
 }
 
 export default function RootLayout({
@@ -17,7 +18,11 @@ export default function RootLayout({
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
         <link rel="icon" href="/ReminiscentWhiteLogo.png" type="image/png" />
       </head>
-      <body className="bg-gray-50">{children}</body>
+      <body className="bg-gray-50">
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </body>
     </html>
   )
 }

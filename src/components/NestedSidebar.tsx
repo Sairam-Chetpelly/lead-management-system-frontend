@@ -8,16 +8,10 @@ import {
   ChevronRight, 
   LogOut, 
   User, 
-  Menu, 
   X,
   Activity,
   Shield,
-  UserCheck,
   Building,
-  Waypoints,
-  Phone,
-  House,
-  HandCoinsIcon,
   ListCollapse,
   BarChart3
 } from 'lucide-react';
@@ -47,15 +41,12 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
     const currentPath = window.location.pathname;
     const pathToSection: { [key: string]: string } = {
       '/users': 'users',
-      '/leads': 'leads',
       '/roles': 'roles',
-      '/lead-sources': 'lead-sources',
-      '/lead-activities': 'lead-activities',
-      '/call-logs': 'call-logs',
-      '/project-house-types': 'project-house-types',
       '/centres': 'centres',
       '/languages': 'languages',
-      '/statuses': 'statuses'
+      '/statuses': 'statuses',
+      '/lead-sources': 'lead-sources',
+      '/project-house-types': 'project-house-types'
     };
     
     const section = pathToSection[currentPath] || activeSection;
@@ -67,9 +58,6 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
     const sectionToParent: { [key: string]: string } = {
       'users': 'user-management',
       'roles': 'user-management',
-      'leads': 'lead-management',
-      'lead-activities': 'lead-management',
-      'call-logs': 'lead-management',
       'centres': 'settings',
       'languages': 'settings',
       'statuses': 'settings',
@@ -95,28 +83,10 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       }
     ];
     
-    // Lead management for agents and above
-    if (['presales_agent', 'sales_agent', 'manager_presales', 'sales_manager', 'hod_presales', 'hod_sales', 'admin'].includes(userRole)) {
-      baseItems.push({
-        id: 'lead-management',
-        name: 'Lead Management',
-        icon: UserCheck,
-        children: [
-          { id: 'leads', name: 'Leads', icon: HandCoinsIcon }
-        ]
-      });
-    }
+
     
     // Admin and management features
     if (['admin', 'hod_presales', 'hod_sales', 'manager_presales', 'sales_manager'].includes(userRole)) {
-      // Add full lead management
-      const leadMgmt = baseItems.find(item => item.id === 'lead-management');
-      if (leadMgmt && leadMgmt.children) {
-        leadMgmt.children.push(
-          { id: 'lead-activities', name: 'Lead Activities', icon: Activity },
-          { id: 'call-logs', name: 'Call Logs', icon: Phone }
-        );
-      }
       
       // User management for admin and HODs
       if (['admin', 'hod_presales', 'hod_sales'].includes(userRole)) {
@@ -141,8 +111,9 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
             { id: 'centres', name: 'Centres', icon: Building },
             { id: 'languages', name: 'Languages', icon: Globe },
             { id: 'statuses', name: 'Statuses', icon: Activity },
-            { id: 'lead-sources', name: 'Sources', icon: Waypoints },
-            { id: 'project-house-types', name: 'Project & House Types', icon: House }
+            { id: 'lead-sources', name: 'Lead Sources', icon: Activity },
+            { id: 'project-house-types', name: 'Project & House Types', icon: Building },
+
           ]
         });
       }
