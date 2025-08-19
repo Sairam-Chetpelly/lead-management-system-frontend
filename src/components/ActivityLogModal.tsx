@@ -40,38 +40,44 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Log Activity">
-      <div className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title="📝 Log Activity" size="md">
+      <div className="space-y-6">
         {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('call')}
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'call'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Phone size={16} />
-            <span>Call Activity</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('manual')}
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'manual'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <FileText size={16} />
-            <span>Manual</span>
-          </button>
+        <div className="grid grid-cols-2 gap-4">
+          <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
+            activeTab === 'call' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+          }`}>
+            <input
+              type="radio"
+              name="activityType"
+              value="call"
+              checked={activeTab === 'call'}
+              onChange={() => setActiveTab('call')}
+              className="mr-3"
+            />
+            <Phone size={16} className="mr-2" />
+            <span className="font-medium">Call Activity</span>
+          </label>
+          <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
+            activeTab === 'manual' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+          }`}>
+            <input
+              type="radio"
+              name="activityType"
+              value="manual"
+              checked={activeTab === 'manual'}
+              onChange={() => setActiveTab('manual')}
+              className="mr-3"
+            />
+            <FileText size={16} className="mr-2" />
+            <span className="font-medium">Manual</span>
+          </label>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Comment
             </label>
             <textarea
@@ -79,23 +85,17 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
               onChange={(e) => setComment(e.target.value)}
               placeholder={`Enter ${activeTab === 'call' ? 'call notes' : 'manual activity'} comment...`}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               required
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-            >
-              Cancel
-            </button>
+          <div className="flex justify-end pt-6 border-t border-gray-200">
             <button
               type="submit"
               disabled={loading || !comment.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+              style={{backgroundColor: '#0f172a'}}
             >
               {loading ? 'Logging...' : `Log ${activeTab === 'call' ? 'Call' : 'Manual'}`}
             </button>
