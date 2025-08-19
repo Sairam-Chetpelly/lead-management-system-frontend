@@ -3,46 +3,17 @@
 import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import AccessControl from './AccessControl';
-import PresalesDashboard from './PresalesDashboard';
-import SalesDashboard from './SalesDashboard';
 
 interface DashboardProps {
   user: any;
-  onCallLead?: (lead: any) => void;
-  onViewLead?: (leadId: string) => void;
-  onEditLead?: (lead: any) => void;
 }
 
-export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: DashboardProps) {
-  
-  // Show presales dashboard for presales agents
-  if (user.role === 'presales_agent') {
-    return (
-      <PresalesDashboard 
-        user={user} 
-        onCallLead={onCallLead || (() => {})} 
-        onViewLead={onViewLead || (() => {})} 
-        onEditLead={onEditLead || (() => {})}
-      />
-    );
-  }
-
-  // Show sales dashboard for sales agents
-  if (user.role === 'sales_agent') {
-    return (
-      <SalesDashboard 
-        user={user} 
-        onCallLead={onCallLead || (() => {})} 
-        onViewLead={onViewLead || (() => {})} 
-        onEditLead={onEditLead || (() => {})}
-      />
-    );
-  }
+export default function Dashboard({ user }: DashboardProps) {
   const [stats, setStats] = useState({
-    totalLeads: 0,
-    activeLeads: 0,
-    callsToday: 0,
-    activitiesThisWeek: 0
+    totalUsers: 0,
+    activeUsers: 0,
+    totalRoles: 0,
+    totalCentres: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -52,21 +23,21 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
 
   const fetchDashboardStats = async () => {
     try {
-      const [leadsRes, callLogsRes, activitiesRes] = await Promise.all([
-        authAPI.leads.getLeads({ limit: 1 }),
-        authAPI.leads.getCallLogs({ limit: 1 }),
-        authAPI.leads.getLeadActivities({ limit: 1 })
+      const [usersRes, rolesRes, centresRes] = await Promise.all([
+        authAPI.getUsers({ limit: 1 }),
+        authAPI.admin.getAllRoles(),
+        authAPI.admin.getAllCentres()
       ]);
       
       setStats({
-        totalLeads: leadsRes.data.pagination?.total || 0,
-        activeLeads: leadsRes.data.pagination?.total || 0,
-        callsToday: callLogsRes.data.pagination?.total || 0,
-        activitiesThisWeek: activitiesRes.data.pagination?.total || 0
+        totalUsers: usersRes.data.pagination?.total || 0,
+        activeUsers: usersRes.data.pagination?.total || 0,
+        totalRoles: rolesRes.data.length || 0,
+        totalCentres: centresRes.data.length || 0
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
-      setStats({ totalLeads: 0, activeLeads: 0, callsToday: 0, activitiesThisWeek: 0 });
+      setStats({ totalUsers: 0, activeUsers: 0, totalRoles: 0, totalCentres: 0 });
     } finally {
       setLoading(false);
     }
@@ -94,8 +65,8 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
                 <i className="fas fa-users text-blue-600 text-sm sm:text-base"></i>
               </div>
               <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Leads</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalLeads}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Users</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
               </div>
             </div>
           </div>
@@ -105,11 +76,11 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-chart-line text-green-600 text-sm sm:text-base"></i>
+                <i className="fas fa-user-check text-green-600 text-sm sm:text-base"></i>
               </div>
               <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Leads</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeLeads}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Users</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
               </div>
             </div>
           </div>
@@ -119,11 +90,11 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-phone text-yellow-600 text-sm sm:text-base"></i>
+                <i className="fas fa-user-tag text-yellow-600 text-sm sm:text-base"></i>
               </div>
               <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Calls Today</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.callsToday}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Roles</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalRoles}</p>
               </div>
             </div>
           </div>
@@ -133,11 +104,11 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-tasks text-purple-600 text-sm sm:text-base"></i>
+                <i className="fas fa-building text-purple-600 text-sm sm:text-base"></i>
               </div>
               <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Activities</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activitiesThisWeek}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Centres</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalCentres}</p>
               </div>
             </div>
           </div>
@@ -162,21 +133,21 @@ export default function Dashboard({ user, onCallLead, onViewLead, onEditLead }: 
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                <i className="fas fa-chart-bar text-blue-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">Lead Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">View lead performance metrics</p>
+                <i className="fas fa-users text-blue-600 mb-2 text-sm sm:text-base"></i>
+                <h3 className="font-medium text-sm sm:text-base">User Reports</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">View user activity and performance</p>
               </button>
               
               <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                <i className="fas fa-phone-alt text-green-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">Call Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">Analyze call logs and performance</p>
+                <i className="fas fa-chart-bar text-green-600 mb-2 text-sm sm:text-base"></i>
+                <h3 className="font-medium text-sm sm:text-base">System Reports</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">System usage and statistics</p>
               </button>
               
               <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors sm:col-span-2 lg:col-span-1">
-                <i className="fas fa-user-chart text-purple-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">User Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">User activity and performance</p>
+                <i className="fas fa-cog text-purple-600 mb-2 text-sm sm:text-base"></i>
+                <h3 className="font-medium text-sm sm:text-base">Admin Reports</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">Administrative insights and metrics</p>
               </button>
             </div>
           </AccessControl>

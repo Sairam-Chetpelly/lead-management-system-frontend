@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { authAPI } from '@/lib/auth';
 import GlobalLoader from './GlobalLoader';
+import { extractErrorMessage } from '@/lib/validation';
+import { useToast } from '@/components/ToastContainer';
 
 interface LoginFormProps {
   onLogin: (user: any) => void;
@@ -13,12 +15,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+
     
     try {
       const response = await authAPI.login({ email, password });
@@ -28,8 +30,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       localStorage.setItem('user', JSON.stringify(user));
       
       onLogin(user);
+      showToast('Login successful! Welcome back.', 'success');
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Login failed');
+      const errorMessage = extractErrorMessage(error);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -106,9 +110,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </div>
             </div>
 
-            {error && (
-              <div className="text-red-600 text-sm text-center mb-4">{error}</div>
-            )}
+
 
             <button
               type="submit"
