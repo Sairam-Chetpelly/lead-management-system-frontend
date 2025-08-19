@@ -2,14 +2,812 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Trash2, Plus, Phone, Eye, Search, FileSpreadsheet, Filter, UserPen, Upload, PhoneCall } from 'lucide-react';
+import { Pencil, Trash2, Plus, Phone, Eye, Search, FileSpreadsheet, Filter, UserPen, Upload, PhoneCall, ClipboardList } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePagination } from '@/hooks/usePagination';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import ModernLoader from '../ModernLoader';
 import Modal from '../Modal';
 import PaginationFooter from '../PaginationFooter';
-import BulkUploadModal from './BulkUploadModal';
+import ErrorPage from '../ErrorPage';
+
 import { authAPI } from '@/lib/auth';
+
+// Lead Activity Form Component
+interface LeadActivityFormProps {
+  lead: Lead;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function LeadActivityForm({ lead, onSuccess, onCancel }: LeadActivityFormProps) {
+  const [formData, setFormData] = useState({
+    leadId: lead._id,
+    name: lead.name,
+    email: lead.email,
+    contactNumber: lead.contactNumber,
+    presalesUserId: '',
+    salesUserId: '',
+    leadStatusId: '',
+    leadSubStatusId: '',
+    languageId: lead.languageId._id,
+    sourceId: lead.sourceId._id,
+    projectTypeId: '',
+    projectValue: '',
+    apartmentName: '',
+    houseTypeId: '',
+    expectedPossessionDate: '',
+    leadValue: '',
+    paymentMethod: '',
+    siteVisit: false,
+    siteVisitDate: '',
+    centerVisit: false,
+    centerVisitDate: '',
+    virtualMeeting: false,
+    virtualMeetingDate: '',
+    isCompleted: false,
+    isCompletedDate: '',
+    notes: '',
+    centerId: lead.centerId?._id || '',
+    leadSubStatusId: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<any[]>([]);
+  const [languages, setLanguages] = useState<any[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
+  const [projectTypes, setProjectTypes] = useState<any[]>([]);
+  const [centers, setCenters] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchDropdownData();
+  }, []);
+
+  const fetchDropdownData = async () => {
+    try {
+      const [usersRes, statusesRes, languagesRes, sourcesRes, typesRes, centersRes] = await Promise.all([
+        authAPI.admin.getUsers(),
+        authAPI.admin.getStatuses(),
+        authAPI.admin.getLanguages(),
+        authAPI.leads.getLeadSources(),
+        authAPI.leads.getProjectHouseTypes(),
+        authAPI.admin.getAllCentres()
+      ]);
+      
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : usersRes.data.data || []);
+      setStatuses(Array.isArray(statusesRes.data) ? statusesRes.data : statusesRes.data.data || []);
+      setLanguages(Array.isArray(languagesRes.data) ? languagesRes.data : languagesRes.data.data || []);
+      setSources(Array.isArray(sourcesRes.data) ? sourcesRes.data : sourcesRes.data.data || []);
+      setProjectTypes(Array.isArray(typesRes.data) ? typesRes.data : typesRes.data.data || []);
+      setCenters(Array.isArray(centersRes.data) ? centersRes.data : centersRes.data.data || []);
+    } catch (error) {
+      console.error('Error fetching dropdown data:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const payload = {
+        ...formData,
+        updatedPerson: currentUser._id || currentUser.id
+      };
+      
+      await authAPI.leads.createLeadActivity(payload);
+      alert('Lead activity created successfully!');
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating lead activity:', error);
+      alert('Error creating lead activity');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-h-[75vh] overflow-y-auto scrollbar-hide">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Basic Information */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+            Basic Information
+          </h3>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Email *</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Contact *</label>
+              <input
+                type="text"
+                value={formData.contactNumber}
+                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Project Value</label>
+              <input
+                type="text"
+                value={formData.projectValue}
+                onChange={(e) => setFormData({ ...formData, projectValue: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              />
+            </div>
+          </div>
+        </div>
+        {/* Assignment & Status */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
+            Assignment & Status
+          </h3>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Presales User</label>
+              <select
+                value={formData.presalesUserId}
+                onChange={(e) => setFormData({ ...formData, presalesUserId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Presales User</option>
+                {users.filter(u => u.roleId?.slug === 'presales_agent').map(user => (
+                  <option key={user._id} value={user._id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Sales User</label>
+              <select
+                value={formData.salesUserId}
+                onChange={(e) => setFormData({ ...formData, salesUserId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Sales User</option>
+                {users.filter(u => u.roleId?.slug === 'sales_agent').map(user => (
+                  <option key={user._id} value={user._id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Lead Status</label>
+              <select
+                value={formData.leadStatusId}
+                onChange={(e) => setFormData({ ...formData, leadStatusId: e.target.value, leadSubStatusId: '' })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Lead Status</option>
+                {statuses.filter(s => s.type === 'leadStatus').map(status => (
+                  <option key={status._id} value={status._id}>{status.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Language</label>
+              <select
+                value={formData.languageId}
+                onChange={(e) => setFormData({ ...formData, languageId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Language</option>
+                {languages.map(language => (
+                  <option key={language._id} value={language._id}>{language.name}</option>
+                ))}
+              </select>
+            </div>
+            {(() => {
+              const selectedStatus = statuses.find(s => s._id === formData.leadStatusId);
+              return selectedStatus?.name === 'Qualified' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Substatus *</label>
+                  <select
+                    value={formData.leadSubStatusId}
+                    onChange={(e) => setFormData({ ...formData, leadSubStatusId: e.target.value })}
+                    className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                    required
+                  >
+                    <option value="">Select Substatus</option>
+                    {statuses.filter(s => s.type === 'leadSubStatus').map(substatus => (
+                      <option key={substatus._id} value={substatus._id}>{substatus.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null;
+            })()
+            }
+          </div>
+        </div>
+
+        {/* Project Details */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></div>
+            Project Details
+          </h3>
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Project Type</label>
+              <select
+                value={formData.projectTypeId}
+                onChange={(e) => setFormData({ ...formData, projectTypeId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Project Type</option>
+                {projectTypes.filter(t => t.type === 'project').map(type => (
+                  <option key={type._id} value={type._id}>{type.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">House Type</label>
+              <select
+                value={formData.houseTypeId}
+                onChange={(e) => setFormData({ ...formData, houseTypeId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select House Type</option>
+                {projectTypes.filter(t => t.type === 'house').map(type => (
+                  <option key={type._id} value={type._id}>{type.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Apartment Name</label>
+              <input
+                type="text"
+                value={formData.apartmentName}
+                onChange={(e) => setFormData({ ...formData, apartmentName: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Possession Date</label>
+              <input
+                type="date"
+                value={formData.expectedPossessionDate}
+                onChange={(e) => setFormData({ ...formData, expectedPossessionDate: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Financial & Center */}
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-4 rounded-lg border border-orange-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2"></div>
+            Financial & Center
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Lead Value</label>
+              <select
+                value={formData.leadValue}
+                onChange={(e) => setFormData({ ...formData, leadValue: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Value</option>
+                <option value="high value">High</option>
+                <option value="medium value">Medium</option>
+                <option value="low value">Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Payment Method</label>
+              <select
+                value={formData.paymentMethod}
+                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Payment</option>
+                <option value="cod">COD</option>
+                <option value="upi">UPI</option>
+                <option value="debit card">Debit Card</option>
+                <option value="credit card">Credit Card</option>
+                <option value="emi">EMI</option>
+                <option value="cheque">Cheque</option>
+                <option value="loan">Loan</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Center</label>
+              <select
+                value={formData.centerId}
+                onChange={(e) => setFormData({ ...formData, centerId: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+              >
+                <option value="">Select Center</option>
+                {centers.map(center => (
+                  <option key={center._id} value={center._id}>{center.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+        {/* Activity Tracking */}
+        <div className="bg-gradient-to-r from-red-50 to-rose-50 p-4 rounded-lg border border-red-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-2"></div>
+            Activity Tracking
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+              <label className="flex items-center mb-2 text-xs font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.siteVisit}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const currentDateTime = checked ? new Date().toISOString().slice(0, 16) : '';
+                    setFormData({ ...formData, siteVisit: checked, siteVisitDate: currentDateTime });
+                  }}
+                  className="mr-2 w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-400"
+                />
+                Site Visit
+              </label>
+              {formData.siteVisit && (
+                <input
+                  type="datetime-local"
+                  value={formData.siteVisitDate}
+                  onChange={(e) => setFormData({ ...formData, siteVisitDate: e.target.value })}
+                  className="w-full p-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                />
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+              <label className="flex items-center mb-2 text-xs font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.centerVisit}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const currentDateTime = checked ? new Date().toISOString().slice(0, 16) : '';
+                    setFormData({ ...formData, centerVisit: checked, centerVisitDate: currentDateTime });
+                  }}
+                  className="mr-2 w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-400"
+                />
+                Center Visit
+              </label>
+              {formData.centerVisit && (
+                <input
+                  type="datetime-local"
+                  value={formData.centerVisitDate}
+                  onChange={(e) => setFormData({ ...formData, centerVisitDate: e.target.value })}
+                  className="w-full p-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                />
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+              <label className="flex items-center mb-2 text-xs font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.virtualMeeting}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const currentDateTime = checked ? new Date().toISOString().slice(0, 16) : '';
+                    setFormData({ ...formData, virtualMeeting: checked, virtualMeetingDate: currentDateTime });
+                  }}
+                  className="mr-2 w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-400"
+                />
+                Virtual Meeting
+              </label>
+              {formData.virtualMeeting && (
+                <input
+                  type="datetime-local"
+                  value={formData.virtualMeetingDate}
+                  onChange={(e) => setFormData({ ...formData, virtualMeetingDate: e.target.value })}
+                  className="w-full p-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Completion & Notes */}
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border border-indigo-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-2"></div>
+            Completion & Notes
+          </h3>
+          <div className="space-y-3">
+            <div className="bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+              <label className="flex items-center mb-2 text-xs font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.isCompleted}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const currentDateTime = checked ? new Date().toISOString().slice(0, 16) : '';
+                    setFormData({ ...formData, isCompleted: checked, isCompletedDate: currentDateTime });
+                  }}
+                  className="mr-2 w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-400"
+                />
+                Mark as Completed
+              </label>
+              {formData.isCompleted && (
+                <input
+                  type="datetime-local"
+                  value={formData.isCompletedDate}
+                  onChange={(e) => setFormData({ ...formData, isCompletedDate: e.target.value })}
+                  className="w-full p-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                />
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full p-2.5 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                rows={3}
+                placeholder="Add notes or comments..."
+              />
+            </div>
+          </div>
+        </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.01] disabled:transform-none text-sm"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating...
+              </span>
+            ) : 'Create Activity'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.01] text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// Bulk Upload Component
+interface BulkUploadComponentProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+interface UploadResult {
+  success?: boolean;
+  message: string;
+  summary?: {
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+  };
+  hasErrors?: boolean;
+  errorFile?: string;
+  requiredColumns?: string[];
+  foundColumns?: string[];
+}
+
+function BulkUploadComponent({ onSuccess, onCancel }: BulkUploadComponentProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const downloadErrorFile = (errorFileData: string) => {
+    const binaryString = atob(errorFileData);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    const blob = new Blob([bytes], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'invalid_rows.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    
+    setUploading(true);
+    try {
+      const response = await authAPI.leads.bulkUploadLeads(file);
+      const result = response.data;
+      
+      console.log('Full upload response:', response);
+      console.log('Upload result data:', result);
+      console.log('Summary data:', result.summary);
+      
+      setUploadResult(result);
+      setShowResultModal(true);
+      
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      const errorMsg = error.response?.data?.message || error.message;
+      
+      setUploadResult({
+        success: false,
+        message: errorMsg,
+        requiredColumns: error.response?.data?.requiredColumns,
+        foundColumns: error.response?.data?.foundColumns,
+        summary: {
+          totalRows: 0,
+          validRows: 0,
+          invalidRows: 0
+        }
+      });
+      setShowResultModal(true);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    try {
+      const response = await authAPI.leads.downloadLeadsTemplate();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'leads_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Template download failed:', error);
+      alert('Failed to download template');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Bulk Upload Leads</h3>
+        <p className="text-sm text-gray-600">Upload multiple leads using an Excel file</p>
+      </div>
+
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-medium text-blue-900">Download Template</h4>
+            <p className="text-sm text-blue-700">Get the Excel template with sample data</p>
+          </div>
+          <button
+            onClick={downloadTemplate}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Download
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+        <div className="space-y-2">
+          <p className="text-lg font-medium text-gray-900">
+            {file ? file.name : 'Drop your Excel file here'}
+          </p>
+          <p className="text-sm text-gray-600">or</p>
+          <label className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+            Choose File
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">Supports .xlsx and .xls files</p>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={handleUpload}
+          disabled={!file || uploading}
+          className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {uploading ? 'Uploading...' : 'Upload Leads'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {/* Upload Result Modal */}
+      {showResultModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              {uploadResult?.success === false ? (
+                <>
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Failed</h3>
+                  <p className="text-gray-600 mb-4">{uploadResult.message}</p>
+                  {uploadResult.requiredColumns && (
+                    <div className="bg-red-50 p-3 rounded-lg mb-4 text-left">
+                      <p className="text-sm font-medium text-red-800 mb-2">Required columns:</p>
+                      <p className="text-sm text-red-700">{uploadResult.requiredColumns.join(', ')}</p>
+                      <p className="text-sm font-medium text-red-800 mb-1 mt-2">Found columns:</p>
+                      <p className="text-sm text-red-700">{uploadResult.foundColumns?.join(', ')}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Completed!</h3>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{uploadResult?.summary?.validRows || 0}</div>
+                        <div className="text-gray-600">Rows Inserted</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{uploadResult?.summary?.invalidRows || 0}</div>
+                        <div className="text-gray-600">Rows Failed</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-gray-800">{uploadResult?.summary?.totalRows || 0}</div>
+                        <div className="text-gray-600 text-sm">Total Rows Processed</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {uploadResult?.hasErrors && uploadResult?.errorFile && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center mb-2">
+                        <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <span className="font-medium text-yellow-800">Action Required</span>
+                      </div>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        {uploadResult.summary?.invalidRows || 0} rows failed validation. Download the error file to see details and fix the issues.
+                      </p>
+                      <button
+                        onClick={() => {
+                          console.log('Downloading error file...');
+                          downloadErrorFile(uploadResult.errorFile);
+                        }}
+                        className="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                      >
+                        Download Error File
+                      </button>
+                      <p className="text-xs text-yellow-600 mt-2">
+                        Fix the errors in the downloaded file and re-upload the corrected rows.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {uploadResult?.summary?.invalidRows === 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium text-green-800">Perfect! All rows were successfully processed.</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowResultModal(false);
+                    setUploadResult(null);
+                    if (uploadResult?.success !== false) {
+                      onSuccess();
+                    }
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  {uploadResult?.success === false ? 'Try Again' : 'Continue'}
+                </button>
+                {uploadResult?.success !== false && (
+                  <button
+                    onClick={() => {
+                      setShowResultModal(false);
+                      setUploadResult(null);
+                      setFile(null);
+                    }}
+                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                  >
+                    Upload More
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Lead {
   _id: string;
@@ -50,6 +848,7 @@ interface LeadsTableProps {
 
 export default function LeadsTable({ onViewLead }: LeadsTableProps) {
   const router = useRouter();
+  const { error, handleError, retry } = useErrorHandler();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -70,27 +869,7 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
   const [users, setUsers] = useState<any[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
   const [centers, setCenters] = useState<any[]>([]);
-  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [currentLead, setCurrentLead] = useState<Lead | null>(null);
-  const [callTimer, setCallTimer] = useState(0);
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [callNotes, setCallNotes] = useState('');
-  const [callStatus, setCallStatus] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [callForm, setCallForm] = useState({
-    cifOption: '',
-    customCifDateTime: '',
-    languageId: '',
-    originalLanguageId: '',
-    updatedLanguageId: '',
-    assignedUserId: '',
-    leadValue: '',
-    centerId: '',
-    apartmentTypeId: '',
-    followUpAction: '',
-    callOutcome: ''
-  });
-  const [apartmentTypes, setApartmentTypes] = useState<any[]>([]);
   const [formData, setFormData] = useState<LeadFormData>({
     name: '',
     contactNumber: '',
@@ -100,8 +879,10 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     languageId: ''
   });
   const [manualSourceId, setManualSourceId] = useState<string>('');
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [isManualCallLogOpen, setIsManualCallLogOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState('manual'); // 'manual' or 'bulk'
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [selectedLeadForActivity, setSelectedLeadForActivity] = useState<Lead | null>(null);
+
 
   useEffect(() => {
     // Prevent redirect on refresh
@@ -161,164 +942,34 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     }
   }, []);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isCallActive) {
-      interval = setInterval(() => {
-        setCallTimer(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isCallActive]);
 
-  const openCallModal = (lead: Lead) => {
-    setCurrentLead(lead);
-    setIsCallModalOpen(true);
-    setCallTimer(0);
-    setCallNotes('');
-    setCallStatus('');
-    setCallForm({
-      cifOption: '',
-      customCifDateTime: '',
-      languageId: lead.languageId?._id || '',
-      originalLanguageId: lead.languageId?._id || '',
-      updatedLanguageId: '',
-      assignedUserId: '',
-      leadValue: '',
-      centerId: lead.centerId?._id || '',
-      apartmentTypeId: '',
-      followUpAction: '',
-      callOutcome: ''
-    });
-  };
 
-  const openManualCallModal = (lead: Lead) => {
-    setCurrentLead(lead);
-    setIsManualCallLogOpen(true);
-    setCallTimer(0);
-    setCallNotes('');
-    setCallStatus('');
-    setCallForm({
-      cifOption: '',
-      customCifDateTime: '',
-      languageId: lead.languageId?._id || '',
-      originalLanguageId: lead.languageId?._id || '',
-      updatedLanguageId: '',
-      assignedUserId: '',
-      leadValue: '',
-      centerId: lead.centerId?._id || '',
-      apartmentTypeId: '',
-      followUpAction: '',
-      callOutcome: ''
-    });
-  };
-
-  const startCall = () => {
-    setIsCallActive(true);
-    setCallTimer(0);
-  };
-
-  const endCall = async () => {
-    console.log('endCall function started');
-    console.log('callStatus:', callStatus);
-    console.log('currentLead:', currentLead);
-    console.log('currentUser:', currentUser);
-    
-    setIsCallActive(false);
-    
-    // Validation
-    if (!callStatus) {
-      alert('Please select call status');
-      return;
-    }
-    
-    if (callStatus === 'connected' && callForm.followUpAction === 'qualified') {
-      if (!callForm.leadValue || !callForm.centerId) {
-        alert('Lead Value and Center are required for qualified leads');
+  const handleCallClick = async (lead: Lead) => {
+    try {
+      const userId = currentUser?._id || currentUser?.id;
+      if (!userId) {
+        alert('Please login again');
         return;
       }
-    }
-    
-    if (callStatus && currentLead && currentUser) {
-      try {
-        console.log('currentUser object:', currentUser);
-        console.log('currentUser._id:', currentUser._id);
-        console.log('currentUser.id:', currentUser.id);
-        
-        const userId = currentUser._id || currentUser.id;
-        if (!userId) {
-          throw new Error('User ID not found. Please login again.');
-        }
-        
-        const nextCallDateTime = getCifDateTime();
-        
-        const callLogData = {
-          userId: userId,
-          leadId: currentLead._id,
-          callDuration: callTimer,
-          callStatus,
-          callOutcome: callForm.callOutcome || null,
-          notes: callNotes || '',
-          nextCallDateTime,
-          languageId: callForm.languageId || null,
-          originalLanguageId: callForm.originalLanguageId || null,
-          updatedLanguageId: callForm.updatedLanguageId || null,
-          assignedUserId: callForm.assignedUserId || null,
-          leadValue: callForm.leadValue || null,
-          centerId: callForm.centerId || null,
-          apartmentTypeId: callForm.apartmentTypeId || null
-        };
-
-        console.log('Sending call log data:', callLogData);
-        console.log('authAPI.leads.createCallLog exists:', typeof authAPI.leads.createCallLog);
-        const response = await authAPI.leads.createCallLog(callLogData);
-        console.log('Call log response:', response);
-        
-        alert('Call log saved successfully!');
-        setIsCallModalOpen(false);
-        setCallTimer(0);
-        setCallNotes('');
-        setCallStatus('');
-        fetchLeads();
-      } catch (error: any) {
-        console.error('Error saving call log:', error);
-        console.error('Error details:', error.response?.data);
-        alert(`Failed to save call log: ${error.response?.data?.message || error.message}`);
-        setIsCallActive(true);
-      }
-    } else {
-      console.log('Missing required data:', { callStatus, currentLead: !!currentLead, currentUser: !!currentUser });
-      alert('Missing required information. Please try again.');
+      
+      const callLogData = {
+        userId,
+        leadId: lead._id,
+        datetime: new Date().toISOString()
+      };
+      
+      await authAPI.leads.createCallLog(callLogData);
+      alert('Call logged successfully!');
+      fetchLeads();
+    } catch (error: any) {
+      console.error('Error logging call:', error);
+      alert('Failed to log call: ' + (error.response?.data?.message || error.message));
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
-  const getCifDateTime = () => {
-    const now = new Date();
-    if (callForm.cifOption === '30mins') {
-      return new Date(now.getTime() + 30 * 60000).toISOString();
-    } else if (callForm.cifOption === '60mins') {
-      return new Date(now.getTime() + 60 * 60000).toISOString();
-    } else if (callForm.cifOption === '2hours') {
-      return new Date(now.getTime() + 2 * 60 * 60000).toISOString();
-    } else if (callForm.cifOption === 'tomorrow') {
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString();
-    } else if (callForm.cifOption === 'custom' && callForm.customCifDateTime) {
-      return new Date(callForm.customCifDateTime).toISOString();
-    }
-    return null;
-  };
 
-  const handleCallFormChange = (field: string, value: string) => {
-    setCallForm(prev => ({ ...prev, [field]: value }));
-  };
+
 
   const fetchDropdownData = async () => {
     try {
@@ -328,7 +979,7 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
         authAPI.admin.getUsers(),
         authAPI.admin.getLanguages(),
         authAPI.admin.getAllCentres(),
-        authAPI.leads.getProjectHouseTypes()
+        Promise.resolve({ data: [] })
       ]);
       
       const sourcesData = Array.isArray(sourcesRes.data) ? sourcesRes.data : sourcesRes.data.data || [];
@@ -336,7 +987,6 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
       let usersData = Array.isArray(usersRes.data) ? usersRes.data : usersRes.data.data || [];
       const languagesData = Array.isArray(languagesRes.data) ? languagesRes.data : languagesRes.data.data || [];
       const centersData = Array.isArray(centersRes.data) ? centersRes.data : centersRes.data.data || [];
-      const apartmentTypesData = Array.isArray(apartmentTypesRes.data) ? apartmentTypesRes.data : apartmentTypesRes.data.data || [];
       
       // Populate role data for users if not already populated
       if (usersData.length > 0 && !usersData[0].roleId?.slug) {
@@ -351,7 +1001,6 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
       setUsers(usersData);
       setLanguages(languagesData);
       setCenters(centersData);
-      setApartmentTypes(apartmentTypesData.filter((t: any) => t.type === 'house'));
       
       // Set Manual as default source
       const manualSource = sourcesData.find((s: any) => s.name === 'Manual');
@@ -372,16 +1021,23 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setLeads(Array.isArray(response.data) ? response.data : response.data.data || []);
-      if (response.data.pagination) {
-        updatePagination(response.data.pagination);
+      
+      if (response.data.data) {
+        setLeads(response.data.data);
+        if (response.data.pagination) {
+          updatePagination(response.data.pagination);
+        }
+      } else {
+        setLeads(Array.isArray(response.data) ? response.data : []);
       }
-    } catch (error) {
-      console.error('Error fetching leads:', error);
+    } catch (err) {
+      console.error('Error fetching leads:', err);
+      handleError(err);
+      setLeads([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedFilters]);
+  }, [pagination.current, pagination.limit, debouncedFilters, updatePagination, handleError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -472,6 +1128,11 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     } else {
       router.push(`/leads/${leadId}`);
     }
+  };
+
+  const openActivityModal = (lead: Lead) => {
+    setSelectedLeadForActivity(lead);
+    setIsActivityModalOpen(true);
   };
 
   const getLeadStatusName = () => {
@@ -599,6 +1260,10 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
     handlePageChange(1);
   };
 
+  if (error.hasError) {
+    return <ErrorPage statusCode={error.statusCode || 500} message={error.message} onRetry={() => { retry(); fetchLeads(); }} />;
+  }
+
   if (loading && leads.length === 0) return <div className="flex items-center justify-center h-64"><ModernLoader size="lg" variant="primary" /></div>;
 
   return (
@@ -656,13 +1321,6 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
-          <button 
-            onClick={() => setIsBulkUploadOpen(true)}
-            className="flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 bg-white/80 backdrop-blur-sm border border-blue-200 rounded-xl sm:rounded-2xl hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl group text-sm sm:text-base"
-          >
-            <Upload size={18} className="text-blue-600 group-hover:scale-110 transition-transform" />
-            <span className="text-blue-700 font-semibold">Bulk Upload</span>
-          </button>
           <button 
             onClick={async () => {
               try {
@@ -737,18 +1395,19 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                     </span>
                   </div>
                   <div className="col-span-2 flex items-center space-x-1">
-                    <button onClick={() => openCallModal(lead)} className="p-1.5 xl:p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Call">
-                      <Phone size={14} />
-                    </button>
                     <button onClick={() => openViewPage(lead._id)} className="p-1.5 xl:p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all" title="View">
                       <Eye size={14} />
                     </button>
                     <button onClick={() => openModal(lead)} className="p-1.5 xl:p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Edit">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => openManualCallModal(lead)} className="p-1.5 xl:p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Manual Call Log">
-                      <UserPen size={14} />
+                    <button onClick={() => openActivityModal(lead)} className="p-1.5 xl:p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Add Activity">
+                      <ClipboardList size={14} />
                     </button>
+                    <button onClick={() => handleCallClick(lead)} className="p-1.5 xl:p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Call">
+                      <Phone size={14} />
+                    </button>
+
                   </div>
                 </div>
               ))}
@@ -781,17 +1440,17 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
                   <div className="truncate"><span className="font-medium">Source:</span> {lead.sourceId?.name || '--'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-3 sm:mt-4">
-                  <button onClick={() => openCallModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-green-100 text-green-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
+                  <button onClick={() => handleCallClick(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-green-100 text-green-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
                     <Phone size={12} className="mr-1" /> Call
-                  </button>
-                  <button onClick={() => openManualCallModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-orange-100 text-orange-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
-                    <PhoneCall size={12} className="mr-1" /> Manual
                   </button>
                   <button onClick={() => openViewPage(lead._id)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-blue-100 text-blue-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
                     <Eye size={12} className="mr-1" /> View
                   </button>
                   <button onClick={() => openModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-purple-100 text-purple-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
                     <Pencil size={12} className="mr-1" /> Edit
+                  </button>
+                  <button onClick={() => openActivityModal(lead)} className="flex items-center justify-center px-2 sm:px-3 py-2 bg-orange-100 text-orange-700 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm">
+                    <ClipboardList size={12} className="mr-1" /> Activity
                   </button>
                 </div>
               </div>
@@ -809,549 +1468,183 @@ export default function LeadsTable({ onViewLead }: LeadsTableProps) {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setActiveModalTab('manual');
+        }}
         title={editingLead ? 'Edit Lead' : 'Add Lead'}
       >
         <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <input
-                type="text"
-                placeholder="Full Name *"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email Address *"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Contact Number *"
-                value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <select
-                value={formData.languageId}
-                onChange={(e) => setFormData({ ...formData, languageId: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">Select Language *</option>
-                {languages.map(language => (
-                  <option key={language._id} value={language._id}>{language.name}</option>
-                ))}
-              </select>
-              <select
-                value={formData.centerId || ''}
-                onChange={(e) => setFormData({ ...formData, centerId: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required={getLeadStatusName() === 'Qualified'}
-              >
-                <option value="">{getLeadStatusName() === 'Qualified' ? 'Select Center *' : 'Select Center (Optional)'}</option>
-                {centers.map(center => (
-                  <option key={center._id} value={center._id}>{center.name}</option>
-                ))}
-              </select>
-              <select
-                value={formData.sourceId}
-                onChange={(e) => setFormData({ ...formData, sourceId: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                {sources.map(source => (
-                  <option key={source._id} value={source._id}>{source.name}</option>
-                ))}
-              </select>
-              <select
-                value={formData.leadStatusId}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  leadStatusId: e.target.value,
-                  assignmentType: '',
-                  presalesUserId: '',
-                  leadSubstatus: '',
-                  cifDateTime: '',
-                  salesUserId: ''
-                })}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">Select Status *</option>
-                {statuses.filter(s => s.type === 'leadStatus' && (s.name === 'Lead' || s.name === 'Qualified')).map(status => (
-                  <option key={status._id} value={status._id}>{status.name}</option>
-                ))}
-              </select>
-              
-              {renderConditionalFields()}
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+          {!editingLead && (
+            <div className="flex border-b border-gray-200 mb-6">
               <button
-                type="submit"
-                className="flex-1 text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-all"
-                style={{backgroundColor: '#0f172a'}}
+                onClick={() => setActiveModalTab('manual')}
+                className={`flex-1 py-3 px-4 text-center font-medium transition-all ${
+                  activeModalTab === 'manual'
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
               >
-                {editingLead ? 'Update Lead' : 'Create Lead'}
+                Manual Entry
               </button>
               <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+                onClick={() => setActiveModalTab('bulk')}
+                className={`flex-1 py-3 px-4 text-center font-medium transition-all ${
+                  activeModalTab === 'bulk'
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
               >
-                Cancel
+                Bulk Upload
               </button>
             </div>
-          </form>
-        </div>
-      </Modal>
-
-      {/* Call Activity Modal */}
-      <Modal
-        isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
-        title={`Call Activity - ${currentLead?.name}`}
-      >
-        <div className="space-y-4">
-          <div className="text-center bg-gray-50 rounded-lg p-4">
-            <div className="text-sm text-gray-600 mb-2">Caller: {currentUser?.name}</div>
-            <div className="text-xl font-bold text-blue-600 mb-2">{currentLead?.contactNumber}</div>
-            <div className="text-3xl font-mono font-bold text-gray-800 my-3">{formatTime(callTimer)}</div>
-            {!isCallActive ? (
-              <button onClick={startCall} className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium">
-                <Phone size={16} className="inline mr-2" />Start Call
-              </button>
-            ) : (
-              <div className="text-green-600 font-medium animate-pulse">📞 Call in Progress...</div>
-            )}
-          </div>
-
-          {isCallActive && (
-            <div className="space-y-4">
-              {/* Call Status */}
-              <div className="bg-white p-3 rounded-lg border">
-                <label className="block text-sm font-medium mb-2 text-gray-700">Call Status *</label>
+          )}
+          
+          {(editingLead || activeModalTab === 'manual') && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  type="text"
+                  placeholder="Full Name *"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email Address *"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Contact Number *"
+                  value={formData.contactNumber}
+                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
                 <select
-                  value={callStatus}
-                  onChange={(e) => setCallStatus(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={formData.languageId}
+                  onChange={(e) => setFormData({ ...formData, languageId: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Select Call Status</option>
-                  <option value="connected">Connected</option>
-                  <option value="not_connected">Not Connected</option>
+                  <option value="">Select Language *</option>
+                  {languages.map(language => (
+                    <option key={language._id} value={language._id}>{language.name}</option>
+                  ))}
                 </select>
+                <select
+                  value={formData.centerId || ''}
+                  onChange={(e) => setFormData({ ...formData, centerId: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required={getLeadStatusName() === 'Qualified'}
+                >
+                  <option value="">{getLeadStatusName() === 'Qualified' ? 'Select Center *' : 'Select Center (Optional)'}</option>
+                  {centers.map(center => (
+                    <option key={center._id} value={center._id}>{center.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={formData.sourceId}
+                  onChange={(e) => setFormData({ ...formData, sourceId: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  {sources.map(source => (
+                    <option key={source._id} value={source._id}>{source.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={formData.leadStatusId}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    leadStatusId: e.target.value,
+                    assignmentType: '',
+                    presalesUserId: '',
+                    leadSubstatus: '',
+                    cifDateTime: '',
+                    salesUserId: ''
+                  })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select Status *</option>
+                  {statuses.filter(s => s.type === 'leadStatus' && (s.name === 'Lead' || s.name === 'Qualified')).map(status => (
+                    <option key={status._id} value={status._id}>{status.name}</option>
+                  ))}
+                </select>
+                
+                {renderConditionalFields()}
               </div>
 
-              {/* Duration */}
-              <div className="bg-white p-3 rounded-lg border">
-                <label className="block text-sm font-medium mb-2 text-gray-700">Call Duration (seconds)</label>
-                <input
-                  type="number"
-                  value={callTimer}
-                  onChange={(e) => setCallTimer(parseInt(e.target.value) || 0)}
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Duration in seconds"
-                />
-              </div>
-
-              {/* Not Connected Options */}
-              {callStatus === 'not_connected' && (
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-red-800 mb-3">Not Connected Reason</h4>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Reason *</label>
-                    <select
-                      value={callForm.callOutcome}
-                      onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
-                      className="w-full p-2 border rounded-lg mb-2"
-                      required
-                    >
-                      <option value="">Select Reason</option>
-                      <option value="not_reachable">Not Reachable</option>
-                      <option value="incorrect_number">Incorrect Mobile No.</option>
-                      <option value="not_picking">Not Picking</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Schedule Next Call</label>
-                    <select
-                      value={callForm.cifOption}
-                      onChange={(e) => handleCallFormChange('cifOption', e.target.value)}
-                      className="w-full p-2 border rounded-lg mb-2"
-                    >
-                      <option value="">Select Next Call Time</option>
-                      <option value="30mins">Call in 30 Minutes</option>
-                      <option value="60mins">Call in 60 Minutes</option>
-                      <option value="custom">Custom Date & Time</option>
-                    </select>
-                    {callForm.cifOption === 'custom' && (
-                      <input
-                        type="datetime-local"
-                        value={callForm.customCifDateTime}
-                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
-                        className="w-full p-2 border rounded-lg"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Connected Options */}
-              {callStatus === 'connected' && (
-                <div className="bg-green-50 p-4 rounded-lg space-y-4">
-                  <h4 className="font-medium text-green-800 mb-3">Connected - What Happened?</h4>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Call Outcome *</label>
-                    <select
-                      value={callForm.callOutcome}
-                      onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
-                      className="w-full p-2 border rounded-lg"
-                      required
-                    >
-                      <option value="">Select Outcome</option>
-                      {currentUser?.role === 'presales_agent' ? (
-                        <>
-                          <option value="not_interested">Customer Not Interested → Lead Lost</option>
-                          <option value="language_mismatch">Language Do Not Match</option>
-                          <option value="follow_up">Need Follow Up Call</option>
-                          <option value="qualified">Qualified → Move to Sales</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="not_interested">Customer Not Interested → Lead Lost</option>
-                          <option value="follow_up">Need Follow Up Call</option>
-                          <option value="site_visit">Site Visit Scheduled</option>
-                          <option value="meeting_scheduled">Meeting Scheduled</option>
-                          <option value="won">Deal Won → Customer Purchased</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-
-                  {/* Language Mismatch */}
-                  {callForm.callOutcome === 'language_mismatch' && (
-                    <div className="bg-yellow-100 p-3 rounded space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Update Customer Language *</label>
-                        <select
-                          value={callForm.updatedLanguageId}
-                          onChange={(e) => handleCallFormChange('updatedLanguageId', e.target.value)}
-                          className="w-full p-2 border rounded-lg"
-                          required
-                        >
-                          <option value="">Select Correct Language</option>
-                          {languages.map(lang => (
-                            <option key={lang._id} value={lang._id}>{lang.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Reassign to Presales Agent *</label>
-                        <select
-                          value={callForm.assignedUserId}
-                          onChange={(e) => handleCallFormChange('assignedUserId', e.target.value)}
-                          className="w-full p-2 border rounded-lg"
-                          required
-                        >
-                          <option value="">Select Presales Agent</option>
-                          {users.filter(u => u.roleId?.slug === 'presales_agent').map(user => (
-                            <option key={user._id} value={user._id}>{user.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Follow Up */}
-                  {callForm.callOutcome === 'follow_up' && (
-                    <div className="bg-blue-100 p-3 rounded">
-                      <label className="block text-sm font-medium mb-2">Next Call Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        value={callForm.customCifDateTime}
-                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
-                        className="w-full p-2 border rounded-lg"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Site Visit */}
-                  {callForm.callOutcome === 'site_visit' && (
-                    <div className="bg-purple-100 p-3 rounded">
-                      <label className="block text-sm font-medium mb-2">Site Visit Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        value={callForm.customCifDateTime}
-                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
-                        className="w-full p-2 border rounded-lg"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Meeting Scheduled */}
-                  {callForm.callOutcome === 'meeting_scheduled' && (
-                    <div className="bg-indigo-100 p-3 rounded">
-                      <label className="block text-sm font-medium mb-2">Meeting Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        value={callForm.customCifDateTime}
-                        onChange={(e) => handleCallFormChange('customCifDateTime', e.target.value)}
-                        className="w-full p-2 border rounded-lg"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Deal Won */}
-                  {callForm.callOutcome === 'won' && (
-                    <div className="bg-green-100 p-3 rounded space-y-3">
-                      <h5 className="font-medium text-green-800">🎉 Congratulations! Deal Won</h5>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Purchase Amount</label>
-                        <input
-                          type="number"
-                          placeholder="Enter purchase amount"
-                          className="w-full p-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Payment Method</label>
-                        <select className="w-full p-2 border rounded-lg">
-                          <option value="">Select Payment Method</option>
-                          <option value="cash">Cash</option>
-                          <option value="loan">Home Loan</option>
-                          <option value="emi">EMI</option>
-                          <option value="cheque">Cheque</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Qualification */}
-                  {callForm.callOutcome === 'qualified' && (
-                    <div className="space-y-3 bg-blue-50 p-3 rounded">
-                      <h5 className="font-medium text-blue-800">Qualification Details (All Required)</h5>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Lead Value *</label>
-                          <select
-                            value={callForm.leadValue}
-                            onChange={(e) => handleCallFormChange('leadValue', e.target.value)}
-                            className="w-full p-2 border rounded-lg"
-                            required
-                          >
-                            <option value="">Select Value</option>
-                            <option value="high_value">High Value</option>
-                            <option value="low_value">Low Value</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Selection Center *</label>
-                          <select
-                            value={callForm.centerId}
-                            onChange={(e) => handleCallFormChange('centerId', e.target.value)}
-                            className="w-full p-2 border rounded-lg"
-                            required
-                          >
-                            <option value="">Select Center</option>
-                            {centers.map(center => (
-                              <option key={center._id} value={center._id}>{center.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Language *</label>
-                        <select
-                          value={callForm.languageId}
-                          onChange={(e) => handleCallFormChange('languageId', e.target.value)}
-                          className="w-full p-2 border rounded-lg"
-                          required
-                        >
-                          <option value="">Select Language</option>
-                          {languages.map(lang => (
-                            <option key={lang._id} value={lang._id}>{lang.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Notes */}
-              <div className="bg-white p-3 rounded-lg border">
-                <label className="block text-sm font-medium mb-2 text-gray-700">Call Notes</label>
-                <textarea
-                  value={callNotes}
-                  onChange={(e) => setCallNotes(e.target.value)}
-                  className="w-full p-2 border rounded-lg h-20 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  placeholder="Add your call notes here..."
-                />
-              </div>
-
-              {/* End Call Button */}
-              <div className="pt-3 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  className="flex-1 text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-all"
+                  style={{backgroundColor: '#0f172a'}}
+                >
+                  {editingLead ? 'Update Lead' : 'Create Lead'}
+                </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log('End call button clicked');
-                    endCall();
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setActiveModalTab('manual');
                   }}
-                  disabled={!callStatus}
-                  className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-600 transition-colors"
                 >
-                  End Call & Save
+                  Cancel
                 </button>
               </div>
-            </div>
+            </form>
+          )}
+          
+          {!editingLead && activeModalTab === 'bulk' && (
+            <BulkUploadComponent
+              onSuccess={() => {
+                fetchLeads();
+                setIsModalOpen(false);
+                setActiveModalTab('manual');
+              }}
+              onCancel={() => {
+                setIsModalOpen(false);
+                setActiveModalTab('manual');
+              }}
+            />
           )}
         </div>
       </Modal>
 
-      {/* Manual Call Log Modal */}
+      {/* Lead Activity Modal */}
       <Modal
-        isOpen={isManualCallLogOpen}
-        onClose={() => setIsManualCallLogOpen(false)}
-        title={`Manual Call Log - ${currentLead?.name}`}
-      >
-        <div className="space-y-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="text-sm text-gray-600 mb-2">Caller: {currentUser?.name}</div>
-            <div className="text-xl font-bold text-blue-600">{currentLead?.contactNumber}</div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Call Status *</label>
-              <select
-                value={callStatus}
-                onChange={(e) => setCallStatus(e.target.value)}
-                className="w-full p-2 border rounded-lg"
-                required
-              >
-                <option value="">Select Call Status</option>
-                <option value="connected">Connected</option>
-                <option value="not_connected">Not Connected</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Call Duration (minutes)</label>
-              <input
-                type="number"
-                value={Math.floor(callTimer / 60)}
-                onChange={(e) => setCallTimer(parseInt(e.target.value) * 60 || 0)}
-                className="w-full p-2 border rounded-lg"
-                placeholder="Duration in minutes"
-              />
-            </div>
-
-            {callStatus === 'not_connected' && (
-              <div className="bg-red-50 p-4 rounded-lg">
-                <label className="block text-sm font-medium mb-2">Reason *</label>
-                <select
-                  value={callForm.callOutcome}
-                  onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                >
-                  <option value="">Select Reason</option>
-                  <option value="not_reachable">Not Reachable</option>
-                  <option value="incorrect_number">Incorrect Mobile No.</option>
-                  <option value="not_picking">Not Picking</option>
-                </select>
-              </div>
-            )}
-
-            {callStatus === 'connected' && (
-              <div className="bg-green-50 p-4 rounded-lg">
-                <label className="block text-sm font-medium mb-2">Call Outcome *</label>
-                <select
-                  value={callForm.callOutcome}
-                  onChange={(e) => handleCallFormChange('callOutcome', e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                >
-                  <option value="">Select Outcome</option>
-                  <option value="not_interested">Not Interested</option>
-                  <option value="follow_up">Follow Up Required</option>
-                  <option value="qualified">Qualified</option>
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Call Notes</label>
-              <textarea
-                value={callNotes}
-                onChange={(e) => setCallNotes(e.target.value)}
-                className="w-full p-2 border rounded-lg h-20"
-                placeholder="Add your call notes here..."
-              />
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t">
-              <button
-                onClick={async () => {
-                  if (!callStatus) {
-                    alert('Please select call status');
-                    return;
-                  }
-                  try {
-                    const callLogData = {
-                      userId: currentUser?.id || currentUser?._id,
-                      leadId: currentLead?._id,
-                      callDuration: callTimer,
-                      callStatus,
-                      callOutcome: callForm.callOutcome || null,
-                      notes: callNotes || ''
-                    };
-                    await authAPI.leads.createCallLog(callLogData);
-                    alert('Call log saved successfully!');
-                    setIsManualCallLogOpen(false);
-                    fetchLeads();
-                  } catch (error: any) {
-                    alert('Failed to save call log: ' + (error.response?.data?.message || error.message));
-                  }
-                }}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-              >
-                Save Call Log
-              </button>
-              <button
-                onClick={() => setIsManualCallLogOpen(false)}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Bulk Upload Modal */}
-      <BulkUploadModal
-        isOpen={isBulkUploadOpen}
-        onClose={() => setIsBulkUploadOpen(false)}
-        onSuccess={() => {
-          fetchLeads();
-          setIsBulkUploadOpen(false);
+        isOpen={isActivityModalOpen}
+        onClose={() => {
+          setIsActivityModalOpen(false);
+          setSelectedLeadForActivity(null);
         }}
-      />
+        title="Add Lead Activity"
+        size="xl"
+      >
+        {selectedLeadForActivity && (
+          <LeadActivityForm
+            lead={selectedLeadForActivity}
+            onSuccess={() => {
+              setIsActivityModalOpen(false);
+              setSelectedLeadForActivity(null);
+              fetchLeads();
+            }}
+            onCancel={() => {
+              setIsActivityModalOpen(false);
+              setSelectedLeadForActivity(null);
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

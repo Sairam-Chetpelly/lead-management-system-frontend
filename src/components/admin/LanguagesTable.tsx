@@ -28,7 +28,7 @@ export default function LanguagesTable() {
 
   useEffect(() => {
     fetchLanguages();
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
 
   const fetchLanguages = useCallback(async () => {
     setLoading(true);
@@ -45,7 +45,7 @@ export default function LanguagesTable() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
   
   const handleSearchChange = (value: string) => {
     setSearch(value);

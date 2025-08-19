@@ -168,7 +168,7 @@ export const authAPI = {
       return api.get(`/api/call-logs?${queryParams}`);
     },
     getCallLogsByLead: (leadId: string) => api.get(`/api/call-logs/lead/${leadId}`),
-    createCallLog: (data: any) => api.post('/api/call-logs', data),
+    createCallLog: (data: { userId: string; leadId: string; datetime?: string }) => api.post('/api/call-logs', data),
     updateCallLog: (id: string, data: any) => api.put(`/api/call-logs/${id}`, data),
     deleteCallLog: (id: string) => api.delete(`/api/call-logs/${id}`),
     

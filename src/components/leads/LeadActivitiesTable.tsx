@@ -142,16 +142,22 @@ export default function LeadActivitiesTable() {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setActivities(Array.isArray(response.data) ? response.data : response.data.data || []);
-      if (response.data.pagination) {
-        updatePagination(response.data.pagination);
+      
+      if (response.data.data) {
+        setActivities(response.data.data);
+        if (response.data.pagination) {
+          updatePagination(response.data.pagination);
+        }
+      } else {
+        setActivities(Array.isArray(response.data) ? response.data : []);
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedFilters]);
+  }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
   
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));

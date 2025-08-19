@@ -37,14 +37,22 @@ export default function RolesTable() {
         limit: pagination.limit,
         search: debouncedSearch
       });
-      setRoles(response.data.data);
-      updatePagination(response.data.pagination);
+      
+      if (response.data.data) {
+        setRoles(response.data.data);
+        if (response.data.pagination) {
+          updatePagination(response.data.pagination);
+        }
+      } else {
+        setRoles(Array.isArray(response.data) ? response.data : []);
+      }
     } catch (error) {
       console.error('Error fetching roles:', error);
+      setRoles([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
   
   const handleSearchChange = (value: string) => {
     setSearch(value);

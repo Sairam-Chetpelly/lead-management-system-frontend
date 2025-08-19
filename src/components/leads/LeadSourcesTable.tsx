@@ -58,16 +58,22 @@ export default function LeadSourcesTable() {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setLeadSources(Array.isArray(response.data) ? response.data : response.data.data || []);
-      if (response.data.pagination) {
-        updatePagination(response.data.pagination);
+      
+      if (response.data.data) {
+        setLeadSources(response.data.data);
+        if (response.data.pagination) {
+          updatePagination(response.data.pagination);
+        }
+      } else {
+        setLeadSources(Array.isArray(response.data) ? response.data : []);
       }
     } catch (error) {
       console.error('Error fetching lead sources:', error);
+      setLeadSources([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedFilters]);
+  }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

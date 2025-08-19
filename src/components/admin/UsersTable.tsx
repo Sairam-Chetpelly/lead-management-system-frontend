@@ -74,14 +74,22 @@ export default function UsersTable() {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setUsers(response.data.data);
-      updatePagination(response.data.pagination);
+      
+      if (response.data.data) {
+        setUsers(response.data.data);
+        if (response.data.pagination) {
+          updatePagination(response.data.pagination);
+        }
+      } else {
+        setUsers(Array.isArray(response.data) ? response.data : []);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedFilters]);
+  }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
   
   const fetchDropdownData = async () => {
     try {

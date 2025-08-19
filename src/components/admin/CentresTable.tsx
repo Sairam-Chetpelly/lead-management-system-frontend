@@ -27,7 +27,7 @@ export default function CentresTable() {
 
   useEffect(() => {
     fetchCentres();
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
 
   const fetchCentres = useCallback(async () => {
     setLoading(true);
@@ -44,7 +44,7 @@ export default function CentresTable() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
   
   const handleSearchChange = (value: string) => {
     setSearch(value);

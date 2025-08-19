@@ -27,17 +27,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle responses and check for inactive user
+// Handle responses and check for inactive user or expired token
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 403 && 
-        error.response?.data?.error?.includes('inactive')) {
-      // User is inactive, force logout
+    const status = error.response?.status;
+    
+    if (status === 401 || (status === 403 && error.response?.data?.error?.includes('inactive'))) {
+      // Token expired or user is inactive, force logout
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.reload();
+      localStorage.removeItem('currentPage');
+      localStorage.removeItem('lastVisitedPage');
+      window.location.href = '/login';
+    } else if ([500, 502, 503, 504].includes(status)) {
+      // Server errors - store error info for error page
+      localStorage.setItem('lastError', JSON.stringify({
+        status,
+        message: error.response?.data?.message || error.message,
+        timestamp: Date.now()
+      }));
     }
+    
     return Promise.reject(error);
   }
 );

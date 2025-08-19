@@ -29,7 +29,7 @@ export default function StatusesTable() {
 
   useEffect(() => {
     fetchStatuses();
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
 
   const fetchStatuses = useCallback(async () => {
     setLoading(true);
@@ -46,7 +46,7 @@ export default function StatusesTable() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedSearch]);
+  }, [pagination.current, pagination.limit, debouncedSearch, updatePagination]);
   
   const handleSearchChange = (value: string) => {
     setSearch(value);

@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -17,7 +18,13 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         onClick={onClose}
       ></div>
       
-      <div className="relative w-full max-w-4xl max-h-[95vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col transform transition-all duration-300 scale-100 animate-in fade-in zoom-in">
+      <div className={`relative w-full max-h-[95vh] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col transform transition-all duration-300 scale-100 animate-in fade-in zoom-in ${
+        size === 'sm' ? 'max-w-md' :
+        size === 'md' ? 'max-w-2xl' :
+        size === 'lg' ? 'max-w-4xl' :
+        size === 'xl' ? 'max-w-6xl' :
+        size === '2xl' ? 'max-w-7xl' : 'max-w-4xl'
+      } ${size === 'xl' || size === '2xl' ? 'h-[90vh]' : 'max-h-[95vh]'}`}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 flex-shrink-0 bg-gray-50">
           <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{title}</h3>
