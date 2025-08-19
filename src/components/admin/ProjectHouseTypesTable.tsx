@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { authAPI } from '@/lib/auth';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface ProjectHouseType {
   _id: string;
@@ -27,6 +29,8 @@ export default function ProjectHouseTypesTable() {
   const [types, setTypes] = useState<ProjectHouseType[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingType, setEditingType] = useState<ProjectHouseType | null>(null);
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
@@ -59,6 +63,7 @@ export default function ProjectHouseTypesTable() {
       }
     } catch (error) {
       console.error('Error fetching types:', error);
+      showToast('Failed to fetch types', 'error');
     } finally {
       setLoading(false);
     }
@@ -74,25 +79,30 @@ export default function ProjectHouseTypesTable() {
     try {
       if (editingType) {
         await authAPI.updateProjectHouseType(editingType._id, formData);
+        showToast('Type updated successfully', 'success');
       } else {
         await authAPI.createProjectHouseType(formData);
+        showToast('Type created successfully', 'success');
       }
       fetchTypes();
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
       console.error('Error saving type:', error);
+      showToast('Failed to save type', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this type?')) {
-      try {
-        await authAPI.deleteProjectHouseType(id);
-        fetchTypes();
-      } catch (error) {
-        console.error('Error deleting type:', error);
-      }
+  const handleDelete = async () => {
+    try {
+      await authAPI.deleteProjectHouseType(deleteDialog.id);
+      showToast('Type deleted successfully', 'success');
+      fetchTypes();
+    } catch (error) {
+      console.error('Error deleting type:', error);
+      showToast('Failed to delete type', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -171,7 +181,7 @@ export default function ProjectHouseTypesTable() {
                 downloadCSV(response.data, 'project-house-types.csv');
               } catch (error) {
                 console.error('Export failed:', error);
-                alert('Export failed. Please try again.');
+                showToast('Export failed. Please try again.', 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -271,7 +281,7 @@ export default function ProjectHouseTypesTable() {
                   <button onClick={() => openModal(type)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <Pencil size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(type._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: type._id, name: type.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
                   </button>
                 </div>
@@ -338,6 +348,14 @@ export default function ProjectHouseTypesTable() {
           </div>
         </form>
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Type"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }

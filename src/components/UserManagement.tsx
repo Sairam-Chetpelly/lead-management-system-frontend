@@ -81,8 +81,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       
       <div className="flex-1 flex flex-col min-h-0 lg:ml-0">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-3 sm:p-4 flex-shrink-0 animate-fade-in-up">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 p-3 sm:p-4 flex-shrink-0 animate-fade-in-up ml-0 lg:ml-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pl-16 lg:pl-0">
             <div className="min-w-0">
               <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent truncate">
                 {getSectionTitle()}

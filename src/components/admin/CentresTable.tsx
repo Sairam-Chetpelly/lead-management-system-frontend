@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface Centre {
   _id: string;
@@ -24,6 +26,8 @@ export default function CentresTable() {
   const debouncedSearch = useDebounce(search, 300);
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [formData, setFormData] = useState({ name: '', slug: '' });
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
 
   useEffect(() => {
     fetchCentres();
@@ -41,6 +45,7 @@ export default function CentresTable() {
       updatePagination(response.data.pagination);
     } catch (error) {
       console.error('Error fetching centres:', error);
+      showToast('Failed to fetch centres', 'error');
     } finally {
       setLoading(false);
     }
@@ -59,20 +64,25 @@ export default function CentresTable() {
       } else {
         await authAPI.admin.createCentre(formData);
       }
+      showToast(editCentre ? 'Centre updated successfully' : 'Centre created successfully', 'success');
       resetForm();
       fetchCentres();
     } catch (error) {
       console.error('Error saving centre:', error);
+      showToast('Failed to save centre', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+  const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteCentre(id);
+      await authAPI.admin.deleteCentre(deleteDialog.id);
+      showToast('Centre deleted successfully', 'success');
       fetchCentres();
     } catch (error) {
       console.error('Error deleting centre:', error);
+      showToast('Failed to delete centre', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -115,7 +125,7 @@ export default function CentresTable() {
                 downloadCSV(response.data, 'centres.csv');
               } catch (error) {
                 console.error('Export failed:', error);
-                alert('Export failed. Please try again.');
+                showToast('Export failed. Please try again.', 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -263,6 +273,14 @@ export default function CentresTable() {
           </div>
         </form>
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Centre"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }

@@ -121,16 +121,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Reports</h2>
         </div>
         <div className="p-4 sm:p-6">
-          <AccessControl 
-            requiredRole={['admin', 'hod_presales', 'hod_sales', 'manager_presales', 'sales_manager']}
-            fallback={
-              <div className="text-center text-gray-500 p-6 sm:p-8">
-                <i className="fas fa-lock text-2xl sm:text-4xl mb-3 sm:mb-4"></i>
-                <p className="text-sm sm:text-base">You don't have permission to view reports.</p>
-                <p className="text-xs sm:text-sm mt-1">Contact your administrator for access.</p>
-              </div>
-            }
-          >
+          <AccessControl requiredRole="admin">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
                 <i className="fas fa-users text-blue-600 mb-2 text-sm sm:text-base"></i>

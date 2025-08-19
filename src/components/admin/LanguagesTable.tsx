@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface Language {
   _id: string;
@@ -25,6 +27,8 @@ export default function LanguagesTable() {
   const debouncedSearch = useDebounce(search, 300);
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [formData, setFormData] = useState({ name: '', slug: '', code: '' });
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
 
   useEffect(() => {
     fetchLanguages();
@@ -42,6 +46,7 @@ export default function LanguagesTable() {
       updatePagination(response.data.pagination);
     } catch (error) {
       console.error('Error fetching languages:', error);
+      showToast('Failed to fetch languages', 'error');
     } finally {
       setLoading(false);
     }
@@ -60,20 +65,25 @@ export default function LanguagesTable() {
       } else {
         await authAPI.admin.createLanguage(formData);
       }
+      showToast(editLanguage ? 'Language updated successfully' : 'Language created successfully', 'success');
       resetForm();
       fetchLanguages();
     } catch (error) {
       console.error('Error saving language:', error);
+      showToast('Failed to save language', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+  const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteLanguage(id);
+      await authAPI.admin.deleteLanguage(deleteDialog.id);
+      showToast('Language deleted successfully', 'success');
       fetchLanguages();
     } catch (error) {
       console.error('Error deleting language:', error);
+      showToast('Failed to delete language', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -116,7 +126,7 @@ export default function LanguagesTable() {
                 downloadCSV(response.data, 'languages.csv');
               } catch (error) {
                 console.error('Export failed:', error);
-                alert('Export failed. Please try again.');
+                showToast('Export failed. Please try again.', 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -215,7 +225,7 @@ export default function LanguagesTable() {
                   <button onClick={() => handleEdit(language)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(language._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: language._id, name: language.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
                   </button>
                 </div>
@@ -289,6 +299,14 @@ export default function LanguagesTable() {
           </div>
         </form>
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Language"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ToastProvider } from '@/contexts/ToastContext'
 
 export const metadata: Metadata = {
   title: 'Reminiscent',
@@ -18,7 +19,9 @@ export default function RootLayout({
         <link rel="icon" href="/ReminiscentWhiteLogo.png" type="image/png" />
       </head>
       <body className="bg-gray-50">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   )

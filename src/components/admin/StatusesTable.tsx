@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { Search, FileSpreadsheet, Activity, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface Status {
   _id: string;
@@ -26,6 +28,8 @@ export default function StatusesTable() {
   const debouncedSearch = useDebounce(search, 300);
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [formData, setFormData] = useState<{ type: '' | 'status' | 'leadStatus' | 'leadSubStatus', name: string, slug: string, description: string }>({ type: '', name: '', slug: '', description: '' });
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
 
   useEffect(() => {
     fetchStatuses();
@@ -43,6 +47,7 @@ export default function StatusesTable() {
       updatePagination(response.data.pagination);
     } catch (error) {
       console.error('Error fetching statuses:', error);
+      showToast('Failed to fetch statuses', 'error');
     } finally {
       setLoading(false);
     }
@@ -61,20 +66,25 @@ export default function StatusesTable() {
       } else {
         await authAPI.admin.createStatus(formData);
       }
+      showToast(editStatus ? 'Status updated successfully' : 'Status created successfully', 'success');
       resetForm();
       fetchStatuses();
     } catch (error) {
       console.error('Error saving status:', error);
+      showToast('Failed to save status', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+  const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteStatus(id);
+      await authAPI.admin.deleteStatus(deleteDialog.id);
+      showToast('Status deleted successfully', 'success');
       fetchStatuses();
     } catch (error) {
       console.error('Error deleting status:', error);
+      showToast('Failed to delete status', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -117,7 +127,7 @@ export default function StatusesTable() {
                 downloadCSV(response.data, 'statuses.csv');
               } catch (error) {
                 console.error('Export failed:', error);
-                alert('Export failed. Please try again.');
+                showToast('Export failed. Please try again.', 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -192,9 +202,9 @@ export default function StatusesTable() {
                     <button onClick={() => handleEdit(status)} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    <button onClick={() => handleDelete(status._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    {/* <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}
@@ -314,6 +324,14 @@ export default function StatusesTable() {
           </div>
         </form>
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Status"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }

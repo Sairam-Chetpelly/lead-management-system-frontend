@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface Role {
   _id: string;
@@ -24,6 +26,8 @@ export default function RolesTable() {
   const debouncedSearch = useDebounce(search, 300);
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [formData, setFormData] = useState({ name: '', slug: '' });
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
 
   useEffect(() => {
     fetchRoles();
@@ -48,6 +52,7 @@ export default function RolesTable() {
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
+      showToast('Failed to fetch roles', 'error');
       setRoles([]);
     } finally {
       setLoading(false);
@@ -67,20 +72,25 @@ export default function RolesTable() {
       } else {
         await authAPI.admin.createRole(formData);
       }
+      showToast(editRole ? 'Role updated successfully' : 'Role created successfully', 'success');
       resetForm();
       fetchRoles();
     } catch (error) {
       console.error('Error saving role:', error);
+      showToast('Failed to save role', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+  const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteRole(id);
+      await authAPI.admin.deleteRole(deleteDialog.id);
+      showToast('Role deleted successfully', 'success');
       fetchRoles();
     } catch (error) {
       console.error('Error deleting role:', error);
+      showToast('Failed to delete role', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -271,6 +281,14 @@ export default function RolesTable() {
           </div>
         </form>
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Role"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }

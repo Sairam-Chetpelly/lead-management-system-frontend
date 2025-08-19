@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { authAPI } from '@/lib/auth';
 import GlobalLoader from './GlobalLoader';
 import { extractErrorMessage } from '@/lib/validation';
-import { useToast } from '@/components/ToastContainer';
+import { useToast } from '@/contexts/ToastContext';
 
 interface LoginFormProps {
   onLogin: (user: any) => void;

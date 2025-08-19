@@ -8,6 +8,8 @@ import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
 import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/contexts/ToastContext';
+import DeleteDialog from '../DeleteDialog';
 
 interface User {
   _id: string;
@@ -35,6 +37,8 @@ export default function UsersTable() {
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const { showToast } = useToast();
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
   
   // Pagination and filters
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
@@ -85,6 +89,7 @@ export default function UsersTable() {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      showToast('Failed to fetch users', 'error');
       setUsers([]);
     } finally {
       setLoading(false);
@@ -106,6 +111,7 @@ export default function UsersTable() {
       setLanguages(languagesRes.data.data);
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
+      showToast('Failed to fetch dropdown data', 'error');
     }
   };
 
@@ -131,10 +137,12 @@ export default function UsersTable() {
         await authAPI.uploadProfileImage(userId, profileImage);
       }
       
+      showToast(editUser ? 'User updated successfully' : 'User created successfully', 'success');
       resetForm();
       fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
+      showToast('Failed to save user', 'error');
     }
   };
 
@@ -195,13 +203,16 @@ export default function UsersTable() {
     setViewUser(user);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleDelete = async () => {
     try {
-      await authAPI.deleteUser(id);
+      await authAPI.deleteUser(deleteDialog.id);
+      showToast('User deleted successfully', 'success');
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      showToast('Failed to delete user', 'error');
+    } finally {
+      setDeleteDialog({isOpen: false, id: '', name: ''});
     }
   };
 
@@ -279,7 +290,7 @@ export default function UsersTable() {
                 downloadCSV(response.data, 'users.csv');
               } catch (error: any) {
                 console.error('Export failed:', error);
-                alert(`Export failed: ${error.response?.data?.error || error.message}`);
+                showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -442,7 +453,7 @@ export default function UsersTable() {
                   <button onClick={() => handleEdit(user)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(user._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: user._id, name: user.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
                   </button>
                 </div>
@@ -505,14 +516,14 @@ export default function UsersTable() {
               <p className="text-sm text-gray-600 mt-2">Click camera icon to upload profile image</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter full name"
                   required
                 />
@@ -523,7 +534,7 @@ export default function UsersTable() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter email address"
                   required
                 />
@@ -534,7 +545,7 @@ export default function UsersTable() {
                   type="tel"
                   value={formData.mobileNumber}
                   onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter mobile number"
                   required
                 />
@@ -547,18 +558,18 @@ export default function UsersTable() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   placeholder="Enter password"
                   required={!editUser}
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-3">Designation *</label>
                 <input
                   type="text"
                   value={formData.designation}
                   onChange={(e) => setFormData({...formData, designation: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
                   placeholder="Enter designation"
                   required
                 />
@@ -572,7 +583,7 @@ export default function UsersTable() {
               <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs mr-2">🔐</span>
               Role & Access
             </h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-3">Role *</label>
                 <select
@@ -589,7 +600,7 @@ export default function UsersTable() {
                         : ''
                     });
                   }}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
                   required
                 >
                   <option value="">Select Role</option>
@@ -603,7 +614,7 @@ export default function UsersTable() {
                 <select
                   value={formData.statusId}
                   onChange={(e) => setFormData({...formData, statusId: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
                   required
                 >
                   <option value="">Select Status</option>
@@ -621,7 +632,7 @@ export default function UsersTable() {
                     const selectedRole = roles.find(r => r._id === formData.roleId);
                     return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
                   })()}
-                  className={`w-full px-5 py-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium ${
+                  className={`w-full px-3 py-3 sm:px-5 sm:py-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base ${
                     (() => {
                       const selectedRole = roles.find(r => r._id === formData.roleId);
                       return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug)
@@ -652,7 +663,7 @@ export default function UsersTable() {
                 <select
                   value={formData.qualification}
                   onChange={(e) => setFormData({...formData, qualification: e.target.value})}
-                  className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+                  className="w-full px-3 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base"
                   required
                 >
                   <option value="high_value">High Value</option>
@@ -808,6 +819,14 @@ export default function UsersTable() {
           </div>
         )}
       </Modal>
+
+      <DeleteDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+      />
     </div>
   );
 }
