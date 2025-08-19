@@ -6,7 +6,7 @@ import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
-import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
+import { Search, FileSpreadsheet, Eye, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
@@ -22,6 +22,7 @@ export default function LanguagesTable() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editLanguage, setEditLanguage] = useState<Language | null>(null);
+  const [viewLanguage, setViewLanguage] = useState<Language | null>(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -91,6 +92,10 @@ export default function LanguagesTable() {
     setEditLanguage(language);
     setFormData({ name: language.name, slug: language.slug, code: language.code });
     setShowModal(true);
+  };
+
+  const handleView = (language: Language) => {
+    setViewLanguage(language);
   };
 
   const resetForm = () => {
@@ -187,13 +192,16 @@ export default function LanguagesTable() {
                       {language.code}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center space-x-2">
-                    <button onClick={() => handleEdit(language)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                  <div className="col-span-3 flex items-center space-x-1">
+                    <button onClick={() => handleView(language)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                      <Eye size={14} />
+                    </button>
+                    <button onClick={() => handleEdit(language)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(language._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: language._id, name: language.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -222,7 +230,10 @@ export default function LanguagesTable() {
                   </div>
                 </div>
                 <div className="flex space-x-2 mt-4">
-                  <button onClick={() => handleEdit(language)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => handleView(language)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                    <Eye size={16} className="mr-1" /> View
+                  </button>
+                  <button onClick={() => handleEdit(language)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
                   <button onClick={() => setDeleteDialog({isOpen: true, id: language._id, name: language.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
@@ -298,6 +309,30 @@ export default function LanguagesTable() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Language Modal */}
+      <Modal
+        isOpen={!!viewLanguage}
+        onClose={() => setViewLanguage(null)}
+        title="Language Details"
+      >
+        {viewLanguage && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Language Name</label>
+              <p className="text-sm text-gray-900">{viewLanguage.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Identifier</label>
+              <p className="text-sm text-gray-900">{viewLanguage.slug}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Language Code</label>
+              <p className="text-sm text-gray-900 font-mono">{viewLanguage.code}</p>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <DeleteDialog

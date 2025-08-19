@@ -6,7 +6,7 @@ import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
-import { Search, FileSpreadsheet, Activity, Edit, Trash2 } from 'lucide-react';
+import { Search, FileSpreadsheet, Activity, Eye, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
@@ -23,6 +23,7 @@ export default function StatusesTable() {
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editStatus, setEditStatus] = useState<Status | null>(null);
+  const [viewStatus, setViewStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -92,6 +93,10 @@ export default function StatusesTable() {
     setEditStatus(status);
     setFormData({ type: status.type, name: status.name, slug: status.slug, description: status.description });
     setShowModal(true);
+  };
+
+  const handleView = (status: Status) => {
+    setViewStatus(status);
   };
 
   const resetForm = () => {
@@ -198,13 +203,16 @@ export default function StatusesTable() {
                   <div className="col-span-3 flex items-center">
                     <span className="text-slate-600 text-sm truncate">{status.description}</span>
                   </div>
-                  <div className="col-span-2 flex items-center space-x-2">
+                  <div className="col-span-2 flex items-center space-x-1">
+                    <button onClick={() => handleView(status)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                      <Eye size={14} />
+                    </button>
                     <button onClick={() => handleEdit(status)} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -233,12 +241,15 @@ export default function StatusesTable() {
                   </div>
                 </div>
                 <div className="flex space-x-2 mt-4">
+                  <button onClick={() => handleView(status)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                    <Eye size={16} className="mr-1" /> View
+                  </button>
                   <button onClick={() => handleEdit(status)} className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  {/* <button onClick={() => handleDelete(status._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button> */}
+                  </button>
                 </div>
               </div>
             ))}
@@ -323,6 +334,34 @@ export default function StatusesTable() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Status Modal */}
+      <Modal
+        isOpen={!!viewStatus}
+        onClose={() => setViewStatus(null)}
+        title="Status Details"
+      >
+        {viewStatus && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status Name</label>
+              <p className="text-sm text-gray-900">{viewStatus.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Identifier</label>
+              <p className="text-sm text-gray-900">{viewStatus.slug}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <p className="text-sm text-gray-900">{viewStatus.type}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <p className="text-sm text-gray-900">{viewStatus.description}</p>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <DeleteDialog

@@ -457,9 +457,9 @@ export default function UsersTable() {
                   <button onClick={() => handleEdit(user)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => setDeleteDialog({isOpen: true, id: user._id, name: user.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  {/* <button onClick={() => setDeleteDialog({isOpen: true, id: user._id, name: user.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}

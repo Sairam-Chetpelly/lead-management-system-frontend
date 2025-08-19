@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Pencil, Trash2, Plus, Search, FileSpreadsheet, Filter, Waypoints } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, FileSpreadsheet, Filter, Waypoints, Eye } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
@@ -43,6 +43,7 @@ export default function LeadSourcesTable() {
   const debouncedFilters = useDebounce(filters, 300);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<LeadSource | null>(null);
+  const [viewingSource, setViewingSource] = useState<LeadSource | null>(null);
   const [formData, setFormData] = useState<LeadSourceFormData>({
     name: '',
     slug: '',
@@ -254,12 +255,15 @@ export default function LeadSourcesTable() {
                     </span>
                   </div>
                   <div className="col-span-2 flex items-center space-x-1">
+                    <button onClick={() => setViewingSource(source)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                      <Eye size={14} />
+                    </button>
                     <button onClick={() => openModal(source)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Pencil size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(source._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: source._id, name: source.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -292,6 +296,9 @@ export default function LeadSourcesTable() {
                   <div><span className="font-medium">Description:</span> {source.description}</div>
                 </div>
                 <div className="flex space-x-2 mt-4">
+                  <button onClick={() => setViewingSource(source)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                    <Eye size={16} className="mr-1" /> View
+                  </button>
                   <button onClick={() => openModal(source)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <Pencil size={16} className="mr-1" /> Edit
                   </button>
@@ -368,6 +375,34 @@ export default function LeadSourcesTable() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Lead Source Modal */}
+      <Modal
+        isOpen={!!viewingSource}
+        onClose={() => setViewingSource(null)}
+        title="Lead Source Details"
+      >
+        {viewingSource && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Source Name</label>
+              <p className="text-sm text-gray-900">{viewingSource.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Identifier</label>
+              <p className="text-sm text-gray-900">{viewingSource.slug}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <p className="text-sm text-gray-900">{viewingSource.description}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <p className="text-sm text-gray-900">{viewingSource.isApiSource ? 'API Source' : 'Manual Source'}</p>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <DeleteDialog

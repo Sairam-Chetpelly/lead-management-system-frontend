@@ -6,7 +6,7 @@ import { usePagination } from '@/hooks/usePagination';
 import Modal from '../Modal';
 import ModernLoader from '../ModernLoader';
 import PaginationFooter from '../PaginationFooter';
-import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
+import { Search, FileSpreadsheet, Eye, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
@@ -21,6 +21,7 @@ export default function CentresTable() {
   const [centres, setCentres] = useState<Centre[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editCentre, setEditCentre] = useState<Centre | null>(null);
+  const [viewCentre, setViewCentre] = useState<Centre | null>(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -90,6 +91,10 @@ export default function CentresTable() {
     setEditCentre(centre);
     setFormData({ name: centre.name, slug: centre.slug });
     setShowModal(true);
+  };
+
+  const handleView = (centre: Centre) => {
+    setViewCentre(centre);
   };
 
   const resetForm = () => {
@@ -176,13 +181,16 @@ export default function CentresTable() {
                       {centre.slug}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center space-x-2">
+                  <div className="col-span-3 flex items-center space-x-1">
+                    <button onClick={() => handleView(centre)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                      <Eye size={14} />
+                    </button>
                     <button onClick={() => handleEdit(centre)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(centre._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: centre._id, name: centre.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -207,12 +215,15 @@ export default function CentresTable() {
                   </div>
                 </div>
                 <div className="flex space-x-2 mt-4">
+                  <button onClick={() => handleView(centre)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                    <Eye size={16} className="mr-1" /> View
+                  </button>
                   <button onClick={() => handleEdit(centre)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  {/* <button onClick={() => handleDelete(centre._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: centre._id, name: centre.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button> */}
+                  </button>
                 </div>
               </div>
             ))}
@@ -272,6 +283,26 @@ export default function CentresTable() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Centre Modal */}
+      <Modal
+        isOpen={!!viewCentre}
+        onClose={() => setViewCentre(null)}
+        title="Centre Details"
+      >
+        {viewCentre && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Centre Name</label>
+              <p className="text-sm text-gray-900">{viewCentre.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Identifier</label>
+              <p className="text-sm text-gray-900">{viewCentre.slug}</p>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <DeleteDialog
