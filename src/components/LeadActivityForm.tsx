@@ -2,18 +2,15 @@
 
 import React, { useState } from 'react';
 import { MessageSquare, PhoneCall, X, Send, Upload, FileText } from 'lucide-react';
-import { authAPI } from '@/lib/auth';
-import { useToast } from '@/contexts/ToastContext';
 import Modal from './Modal';
 
-interface ActivityLogModalProps {
+interface LeadActivityFormProps {
   isOpen: boolean;
   onClose: () => void;
-  leadId: string;
+  onSubmit: (type: 'call' | 'manual', comment: string, document?: File) => void;
 }
 
-export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLogModalProps) {
-  const { showToast } = useToast();
+export default function LeadActivityForm({ isOpen, onClose, onSubmit }: LeadActivityFormProps) {
   const [type, setType] = useState<'call' | 'manual'>('manual');
   const [comment, setComment] = useState('');
   const [document, setDocument] = useState<File | null>(null);
@@ -46,8 +43,7 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
 
     setSubmitting(true);
     try {
-      await authAPI.createActivityLog(leadId, type, comment.trim(), document || undefined);
-      showToast('Activity logged successfully', 'success');
+      await onSubmit(type, comment.trim(), document || undefined);
       setComment('');
       setDocument(null);
       setFileName('');
@@ -55,7 +51,6 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
       onClose();
     } catch (error) {
       console.error('Error submitting activity:', error);
-      showToast('Failed to log activity', 'error');
     } finally {
       setSubmitting(false);
     }

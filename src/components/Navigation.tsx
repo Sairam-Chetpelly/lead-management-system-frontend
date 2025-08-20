@@ -15,6 +15,9 @@ const Navigation: React.FC = () => {
             <Link href="/dashboard" className="text-gray-700 hover:text-gray-900">
               Dashboard
             </Link>
+            <Link href="/leads" className="text-gray-700 hover:text-gray-900">
+              Leads
+            </Link>
             <Link href="/admin" className="text-gray-700 hover:text-gray-900">
               Admin
             </Link>

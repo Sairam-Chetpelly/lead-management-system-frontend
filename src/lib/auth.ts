@@ -107,14 +107,33 @@ export const authAPI = {
     const queryString = queryParams.toString();
     return api.get(`/api/leads${queryString ? `?${queryString}` : ''}`);
   },
+  getLead: (id: string) => api.get(`/api/leads/${id}`),
+  getLeadTimeline: (id: string) => api.get(`/api/leads/${id}/timeline`),
   createLead: (leadData: any) => api.post('/api/leads', leadData),
   updateLead: (id: string, leadData: any) => api.put(`/api/leads/${id}`, leadData),
   deleteLead: (id: string) => api.delete(`/api/leads/${id}`),
   createCallLog: (leadId: string) => api.post(`/api/leads/${leadId}/call`),
-  createActivityLog: (leadId: string, type: 'call' | 'manual', comment: string) => 
-    api.post(`/api/leads/${leadId}/activity`, { type, comment }),
+  createActivityLog: (leadId: string, type: 'call' | 'manual', comment: string, document?: File) => {
+    const formData = new FormData();
+    formData.append('type', type);
+    formData.append('comment', comment);
+    if (document) {
+      formData.append('document', document);
+    }
+    return api.post(`/api/leads/${leadId}/activity`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   exportLeads: () => api.get('/api/leads/export'),
   getLeadFormData: () => api.get('/api/leads/form/data'),
+  bulkUploadLeads: (formData: FormData) => 
+    api.post('/api/leads/bulk-upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
 };
 
 export default api;

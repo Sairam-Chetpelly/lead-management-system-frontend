@@ -10,13 +10,15 @@ import PaginationFooter from './PaginationFooter';
 import ModernLoader from './ModernLoader';
 import Modal from './Modal';
 import DeleteDialog from './DeleteDialog';
-import LeadCreationForm from './LeadCreationForm';
+import LeadCreationModal from './LeadCreationModal';
 import ActivityLogModal from './ActivityLogModal';
+import LeadView from './LeadView';
 
 interface Lead {
   _id: string;
   leadId: {
     leadID: string;
+    _id: string;
   };
   name: string;
   email: string;
@@ -47,6 +49,14 @@ interface Lead {
   centreId?: {
     name: string;
   };
+  leadStatusId?: {
+    name: string;
+    slug: string;
+  };
+  leadSubStatusId?: {
+    name: string;
+    slug: string;
+  };
   leadValue?: string;
   notes?: string;
   createdAt: string;
@@ -58,6 +68,7 @@ export default function LeadsTable() {
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [viewLead, setViewLead] = useState<Lead | null>(null);
+  const [showLeadView, setShowLeadView] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
   const [activityLogModal, setActivityLogModal] = useState<{isOpen: boolean, leadId: string}>({isOpen: false, leadId: ''});
@@ -127,8 +138,8 @@ export default function LeadsTable() {
       setUsers(usersRes.data.data || usersRes.data || []);
       
       const statuses = statusesRes.data.data || statusesRes.data || [];
-      setLeadStatuses(statuses.filter(s => s.type === 'leadStatus'));
-      setLeadSubStatuses(statuses.filter(s => s.type === 'leadSubStatus'));
+      setLeadStatuses(statuses.filter((s: any) => s.type === 'leadStatus'));
+      setLeadSubStatuses(statuses.filter((s: any) => s.type === 'leadSubStatus'));
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
       showToast('Failed to fetch dropdown data', 'error');
@@ -142,6 +153,10 @@ export default function LeadsTable() {
 
   const handleView = (lead: Lead) => {
     setViewLead(lead);
+  };
+
+  const handleViewDetails = (leadId: string) => {
+    setShowLeadView(leadId);
   };
 
   const handleDelete = async () => {
@@ -402,16 +417,13 @@ export default function LeadsTable() {
                   </div>
                   
                   <div className="col-span-1 flex items-center space-x-1">
-                    <button onClick={() => handleView(lead)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                    <button onClick={() => handleViewDetails(lead._id)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all" title="View Details">
                       <Eye size={14} />
                     </button>
-                    {/* <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
-                      <Trash2 size={14} />
-                    </button> */}
-                    <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead.leadId._id})} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
+                    <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Activity Log">
                       <FileText size={14} />
                     </button>
-                     <button onClick={() => handleCall(lead.leadId._id)} className="!ml-5 p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
+                     <button onClick={() => handleCall(lead._id)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
                       <PhoneCall size={14} />
                     </button>
                   </div>
@@ -457,16 +469,13 @@ export default function LeadsTable() {
                 </div>
                 
                 <div className="flex space-x-2 mt-4">
-                  <button onClick={() => handleView(lead)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => handleViewDetails(lead._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
                     <Eye size={16} className="mr-1" /> View
                   </button>
-                  <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
-                    <Trash2 size={16} className="mr-1" /> Delete
-                  </button>
-                  <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead.leadId._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <FileText size={16} className="mr-1" /> Log
                   </button>
-                  <button onClick={() => handleCall(lead.leadId._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => handleCall(lead._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <PhoneCall size={16} className="mr-1" /> Call
                   </button>
                 </div>
@@ -571,13 +580,11 @@ export default function LeadsTable() {
       </Modal>
 
       {/* Create Lead Modal */}
-      <Modal
+      <LeadCreationModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="➕ Create New Lead"
-      >
-        <LeadCreationForm onSuccess={() => { setShowCreateModal(false); fetchLeads(); }} />
-      </Modal>
+        onSuccess={() => { setShowCreateModal(false); fetchLeads(); }}
+      />
 
       <DeleteDialog
         isOpen={deleteDialog.isOpen}
@@ -592,6 +599,16 @@ export default function LeadsTable() {
         onClose={() => setActivityLogModal({isOpen: false, leadId: ''})}
         leadId={activityLogModal.leadId}
       />
+
+      {/* Lead View */}
+      {showLeadView && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <LeadView
+            leadId={showLeadView}
+            onBack={() => setShowLeadView(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
