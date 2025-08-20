@@ -14,6 +14,11 @@ import LeadCreationModal from './LeadCreationModal';
 import ActivityLogModal from './ActivityLogModal';
 import LeadView from './LeadView';
 import LeadEditModal from './LeadEditModal';
+import PresalesLeadEditModal from './PresalesLeadEditModal';
+
+interface LeadsTableProps {
+  user: any;
+}
 
 interface Lead {
   _id: string;
@@ -63,7 +68,7 @@ interface Lead {
   createdAt: string;
 }
 
-export default function LeadsTable() {
+export default function LeadsTable({ user }: LeadsTableProps) {
   const { showToast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -608,12 +613,22 @@ export default function LeadsTable() {
         leadId={activityLogModal.leadId}
       />
 
-      <LeadEditModal
-        isOpen={showEditModal.isOpen}
-        onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
-        leadId={showEditModal.leadId}
-        onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
-      />
+      {/* Conditional Modal Rendering Based on User Role */}
+      {user?.role === 'presales_agent' ? (
+        <PresalesLeadEditModal
+          isOpen={showEditModal.isOpen}
+          onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
+          leadId={showEditModal.leadId}
+          onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
+        />
+      ) : (
+        <LeadEditModal
+          isOpen={showEditModal.isOpen}
+          onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
+          leadId={showEditModal.leadId}
+          onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
+        />
+      )}
 
       {/* Lead View */}
       {showLeadView && (

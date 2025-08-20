@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail, MessageSquare } from 'lucide-react';
+import { X, Save, Upload, FileText, User, Building, MessageSquare } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
 
-interface LeadEditModalProps {
+interface PresalesLeadEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   leadId: string;
@@ -17,24 +17,14 @@ interface FormData {
   name: string;
   email: string;
   contactNumber: string;
-  leadStatusId: string;
-  leadSubStatusId: string;
-  languageId: string;
   sourceId: string;
+  leadStatusId: string;
   centreId: string;
+  languageId: string;
   projectTypeId: string;
-  projectValue: string;
-  apartmentName: string;
   houseTypeId: string;
-  expectedPossessionDate: string;
+  apartmentName: string;
   leadValue: string;
-  paymentMethod: string;
-  siteVisit: boolean;
-  siteVisitDate: string;
-  centerVisit: boolean;
-  centerVisitDate: string;
-  virtualMeeting: boolean;
-  virtualMeetingDate: string;
   notes: string;
   comment: string;
 }
@@ -46,17 +36,15 @@ interface DropdownItem {
 }
 
 interface DropdownData {
-  users: any[];
   leadSources: any[];
   centres: any[];
   languages: any[];
   projectTypes: any[];
   houseTypes: any[];
   leadStatuses: DropdownItem[];
-  leadSubStatuses: DropdownItem[];
 }
 
-export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: LeadEditModalProps) {
+export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSuccess }: PresalesLeadEditModalProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -64,39 +52,25 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     name: '',
     email: '',
     contactNumber: '',
-    leadStatusId: '',
-    leadSubStatusId: '',
-    languageId: '',
     sourceId: '',
+    leadStatusId: '',
     centreId: '',
+    languageId: '',
     projectTypeId: '',
-    projectValue: '',
-    apartmentName: '',
     houseTypeId: '',
-    expectedPossessionDate: '',
+    apartmentName: '',
     leadValue: '',
-    paymentMethod: '',
-    siteVisit: false,
-    siteVisitDate: '',
-    centerVisit: false,
-    centerVisitDate: '',
-    virtualMeeting: false,
-    virtualMeetingDate: '',
-
     notes: '',
     comment: ''
   });
 
-  // Dropdown data
   const [dropdownData, setDropdownData] = useState<DropdownData>({
-    users: [],
     leadSources: [],
     centres: [],
     languages: [],
     projectTypes: [],
     houseTypes: [],
-    leadStatuses: [],
-    leadSubStatuses: []
+    leadStatuses: []
   });
 
   const [files, setFiles] = useState<File[]>([]);
@@ -118,27 +92,16 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         name: lead.name || '',
         email: lead.email || '',
         contactNumber: lead.contactNumber || '',
-        leadStatusId: lead.leadStatusId?._id || '',
-        leadSubStatusId: lead.leadSubStatusId?._id || '',
-        languageId: lead.languageId?._id || '',
         sourceId: lead.sourceId?._id || '',
+        leadStatusId: lead.leadStatusId?._id || '',
         centreId: lead.centreId?._id || '',
+        languageId: lead.languageId?._id || '',
         projectTypeId: lead.projectTypeId?._id || '',
-        projectValue: lead.projectValue || '',
-        apartmentName: lead.apartmentName || '',
         houseTypeId: lead.houseTypeId?._id || '',
-        expectedPossessionDate: lead.expectedPossessionDate ? new Date(lead.expectedPossessionDate).toISOString().split('T')[0] : '',
+        apartmentName: lead.apartmentName || '',
         leadValue: lead.leadValue || '',
-        paymentMethod: lead.paymentMethod || '',
-        siteVisit: lead.siteVisit || false,
-        siteVisitDate: lead.siteVisitDate ? new Date(lead.siteVisitDate).toISOString().split('T')[0] : '',
-        centerVisit: lead.centerVisit || false,
-        centerVisitDate: lead.centerVisitDate ? new Date(lead.centerVisitDate).toISOString().split('T')[0] : '',
-        virtualMeeting: lead.virtualMeeting || false,
-        virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
-
         notes: lead.notes || '',
-        comment: lead.comment || ''
+        comment: ''
       });
     } catch (error) {
       console.error('Error fetching lead:', error);
@@ -150,8 +113,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
   const fetchDropdownData = async () => {
     try {
-      const [usersRes, sourcesRes, centresRes, languagesRes, statusesRes, formDataRes] = await Promise.all([
-        authAPI.getUsers({ limit: 1000 }),
+      const [sourcesRes, centresRes, languagesRes, statusesRes, formDataRes] = await Promise.all([
         authAPI.admin.getAllLeadSources(),
         authAPI.admin.getAllCentres(),
         authAPI.admin.getAllLanguages(),
@@ -159,20 +121,15 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         authAPI.getLeadFormData()
       ]);
 
-      console.log('Lead Sources Response:', sourcesRes.data);
-      
       const statuses = statusesRes.data.data || statusesRes.data || [];
-      const leadSources = sourcesRes.data || [];
       
       setDropdownData({
-        users: usersRes.data.data || usersRes.data || [],
-        leadSources: leadSources,
+        leadSources: sourcesRes.data.data || sourcesRes.data || [],
         centres: centresRes.data.data || centresRes.data || [],
         languages: languagesRes.data.data || languagesRes.data || [],
         projectTypes: formDataRes.data.projectTypes || [],
         houseTypes: formDataRes.data.houseTypes || [],
-        leadStatuses: statuses.filter((s: any) => s.type === 'leadStatus'),
-        leadSubStatuses: statuses.filter((s: any) => s.type === 'leadSubStatus')
+        leadStatuses: statuses.filter((s: any) => s.type === 'leadStatus' && ['lead', 'qualified', 'lost'].includes(s.slug))
       });
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
@@ -181,17 +138,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      // Clear sub-status if lead status is not qualified
-      if (field === 'leadStatusId') {
-        const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === value);
-        if (selectedStatus?.slug !== 'qualified') {
-          newData.leadSubStatusId = '';
-        }
-      }
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,36 +165,38 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.email || !formData.contactNumber) {
+      showToast('Email and contact number are required', 'error');
+      return;
+    }
+    
+    // Check if status is qualified and validate centre/language
+    if (formData.leadStatusId) {
+      const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
+      if (selectedStatus?.slug === 'qualified') {
+        if (!formData.centreId || !formData.languageId) {
+          showToast('Centre and Language are required when status is Qualified', 'error');
+          return;
+        }
+      }
+    }
+    
     setSubmitting(true);
 
     try {
-      // Prepare lead activity data
-      const leadActivityData = { ...formData };
+      console.log('Submitting presales activity with data:', formData);
+      console.log('Files:', files);
       
-      // Convert date strings to Date objects where needed
-      if (leadActivityData.expectedPossessionDate) {
-        leadActivityData.expectedPossessionDate = new Date(leadActivityData.expectedPossessionDate).toISOString();
-      }
-      if (leadActivityData.siteVisitDate) {
-        leadActivityData.siteVisitDate = new Date(leadActivityData.siteVisitDate).toISOString();
-      }
-      if (leadActivityData.centerVisitDate) {
-        leadActivityData.centerVisitDate = new Date(leadActivityData.centerVisitDate).toISOString();
-      }
-      if (leadActivityData.virtualMeetingDate) {
-        leadActivityData.virtualMeetingDate = new Date(leadActivityData.virtualMeetingDate).toISOString();
-      }
-
-
-      // Create new lead activity entry with all data and files
-      await authAPI.createLeadActivity(leadId, leadActivityData, files);
-
-      showToast('Lead activity created successfully', 'success');
+      await authAPI.createPresalesActivity(leadId, formData, files);
+      showToast('Lead updated successfully', 'success');
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error('Error creating lead activity:', error);
-      showToast('Failed to create lead activity', 'error');
+    } catch (error: any) {
+      console.error('Error updating lead:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update lead';
+      showToast(errorMessage, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -258,25 +207,14 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       name: '',
       email: '',
       contactNumber: '',
-      leadStatusId: '',
-      leadSubStatusId: '',
-      languageId: '',
       sourceId: '',
+      leadStatusId: '',
       centreId: '',
+      languageId: '',
       projectTypeId: '',
-      projectValue: '',
-      apartmentName: '',
       houseTypeId: '',
-      expectedPossessionDate: '',
+      apartmentName: '',
       leadValue: '',
-      paymentMethod: '',
-      siteVisit: false,
-      siteVisitDate: '',
-      centerVisit: false,
-      centerVisitDate: '',
-      virtualMeeting: false,
-      virtualMeetingDate: '',
-
       notes: '',
       comment: ''
     });
@@ -295,8 +233,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead & Add Activity (Admin)" size="xl">
-      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead (Presales)" size="lg">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div className="bg-blue-50 p-4 rounded-xl">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -334,14 +272,13 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Source *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Source (Disabled)</label>
               <select
-                value={formData.sourceId || ''}
-                onChange={(e) => handleInputChange('sourceId', e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formData.sourceId}
+                disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
               >
-                <option value="">Select Source ({dropdownData.leadSources.length} available)</option>
+                <option value="">Select Source</option>
                 {dropdownData.leadSources.map((source: any) => (
                   <option key={source._id} value={source._id}>{source.name}</option>
                 ))}
@@ -370,24 +307,6 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 ))}
               </select>
             </div>
-            {(() => {
-              const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-              return selectedStatus?.slug === 'qualified' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Lead Sub-Status</label>
-                  <select
-                    value={formData.leadSubStatusId}
-                    onChange={(e) => handleInputChange('leadSubStatusId', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Sub-Status</option>
-                    {dropdownData.leadSubStatuses.map((subStatus: any) => (
-                      <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
-                    ))}
-                  </select>
-                </div>
-              ) : null;
-            })()}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Centre</label>
               <select
@@ -412,6 +331,19 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 {dropdownData.languages.map((language: any) => (
                   <option key={language._id} value={language._id}>{language.name}</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Value</label>
+              <select
+                value={formData.leadValue}
+                onChange={(e) => handleInputChange('leadValue', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select Lead Value</option>
+                <option value="high value">High Value</option>
+                <option value="medium value">Medium Value</option>
+                <option value="low value">Low Value</option>
               </select>
             </div>
           </div>
@@ -450,17 +382,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Project Value</label>
-              <input
-                type="text"
-                value={formData.projectValue}
-                onChange={(e) => handleInputChange('projectValue', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter project value"
-              />
-            </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
               <input
                 type="text"
@@ -470,122 +392,6 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 placeholder="Enter apartment name"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Expected Possession Date</label>
-              <input
-                type="date"
-                value={formData.expectedPossessionDate}
-                onChange={(e) => handleInputChange('expectedPossessionDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Value</label>
-              <select
-                value={formData.leadValue}
-                onChange={(e) => handleInputChange('leadValue', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select Lead Value</option>
-                <option value="high value">High Value</option>
-                <option value="medium value">Medium Value</option>
-                <option value="low value">Low Value</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-              <select
-                value={formData.paymentMethod}
-                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select Payment Method</option>
-                <option value="cod">COD</option>
-                <option value="upi">UPI</option>
-                <option value="debit card">Debit Card</option>
-                <option value="credit card">Credit Card</option>
-                <option value="emi">EMI</option>
-                <option value="cheque">Cheque</option>
-                <option value="loan">Loan</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Activities & Meetings */}
-        <div className="bg-yellow-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Calendar className="mr-2" size={20} />
-            Activities & Meetings
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="siteVisit"
-                checked={formData.siteVisit}
-                onChange={(e) => handleInputChange('siteVisit', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="siteVisit" className="text-sm font-medium text-gray-700">Site Visit</label>
-            </div>
-            {formData.siteVisit && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Site Visit Date</label>
-                <input
-                  type="date"
-                  value={formData.siteVisitDate}
-                  onChange={(e) => handleInputChange('siteVisitDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
-            
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="centerVisit"
-                checked={formData.centerVisit}
-                onChange={(e) => handleInputChange('centerVisit', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="centerVisit" className="text-sm font-medium text-gray-700">Center Visit</label>
-            </div>
-            {formData.centerVisit && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Center Visit Date</label>
-                <input
-                  type="date"
-                  value={formData.centerVisitDate}
-                  onChange={(e) => handleInputChange('centerVisitDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
-            
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="virtualMeeting"
-                checked={formData.virtualMeeting}
-                onChange={(e) => handleInputChange('virtualMeeting', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="virtualMeeting" className="text-sm font-medium text-gray-700">Virtual Meeting</label>
-            </div>
-            {formData.virtualMeeting && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Virtual Meeting Date</label>
-                <input
-                  type="date"
-                  value={formData.virtualMeetingDate}
-                  onChange={(e) => handleInputChange('virtualMeetingDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
-            
-
           </div>
         </div>
 
@@ -593,7 +399,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         <div className="bg-orange-50 p-4 rounded-xl">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <MessageSquare className="mr-2" size={20} />
-            Notes & Activity Comments
+            Notes & Comments
           </h3>
           <div className="space-y-4">
             <div>
@@ -603,7 +409,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter general notes about the lead..."
+                placeholder="Enter general notes..."
               />
             </div>
             <div>
@@ -613,11 +419,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 onChange={(e) => handleInputChange('comment', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter activity comment (this will create a new lead activity entry)..."
+                placeholder="Enter activity comment..."
               />
-              <p className="text-sm text-gray-500 mt-1">
-                This comment will be saved as a new lead activity entry when you update the lead.
-              </p>
             </div>
           </div>
         </div>
@@ -631,7 +434,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-gray-400 transition-colors relative">
               <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
+              <p className="text-sm text-gray-600 mb-2">Click to upload files</p>
               <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB each, 5 files max)</p>
               <input
                 type="file"
@@ -650,7 +453,6 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                     <div className="flex items-center space-x-3">
                       <FileText size={20} className="text-blue-600" />
                       <span className="text-sm font-medium text-gray-900">{file.name}</span>
-                      <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                     </div>
                     <button
                       type="button"
@@ -686,13 +488,13 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
           >
             {submitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Creating...</span>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></div>
+                Updating...
               </>
             ) : (
               <>
-                <Save size={16} />
-                <span>Create Lead Activity</span>
+                <Save size={16} className="mr-2 inline-block" />
+                Update Lead
               </>
             )}
           </button>

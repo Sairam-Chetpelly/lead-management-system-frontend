@@ -33,6 +33,27 @@ interface DashboardProps {
   user: any;
 }
 
+interface WeeklyTrendItem {
+  date: string;
+  count: number;
+}
+
+interface StatusDistributionItem {
+  _id: string;
+  count: number;
+}
+
+interface LeadStats {
+  totalLeads: number;
+  weekLeads: number;
+  todayLeads: number;
+  todayCalls: number;
+  wonLeads: number;
+  lostLeads: number;
+  weeklyTrend: WeeklyTrendItem[];
+  statusDistribution: StatusDistributionItem[];
+}
+
 export default function Dashboard({ user }: DashboardProps) {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -40,7 +61,7 @@ export default function Dashboard({ user }: DashboardProps) {
     totalRoles: 0,
     totalCentres: 0
   });
-  const [leadStats, setLeadStats] = useState({
+  const [leadStats, setLeadStats] = useState<LeadStats>({
     totalLeads: 0,
     weekLeads: 0,
     todayLeads: 0,
@@ -79,12 +100,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const fetchLeadStats = async () => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
-        headers: {
-          'x-api-key': process.env.NEXT_PUBLIC_API_KEY || 'lms-secure-api-key-2024'
-        }
-      });
-      const data = await response.json();
+      const response = await authAPI.get('/api/dashboard/stats');
+      const data = response.data;
       console.log('Lead stats data:', data);
       setLeadStats(data);
     } catch (error) {
@@ -190,13 +207,13 @@ export default function Dashboard({ user }: DashboardProps) {
           <div className="h-64">
             <Line
               data={{
-                labels: leadStats.weeklyTrend.map(item => 
+                labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => 
                   new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
                 ),
                 datasets: [
                   {
                     label: 'Leads',
-                    data: leadStats.weeklyTrend.map(item => item.count),
+                    data: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => item.count),
                     borderColor: 'rgb(59, 130, 246)',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     tension: 0.4,
@@ -228,10 +245,10 @@ export default function Dashboard({ user }: DashboardProps) {
             {leadStats.statusDistribution && leadStats.statusDistribution.length > 0 ? (
               <Doughnut
                 data={{
-                  labels: leadStats.statusDistribution.map(item => item._id || 'No Status'),
+                  labels: leadStats.statusDistribution.map((item: StatusDistributionItem) => item._id || 'No Status'),
                   datasets: [
                     {
-                      data: leadStats.statusDistribution.map(item => item.count),
+                      data: leadStats.statusDistribution.map((item: StatusDistributionItem) => item.count),
                       backgroundColor: [
                         '#3B82F6',
                         '#10B981', 

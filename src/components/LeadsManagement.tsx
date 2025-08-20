@@ -5,10 +5,14 @@ import { Plus, List, Users } from 'lucide-react';
 import LeadCreationForm from './LeadCreationForm';
 import LeadsTable from './LeadsTable';
 
-export default function LeadsManagement() {
+interface LeadsManagementProps {
+  user: any;
+}
+
+export default function LeadsManagement({ user }: LeadsManagementProps) {
   return (
     <div className="min-h-full">
-      <LeadsTable />
+      <LeadsTable user={user} />
     </div>
   );
 }

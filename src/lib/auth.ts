@@ -145,6 +145,24 @@ export const authAPI = {
       },
     });
   },
+  createPresalesActivity: (leadId: string, leadData: any, files?: File[]) => {
+    const formData = new FormData();
+    Object.keys(leadData).forEach(key => {
+      if (leadData[key] !== undefined && leadData[key] !== null && leadData[key] !== '') {
+        formData.append(key, leadData[key]);
+      }
+    });
+    if (files && files.length > 0) {
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+    }
+    return api.post(`/api/leads/${leadId}/presales-activity`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   exportLeads: () => api.get('/api/leads/export'),
   getLeadFormData: () => api.get('/api/leads/form/data'),
   bulkUploadLeads: (formData: FormData) => 

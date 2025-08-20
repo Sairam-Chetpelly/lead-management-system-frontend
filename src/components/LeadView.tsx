@@ -13,6 +13,7 @@ import ModernLoader from './ModernLoader';
 import LeadTimeline from './LeadTimeline';
 import LeadActivityForm from './LeadActivityForm';
 import CallLogModal from './CallLogModal';
+import LanguageChangeModal from './LanguageChangeModal';
 
 interface LeadViewProps {
   leadId: string;
@@ -39,6 +40,7 @@ interface Lead {
     email: string;
   };
   languageId?: {
+    _id: string;
     name: string;
   };
   sourceId: {
@@ -74,8 +76,7 @@ interface Lead {
   centerVisitDate?: string;
   virtualMeeting?: boolean;
   virtualMeetingDate?: string;
-  isCompleted?: boolean;
-  isCompletedDate?: string;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -114,10 +115,21 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
   const [editData, setEditData] = useState<any>({});
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'activities'>('overview');
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     fetchLeadData();
+    // Get current user from localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
   }, [leadId]);
 
   const fetchLeadData = async () => {
@@ -247,6 +259,15 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                     <PhoneCall size={16} />
                     <span>Call</span>
                   </button>
+                  {currentUser?.role === 'presales_agent' && (
+                    <button
+                      onClick={() => setShowLanguageModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      <Globe size={16} />
+                      <span>Language Change</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowActivityForm(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -415,6 +436,19 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         />
       )}
 
+      {showLanguageModal && (
+        <LanguageChangeModal
+          isOpen={showLanguageModal}
+          onClose={() => setShowLanguageModal(false)}
+          leadId={leadId}
+          currentLanguageId={lead?.languageId?._id}
+          onSuccess={() => {
+            fetchLeadData();
+            onBack(); // Go back to leads list since lead is reassigned
+          }}
+        />
+      )}
+
 
     </div>
   );
@@ -563,17 +597,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         </div>
       </div>
 
-      {/* Completion Information */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <CheckCircle size={20} className="mr-2" />
-          Completion Status
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FieldDisplay label="Is Completed" value={lead.isCompleted} icon={CheckCircle} editing={editing} field="isCompleted" type="checkbox" />
-          <FieldDisplay label="Completion Date" value={lead.isCompletedDate} icon={Calendar} editing={editing} field="isCompletedDate" type="date" />
-        </div>
-      </div>
+
 
       {/* Comments & Notes */}
       <div>

@@ -68,7 +68,7 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       case 'project-house-types':
         return <ProjectHouseTypesTable />;
       case 'leads':
-        return <LeadsManagement />;
+        return <LeadsManagement user={user} />;
       default:
         return <Dashboard user={user} />;
     }
