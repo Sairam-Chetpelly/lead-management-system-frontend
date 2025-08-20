@@ -344,7 +344,7 @@ export default function UsersTable() {
                   <div className="col-span-2 flex items-center space-x-3">
                     {user.profileImage ? (
                       <img 
-                        src={`http://localhost:5000/uploads/profiles/${user.profileImage}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/profiles/${user.profileImage}`}
                         alt={user.name}
                         className="w-10 h-10 rounded-xl object-cover shadow-lg flex-shrink-0"
                       />
@@ -423,7 +423,7 @@ export default function UsersTable() {
                   <div className="flex items-center space-x-3">
                     {user.profileImage ? (
                       <img 
-                        src={`http://localhost:5000/uploads/profiles/${user.profileImage}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/profiles/${user.profileImage}`}
                         alt={user.name}
                         className="w-12 h-12 rounded-xl object-cover shadow-lg"
                       />
@@ -498,7 +498,7 @@ export default function UsersTable() {
                   />
                 ) : editUser?.profileImage ? (
                   <img 
-                    src={`http://localhost:5000/uploads/profiles/${editUser.profileImage}`}
+                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/profiles/${editUser.profileImage}`}
                     alt="Current profile" 
                     className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                   />
@@ -793,7 +793,7 @@ export default function UsersTable() {
             <div className="flex justify-center mb-6">
               {viewUser.profileImage ? (
                 <img 
-                  src={`http://localhost:5000/uploads/profiles/${viewUser.profileImage}`}
+                  src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/profiles/${viewUser.profileImage}`}
                   alt={viewUser.name}
                   className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                 />
