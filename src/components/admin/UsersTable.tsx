@@ -25,6 +25,7 @@ interface User {
   qualification: string;
   userType?: string;
   profileImage?: string;
+  leadCount?: number;
 }
 
 export default function UsersTable() {
@@ -330,10 +331,11 @@ export default function UsersTable() {
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">User</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Centre</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Centre</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Languages</div>
               <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Role</div>
               <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Status</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Leads</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
@@ -363,7 +365,7 @@ export default function UsersTable() {
                     <div className="text-slate-700 font-medium truncate">{user.email}</div>
                     <div className="text-slate-500 text-sm truncate">{user.mobileNumber}</div>
                   </div>
-                  <div className="col-span-2 flex items-center">
+                  <div className="col-span-1 flex items-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 truncate">
                       {user.centreId?.name || '--'}
                     </span>
@@ -396,6 +398,15 @@ export default function UsersTable() {
                       }`}></div>
                       {user.statusId.name}
                     </span>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    {['sales_agent', 'presales_agent'].includes(user.roleId.slug) ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-orange-100 text-orange-800">
+                        {user.leadCount || 0}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">--</span>
+                    )}
                   </div>
                   <div className="col-span-2 flex items-center space-x-1">
                     <button onClick={() => handleView(user)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
@@ -449,6 +460,9 @@ export default function UsersTable() {
                   <div><span className="font-medium">Mobile:</span> {user.mobileNumber}</div>
                   <div><span className="font-medium">Role:</span> {user.roleId.name}</div>
                   <div><span className="font-medium">Centre:</span> {user.centreId?.name || '--'}</div>
+                  {['sales_agent', 'presales_agent'].includes(user.roleId.slug) && (
+                    <div><span className="font-medium">Assigned Leads:</span> {user.leadCount || 0}</div>
+                  )}
                 </div>
                 <div className="flex space-x-2 mt-4">
                   <button onClick={() => handleView(user)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
