@@ -92,10 +92,9 @@ export default function LanguageChangeModal({
 
     setSubmitting(true);
     try {
-      await authAPI.createPresalesActivity(leadId, {
+      await authAPI.changeLanguage(leadId, {
         languageId: selectedLanguageId,
-        presalesUserId: selectedPresalesUserId,
-        comment: 'Language changed and lead reassigned'
+        presalesUserId: selectedPresalesUserId
       });
 
       showToast('Lead reassigned successfully', 'success');

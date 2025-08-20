@@ -96,7 +96,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     leadValue: '',
     centre: '',
     leadStatus: '',
-    leadSubStatus: ''
+    leadSubStatus: '',
+    dateFrom: '',
+    dateTo: ''
   });
   const debouncedFilters = useDebounce(filters, 300);
 
@@ -218,7 +220,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         
         {/* Filter Controls */}
         <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-10 gap-4">
             <div className="relative lg:col-span-2">
               <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
               <input
@@ -289,6 +291,20 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
               ))}
             </select>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              placeholder="From Date"
+            />
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              placeholder="To Date"
+            />
           </div>
         </div>
       </div>

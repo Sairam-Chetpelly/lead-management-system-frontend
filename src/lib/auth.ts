@@ -171,6 +171,8 @@ export const authAPI = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+  changeLanguage: (leadId: string, data: { languageId: string; presalesUserId: string }) => 
+    api.post(`/api/leads/${leadId}/change-language`, data),
 };
 
 export default api;
