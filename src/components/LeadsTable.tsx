@@ -13,6 +13,7 @@ import DeleteDialog from './DeleteDialog';
 import LeadCreationModal from './LeadCreationModal';
 import ActivityLogModal from './ActivityLogModal';
 import LeadView from './LeadView';
+import LeadEditModal from './LeadEditModal';
 
 interface Lead {
   _id: string;
@@ -70,6 +71,7 @@ export default function LeadsTable() {
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [showLeadView, setShowLeadView] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState<{isOpen: boolean, leadId: string}>({isOpen: false, leadId: ''});
   const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
   const [activityLogModal, setActivityLogModal] = useState<{isOpen: boolean, leadId: string}>({isOpen: false, leadId: ''});
   
@@ -420,6 +422,9 @@ export default function LeadsTable() {
                     <button onClick={() => handleViewDetails(lead._id)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all" title="View Details">
                       <Eye size={14} />
                     </button>
+                    <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Edit Lead">
+                      <Edit size={14} />
+                    </button>
                     <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Activity Log">
                       <FileText size={14} />
                     </button>
@@ -471,6 +476,9 @@ export default function LeadsTable() {
                 <div className="flex space-x-2 mt-4">
                   <button onClick={() => handleViewDetails(lead._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
                     <Eye size={16} className="mr-1" /> View
+                  </button>
+                  <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-xl font-medium text-sm">
+                    <Edit size={16} className="mr-1" /> Edit
                   </button>
                   <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <FileText size={16} className="mr-1" /> Log
@@ -598,6 +606,13 @@ export default function LeadsTable() {
         isOpen={activityLogModal.isOpen}
         onClose={() => setActivityLogModal({isOpen: false, leadId: ''})}
         leadId={activityLogModal.leadId}
+      />
+
+      <LeadEditModal
+        isOpen={showEditModal.isOpen}
+        onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
+        leadId={showEditModal.leadId}
+        onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
       />
 
       {/* Lead View */}

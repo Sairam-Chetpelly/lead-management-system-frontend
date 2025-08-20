@@ -79,7 +79,7 @@ export const authAPI = {
     getUsers: adminServices.users.getAll,
     
     // Lead Sources
-    getAllLeadSources: () => api.get('/api/lead-sources'),
+    getAllLeadSources: () => api.get('/api/lead-sources/all'),
   },
   
   // Lead Sources CRUD
@@ -108,6 +108,7 @@ export const authAPI = {
     return api.get(`/api/leads${queryString ? `?${queryString}` : ''}`);
   },
   getLead: (id: string) => api.get(`/api/leads/${id}`),
+  getLeadActivities: (id: string) => api.get(`/api/leads/${id}/activities`),
   getLeadTimeline: (id: string) => api.get(`/api/leads/${id}/timeline`),
   createLead: (leadData: any) => api.post('/api/leads', leadData),
   updateLead: (id: string, leadData: any) => api.put(`/api/leads/${id}`, leadData),
@@ -121,6 +122,24 @@ export const authAPI = {
       formData.append('document', document);
     }
     return api.post(`/api/leads/${leadId}/activity`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  createLeadActivity: (leadId: string, leadData: any, files?: File[]) => {
+    const formData = new FormData();
+    Object.keys(leadData).forEach(key => {
+      if (leadData[key] !== undefined && leadData[key] !== null && leadData[key] !== '') {
+        formData.append(key, leadData[key]);
+      }
+    });
+    if (files && files.length > 0) {
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+    }
+    return api.post(`/api/leads/${leadId}/lead-activity`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

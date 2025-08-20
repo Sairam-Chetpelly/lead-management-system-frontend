@@ -108,6 +108,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
   const [lead, setLead] = useState<Lead | null>(null);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [leadActivities, setLeadActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
@@ -122,11 +123,16 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
   const fetchLeadData = async () => {
     setLoading(true);
     try {
-      const response = await authAPI.getLead(leadId);
-      setLead(response.data.lead);
-      setCallLogs(response.data.callLogs || []);
-      setActivityLogs(response.data.activityLogs || []);
-      setEditData(response.data.lead);
+      const [leadResponse, activitiesResponse] = await Promise.all([
+        authAPI.getLead(leadId),
+        authAPI.getLeadActivities(leadId)
+      ]);
+      
+      setLead(leadResponse.data.lead);
+      setCallLogs(leadResponse.data.callLogs || []);
+      setActivityLogs(leadResponse.data.activityLogs || []);
+      setLeadActivities(activitiesResponse.data.leadActivities || []);
+      setEditData(leadResponse.data.lead);
     } catch (error) {
       console.error('Error fetching lead:', error);
       showToast('Failed to fetch lead details', 'error');
@@ -384,7 +390,8 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
             {activeTab === 'activities' && (
               <LeadActivities 
                 callLogs={callLogs} 
-                activityLogs={activityLogs} 
+                activityLogs={activityLogs}
+                leadActivities={leadActivities}
               />
             )}
           </div>
@@ -596,12 +603,113 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
 }
 
 // Activities Component
-function LeadActivities({ callLogs, activityLogs }: {
+function LeadActivities({ callLogs, activityLogs, leadActivities }: {
   callLogs: CallLog[];
   activityLogs: ActivityLog[];
+  leadActivities: any[];
 }) {
   return (
     <div className="space-y-6">
+      {/* Lead Activities */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Activity size={20} className="mr-2" />
+          Lead Activities ({leadActivities.length})
+        </h3>
+        {leadActivities.length > 0 ? (
+          <div className="space-y-3">
+            {leadActivities.map((activity, index) => (
+              <div key={activity._id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Activity size={16} className="text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Activity #{leadActivities.length - index}</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Updated by {activity.updatedPerson?.name || 'System'}
+                      </p>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        {activity.leadStatusId && (
+                          <div>
+                            <span className="font-medium text-gray-700">Status:</span>
+                            <span className="ml-1 text-gray-900">{activity.leadStatusId.name}</span>
+                          </div>
+                        )}
+                        {activity.leadSubStatusId && (
+                          <div>
+                            <span className="font-medium text-gray-700">Sub-Status:</span>
+                            <span className="ml-1 text-gray-900">{activity.leadSubStatusId.name}</span>
+                          </div>
+                        )}
+                        {activity.leadValue && (
+                          <div>
+                            <span className="font-medium text-gray-700">Value:</span>
+                            <span className="ml-1 text-gray-900 capitalize">{activity.leadValue}</span>
+                          </div>
+                        )}
+                        {activity.projectValue && (
+                          <div>
+                            <span className="font-medium text-gray-700">Project Value:</span>
+                            <span className="ml-1 text-gray-900">{activity.projectValue}</span>
+                          </div>
+                        )}
+                        {activity.apartmentName && (
+                          <div>
+                            <span className="font-medium text-gray-700">Apartment:</span>
+                            <span className="ml-1 text-gray-900">{activity.apartmentName}</span>
+                          </div>
+                        )}
+                        {activity.paymentMethod && (
+                          <div>
+                            <span className="font-medium text-gray-700">Payment:</span>
+                            <span className="ml-1 text-gray-900 capitalize">{activity.paymentMethod}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {activity.comment && (
+                        <div className="mt-2">
+                          <span className="font-medium text-gray-700">Comment:</span>
+                          <p className="text-gray-900 mt-1">{activity.comment}</p>
+                        </div>
+                      )}
+                      
+                      {activity.files && activity.files.length > 0 && (
+                        <div className="mt-2">
+                          <span className="font-medium text-gray-700">Files:</span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {activity.files.map((file: any, fileIndex: number) => (
+                              <a 
+                                key={fileIndex}
+                                href={`/api/leads/document/${file.filename}`}
+                                download
+                                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center space-x-1 bg-white px-2 py-1 rounded"
+                              >
+                                <FileText size={12} />
+                                <span>{file.originalname}</span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-900">{new Date(activity.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">{new Date(activity.createdAt).toLocaleTimeString()}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No lead activities yet</p>
+        )}
+      </div>
+
       {/* Call Logs */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -620,7 +728,6 @@ function LeadActivities({ callLogs, activityLogs }: {
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">Call - {log.callId}</p>
                       <p className="text-sm text-gray-600 mb-2">by {log.userId.name}</p>
-
                     </div>
                   </div>
                   <div className="text-right">
