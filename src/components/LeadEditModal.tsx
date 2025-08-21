@@ -344,6 +344,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
               <input
                 type="tel"
+                disabled
                 value={formData.contactNumber}
                 onChange={(e) => handleInputChange('contactNumber', e.target.value)}
                 required

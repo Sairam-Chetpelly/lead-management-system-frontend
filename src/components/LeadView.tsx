@@ -255,69 +255,62 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
       <div className="bg-white/80 backdrop-blur-xl border-b border-white/20 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
               >
                 <ArrowLeft size={20} />
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{lead.leadId.leadID}</h1>
-                <p className="text-sm text-gray-600">{lead.name || 'Lead Details'}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{lead.leadId.leadID}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{lead.name || 'Lead Details'}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
               {!editing ? (
                 <>
                   <button
                     onClick={() => handleCall(lead.contactNumber)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <PhoneCall size={16} />
-                    <span>Call</span>
+                    <span className="hidden sm:inline">Call</span>
                   </button>
                   
                   <button
                     onClick={() => setShowActivityForm(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <MessageSquare size={16} />
-                    <span>Add Activity</span>
+                    <span className="hidden sm:inline">Add Activity</span>
                   </button>
                   {currentUser?.role === 'presales_agent' && (
                     <button
                       onClick={() => setShowLanguageModal(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                     >
                       <Globe size={16} />
-                      <span>Language Change</span>
+                      <span className="hidden lg:inline">Language Change</span>
                     </button>
                   )}
-                  {/* <button
-                    onClick={handleEdit}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Edit size={16} />
-                    <span>Edit</span>
-                  </button> */}
                 </>
               ) : (
                 <>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >
                     <X size={16} />
-                    <span>Cancel</span>
+                    <span className="hidden sm:inline">Cancel</span>
                   </button>
                   <button
                     onClick={handleSave}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Save size={16} />
-                    <span>Save</span>
+                    <span className="hidden sm:inline">Save</span>
                   </button>
                 </>
               )}
@@ -329,57 +322,57 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <User size={24} className="text-blue-600" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <User size={16} className="sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Lead Status</p>
-                <p className="font-semibold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-600">Lead Status</p>
+                <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                   {lead.leadStatusId?.name || 'Not Set'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <TrendingUp size={24} className="text-green-600" />
+          <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <TrendingUp size={16} className="sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Lead Value</p>
-                <p className="font-semibold text-gray-900 capitalize">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-600">Lead Value</p>
+                <p className="font-semibold text-gray-900 text-sm sm:text-base capitalize truncate">
                   {lead.leadValue || 'Not Set'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Users size={24} className="text-purple-600" />
+          <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <Users size={16} className="sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Assigned To</p>
-                <p className="font-semibold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-600">Assigned To</p>
+                <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                   {lead.presalesUserId?.name || lead.salesUserId?.name || 'Unassigned'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Target size={24} className="text-orange-600" />
+          <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <Target size={16} className="sm:w-6 sm:h-6 text-orange-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Activities</p>
-                <p className="font-semibold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-gray-600">Activities</p>
+                <p className="font-semibold text-gray-900 text-sm sm:text-base">
                   {callLogs.length + activityLogs.length}
                 </p>
               </div>
@@ -388,9 +381,9 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg mb-8">
+        <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/20 shadow-lg mb-6 sm:mb-8">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex px-4 sm:px-6">
               {[
                 { id: 'overview', label: 'Overview', icon: User },
                 { id: 'timeline', label: 'Timeline', icon: Clock },
@@ -399,20 +392,20 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id as any)}
-                  className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                  className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors ${
                     activeTab === id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <Icon size={16} />
-                  <span>{label}</span>
+                  <Icon size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {activeTab === 'overview' && (
               <LeadOverview 
                 lead={lead} 

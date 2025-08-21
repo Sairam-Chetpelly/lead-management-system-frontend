@@ -261,6 +261,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
               <input
                 type="tel"
+                disabled
                 value={formData.contactNumber}
                 onChange={(e) => handleInputChange('contactNumber', e.target.value)}
                 required
