@@ -225,8 +225,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                 </button>
               </div>
               <div className="text-xs text-gray-600 space-y-1">
-                <div><strong>Required columns:</strong> name, email, contactNumber, comment</div>
-                <div><strong>Required Values:</strong> contactNumber</div>
+                <div><strong>Required Values:</strong> name, email, contactNumber, comment, but contactNumber is manderatry </div>
                 <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
                 <div><strong>Contact Number format:</strong> 10-15 digits, can include +, -, (), spaces</div>

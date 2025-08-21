@@ -196,10 +196,30 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     }
   };
 
-  const handleCall = async (leadId: string) => {
+  const handleCall = async (leadId: string, contactNumber?: string) => {
+    // Check if device is mobile or tablet
+    const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobileOrTablet && contactNumber) {
+      try {
+        // Copy contact number to clipboard
+        await navigator.clipboard.writeText(contactNumber);
+        showToast('Contact number copied to clipboard', 'success');
+        
+        // Open native dialer
+        window.location.href = `tel:${contactNumber}`;
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        // Fallback: just open dialer
+        window.location.href = `tel:${contactNumber}`;
+      }
+    }
+    
     try {
       await authAPI.createCallLog(leadId);
-      showToast('Call logged successfully', 'success');
+      if (!isMobileOrTablet) {
+        showToast('Call logged successfully', 'success');
+      }
     } catch (error) {
       console.error('Error logging call:', error);
       showToast('Failed to log call', 'error');
@@ -467,7 +487,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Activity Log">
                       <FileText size={14} />
                     </button>
-                     <button onClick={() => handleCall(lead._id)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
+                     <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
                       <PhoneCall size={14} />
                     </button>
                   </div>
@@ -522,7 +542,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
                     <FileText size={16} className="mr-1" /> Log
                   </button>
-                  <button onClick={() => handleCall(lead._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <PhoneCall size={16} className="mr-1" /> Call
                   </button>
                 </div>

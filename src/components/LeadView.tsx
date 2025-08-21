@@ -176,12 +176,32 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     setEditData(lead || {});
   };
 
-  const handleCall = async () => {
+  const handleCall = async (contactNumber?: string) => {
     if (!lead) return;
+    
+    // Check if device is mobile or tablet
+    const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobileOrTablet && contactNumber) {
+      try {
+        // Copy contact number to clipboard
+        await navigator.clipboard.writeText(contactNumber);
+        showToast('Contact number copied to clipboard', 'success');
+        
+        // Open native dialer
+        window.location.href = `tel:${contactNumber}`;
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        // Fallback: just open dialer
+        window.location.href = `tel:${contactNumber}`;
+      }
+    }
     
     try {
       await authAPI.createCallLog(lead?.leadId?._id);
-      showToast('Call logged successfully', 'success');
+      if (!isMobileOrTablet) {
+        showToast('Call logged successfully', 'success');
+      }
       fetchLeadData(); // Refresh data
     } catch (error) {
       console.error('Error logging call:', error);
@@ -252,7 +272,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
               {!editing ? (
                 <>
                   <button
-                    onClick={handleCall}
+                    onClick={() => handleCall(lead.contactNumber)}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <PhoneCall size={16} />

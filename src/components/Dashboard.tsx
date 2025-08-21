@@ -275,7 +275,7 @@ export default function Dashboard({ user }: DashboardProps) {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
         {/* Weekly Trend Chart */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Lead Trend</h3>
@@ -313,8 +313,169 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        {/* Lead Status Distribution */}
+        {/* Calling Chart for Presales Agents */}
+        {isPreSalesAgent && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls</h3>
+            <div className="h-64">
+              <Line
+                data={{
+                  labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => 
+                    new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
+                  ),
+                  datasets: [
+                    {
+                      label: 'Calls Made',
+                      data: (leadStats.weeklyCallTrend || []).map((item: WeeklyTrendItem) => item.count),
+                      borderColor: 'rgb(16, 185, 129)',
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Lead Value Distribution for Presales Agents */}
+        {isPreSalesAgent && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Value Distribution</h3>
+            <div className="h-64">
+              {leadStats.leadValueDistribution && leadStats.leadValueDistribution.length > 0 ? (
+                <Doughnut
+                  data={{
+                    labels: leadStats.leadValueDistribution.map((item: StatusDistributionItem) => 
+                      item._id === 'high value' ? 'High Value' :
+                      item._id === 'medium value' ? 'Medium Value' :
+                      item._id === 'low value' ? 'Low Value' : 'Not Set'
+                    ),
+                    datasets: [
+                      {
+                        data: leadStats.leadValueDistribution.map((item: StatusDistributionItem) => item.count),
+                        backgroundColor: [
+                          '#EF4444', // Red for High Value
+                          '#F59E0B', // Yellow for Medium Value  
+                          '#10B981', // Green for Low Value
+                          '#6B7280', // Gray for Not Set
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          padding: 20,
+                          usePointStyle: true,
+                        },
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return `${label}: ${value} leads`;
+                          }
+                        }
+                      }
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                    <p>No lead value data available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Source Distribution Chart */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Sources</h3>
+          <div className="h-64">
+            {leadStats.sourceDistribution && leadStats.sourceDistribution.length > 0 ? (
+              <Doughnut
+                data={{
+                  labels: leadStats.sourceDistribution.map((item: StatusDistributionItem) => item._id || 'Unknown'),
+                  datasets: [
+                    {
+                      data: leadStats.sourceDistribution.map((item: StatusDistributionItem) => item.count),
+                      backgroundColor: [
+                        '#3B82F6', // Blue
+                        '#10B981', // Green
+                        '#F59E0B', // Yellow
+                        '#EF4444', // Red
+                        '#8B5CF6', // Purple
+                        '#F97316', // Orange
+                        '#06B6D4', // Cyan
+                        '#84CC16', // Lime
+                      ],
+                      borderWidth: 2,
+                      borderColor: '#ffffff',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.label || '';
+                          const value = context.parsed || 0;
+                          return `${label}: ${value} leads`;
+                        }
+                      }
+                    }
+                  },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                  <p>No source data available</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lead Status Distribution */}
+        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Status Distribution</h3>
           <div className="h-64">
             {leadStats.statusDistribution && leadStats.statusDistribution.length > 0 ? (
@@ -372,7 +533,98 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
       </div>
 
-     
+      {/* Additional Charts Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Center Distribution Chart */}
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Distribution</h3>
+          <div className="h-64">
+            {leadStats.centerDistribution && leadStats.centerDistribution.length > 0 ? (
+              <Doughnut
+                data={{
+                  labels: leadStats.centerDistribution.map((item: StatusDistributionItem) => item._id || 'No Centre'),
+                  datasets: [
+                    {
+                      data: leadStats.centerDistribution.map((item: StatusDistributionItem) => item.count),
+                      backgroundColor: [
+                        '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B'
+                      ],
+                      borderWidth: 2,
+                      borderColor: '#ffffff',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          return `${context.label}: ${context.parsed} leads`;
+                        }
+                      }
+                    }
+                  },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                  <p>No center data available</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Language Distribution Chart */}
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Language Distribution</h3>
+          <div className="h-64">
+            {leadStats.languageDistribution && leadStats.languageDistribution.length > 0 ? (
+              <Doughnut
+                data={{
+                  labels: leadStats.languageDistribution.map((item: StatusDistributionItem) => item._id || 'No Language'),
+                  datasets: [
+                    {
+                      data: leadStats.languageDistribution.map((item: StatusDistributionItem) => item.count),
+                      backgroundColor: [
+                        '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#F97316', '#06B6D4', '#EC4899'
+                      ],
+                      borderWidth: 2,
+                      borderColor: '#ffffff',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          return `${context.label}: ${context.parsed} leads`;
+                        }
+                      }
+                    }
+                  },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                  <p>No language data available</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Reports Section */}
       <div hidden className="bg-white rounded-lg sm:rounded-xl shadow">
