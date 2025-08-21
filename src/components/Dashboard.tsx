@@ -313,8 +313,8 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        {/* Calling Chart for Presales Agents */}
-        {isPreSalesAgent && (
+        {/* Calling Chart for Presales and Sales Agents */}
+        {(isPreSalesAgent || isSalesAgent) && (
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls</h3>
             <div className="h-64">
@@ -353,7 +353,7 @@ export default function Dashboard({ user }: DashboardProps) {
         )}
 
         {/* Lead Value Distribution for Presales Agents */}
-        {isPreSalesAgent && (
+        {!isPreSalesAgent && (
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Value Distribution</h3>
             <div className="h-64">
@@ -531,54 +531,52 @@ export default function Dashboard({ user }: DashboardProps) {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Additional Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Center Distribution Chart */}
-        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Distribution</h3>
-          <div className="h-64">
-            {leadStats.centerDistribution && leadStats.centerDistribution.length > 0 ? (
-              <Doughnut
-                data={{
-                  labels: leadStats.centerDistribution.map((item: StatusDistributionItem) => item._id || 'No Centre'),
-                  datasets: [
-                    {
-                      data: leadStats.centerDistribution.map((item: StatusDistributionItem) => item.count),
-                      backgroundColor: [
-                        '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B'
-                      ],
-                      borderWidth: 2,
-                      borderColor: '#ffffff',
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          return `${context.label}: ${context.parsed} leads`;
+        {!isPreSalesAgent && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Distribution</h3>
+            <div className="h-64">
+              {leadStats.centerDistribution && leadStats.centerDistribution.length > 0 ? (
+                <Doughnut
+                  data={{
+                    labels: leadStats.centerDistribution.map((item: StatusDistributionItem) => item._id || 'No Centre'),
+                    datasets: [
+                      {
+                        data: leadStats.centerDistribution.map((item: StatusDistributionItem) => item.count),
+                        backgroundColor: [
+                          '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.label}: ${context.parsed} leads`;
+                          }
                         }
                       }
-                    }
-                  },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                  <p>No center data available</p>
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                    <p>No center data available</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Language Distribution Chart */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
@@ -624,36 +622,53 @@ export default function Dashboard({ user }: DashboardProps) {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Reports Section */}
-      <div hidden className="bg-white rounded-lg sm:rounded-xl shadow">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Reports</h2>
-        </div>
-        <div className="p-4 sm:p-6">
-          <AccessControl requiredRole="admin">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                <i className="fas fa-users text-blue-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">User Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">View user activity and performance</p>
-              </button>
-              
-              <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                <i className="fas fa-chart-bar text-green-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">System Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">System usage and statistics</p>
-              </button>
-              
-              <button className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors sm:col-span-2 lg:col-span-1">
-                <i className="fas fa-cog text-purple-600 mb-2 text-sm sm:text-base"></i>
-                <h3 className="font-medium text-sm sm:text-base">Admin Reports</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">Administrative insights and metrics</p>
-              </button>
+        {/* Lead Sub-Status Distribution for Sales Users and Admin */}
+        {(isSalesAgent || (!isSalesAgent && !isPreSalesAgent)) && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Sub-Status Distribution</h3>
+            <div className="h-64">
+              {leadStats.leadSubStatusDistribution && leadStats.leadSubStatusDistribution.length > 0 ? (
+                <Doughnut
+                  data={{
+                    labels: leadStats.leadSubStatusDistribution.map((item: StatusDistributionItem) => item._id || 'No Sub Status'),
+                    datasets: [
+                      {
+                        data: leadStats.leadSubStatusDistribution.map((item: StatusDistributionItem) => item.count),
+                        backgroundColor: [
+                          '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316', '#06B6D4', '#84CC16'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.label}: ${context.parsed} leads`;
+                          }
+                        }
+                      }
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                    <p>No sub-status data available</p>
+                  </div>
+                </div>
+              )}
             </div>
-          </AccessControl>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
