@@ -64,7 +64,6 @@ interface Lead {
     slug: string;
   };
   leadValue?: string;
-  notes?: string;
   createdAt: string;
 }
 
@@ -576,12 +575,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Comment</label>
                 <p className="text-sm text-gray-900">{viewLead.comment}</p>
-              </div>
-            )}
-            {viewLead.notes && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <p className="text-sm text-gray-900">{viewLead.notes}</p>
               </div>
             )}
             {(viewLead.leadStatusId || viewLead.leadSubStatusId) && (

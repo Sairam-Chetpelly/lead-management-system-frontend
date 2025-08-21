@@ -16,8 +16,6 @@ interface FormData {
   projectTypeId: string;
   houseTypeId: string;
   leadValue: string;
-  notes: string;
-  sourceId: string;
 }
 
 interface DropdownData {
@@ -31,9 +29,10 @@ interface DropdownData {
 
 interface LeadCreationFormProps {
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = {}) {
+export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFormProps = {}) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -45,9 +44,7 @@ export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = 
     languageId: '',
     projectTypeId: '',
     houseTypeId: '',
-    leadValue: '',
-    notes: '',
-    sourceId: ''
+    leadValue: ''
   });
 
   const [dropdownData, setDropdownData] = useState<DropdownData>({
@@ -110,9 +107,7 @@ export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = 
         languageId: '',
         projectTypeId: '',
         houseTypeId: '',
-        leadValue: '',
-        notes: '',
-        sourceId: ''
+        leadValue: ''
       });
       
       // Call success callback
@@ -184,25 +179,7 @@ export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = 
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <Building size={16} className="inline mr-2" />
-                Lead Source *
-              </label>
-              <select
-                value={formData.sourceId}
-                onChange={(e) => handleInputChange('sourceId', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
-              >
-                <option value="">Select Lead Source</option>
-                {dropdownData.leadSources.map((source) => (
-                  <option key={source._id} value={source._id}>
-                    {source.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+
           </div>
 
           {/* Assignment Type */}
@@ -336,8 +313,8 @@ export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = 
             </div>
           )}
 
-          {/* Comments and Notes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Comments */}
+          <div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <MessageSquare size={16} className="inline mr-2" />
@@ -351,24 +328,19 @@ export default function LeadCreationForm({ onSuccess }: LeadCreationFormProps = 
                 placeholder="Enter any comments"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <FileText size={16} className="inline mr-2" />
-                Notes
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                rows={4}
-                placeholder="Enter any additional notes"
-              />
-            </div>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
+              >
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
               disabled={loading}

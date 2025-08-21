@@ -25,7 +25,6 @@ interface FormData {
   houseTypeId: string;
   apartmentName: string;
   leadValue: string;
-  notes: string;
   comment: string;
 }
 
@@ -60,7 +59,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     houseTypeId: '',
     apartmentName: '',
     leadValue: '',
-    notes: '',
     comment: ''
   });
 
@@ -100,7 +98,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         houseTypeId: lead.houseTypeId?._id || '',
         apartmentName: lead.apartmentName || '',
         leadValue: lead.leadValue || '',
-        notes: lead.notes || '',
         comment: ''
       });
     } catch (error) {
@@ -215,7 +212,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       houseTypeId: '',
       apartmentName: '',
       leadValue: '',
-      notes: '',
       comment: ''
     });
     setFiles([]);
@@ -395,33 +391,21 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
           </div>
         </div>
 
-        {/* Notes & Comments */}
+        {/* Comments */}
         <div className="bg-orange-50 p-4 rounded-xl">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <MessageSquare className="mr-2" size={20} />
-            Notes & Comments
+            Comments
           </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter general notes..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Activity Comment</label>
-              <textarea
-                value={formData.comment}
-                onChange={(e) => handleInputChange('comment', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter activity comment..."
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Activity Comment</label>
+            <textarea
+              value={formData.comment}
+              onChange={(e) => handleInputChange('comment', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Enter activity comment..."
+            />
           </div>
         </div>
 

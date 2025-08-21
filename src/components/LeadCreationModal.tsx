@@ -204,7 +204,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
 
         {/* Tab Content */}
         {activeTab === 'manual' ? (
-          <LeadCreationForm onSuccess={handleManualSuccess} />
+          <LeadCreationForm onSuccess={handleManualSuccess} onCancel={handleClose} />
         ) : (
           <div className="space-y-6">
             {/* Sample CSV Download */}
@@ -228,7 +228,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                 <div><strong>Required columns:</strong> name, email, contactNumber, comment</div>
                 <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
-                <div><strong>Phone format:</strong> 10-15 digits, can include +, -, (), spaces</div>
+                <div><strong>Contact Number format:</strong> 10-15 digits, can include +, -, (), spaces</div>
                 <div><strong>Assignment:</strong> All leads will be assigned to presales team in round-robin</div>
               </div>
             </div>
@@ -353,7 +353,13 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
             )}
 
             {/* Upload Button */}
-            <div className="flex justify-end pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                onClick={handleClose}
+                className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleBulkUpload}
                 disabled={!file || uploading}

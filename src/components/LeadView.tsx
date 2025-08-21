@@ -12,7 +12,7 @@ import { useToast } from '@/contexts/ToastContext';
 import ModernLoader from './ModernLoader';
 import LeadTimeline from './LeadTimeline';
 import LeadActivityForm from './LeadActivityForm';
-import CallLogModal from './CallLogModal';
+
 import LanguageChangeModal from './LanguageChangeModal';
 
 interface LeadViewProps {
@@ -30,7 +30,6 @@ interface Lead {
   email: string;
   contactNumber: string;
   comment: string;
-  notes: string;
   presalesUserId?: {
     name: string;
     email: string;
@@ -114,7 +113,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [showActivityForm, setShowActivityForm] = useState(false);
-  const [showCallModal, setShowCallModal] = useState(false);
+
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'activities'>('overview');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -253,11 +252,19 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
               {!editing ? (
                 <>
                   <button
-                    onClick={() => setShowCallModal(true)}
+                    onClick={handleCall}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <PhoneCall size={16} />
                     <span>Call</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowActivityForm(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <MessageSquare size={16} />
+                    <span>Add Activity</span>
                   </button>
                   {currentUser?.role === 'presales_agent' && (
                     <button
@@ -268,13 +275,6 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                       <span>Language Change</span>
                     </button>
                   )}
-                  <button
-                    onClick={() => setShowActivityForm(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    <MessageSquare size={16} />
-                    <span>Add Activity</span>
-                  </button>
                   {/* <button
                     onClick={handleEdit}
                     className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -428,13 +428,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         />
       )}
 
-      {showCallModal && (
-        <CallLogModal
-          isOpen={showCallModal}
-          onClose={() => setShowCallModal(false)}
-          onCall={handleCall}
-        />
-      )}
+
 
       {showLanguageModal && (
         <LanguageChangeModal
@@ -461,6 +455,23 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
   editData: any;
   setEditData: (data: any) => void;
 }) {
+  // Get current user role
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isPresalesAgent = userRole === 'presales_agent';
+
   const handleInputChange = (field: string, value: any) => {
     setEditData((prev: any) => ({ ...prev, [field]: value }));
   };
@@ -550,9 +561,13 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FieldDisplay label="Presales User" value={lead.presalesUserId?.name} icon={User} editing={false} field="presalesUserId" />
-          <FieldDisplay label="Sales User" value={lead.salesUserId?.name} icon={User} editing={false} field="salesUserId" />
+          {!isPresalesAgent && (
+            <FieldDisplay label="Sales User" value={lead.salesUserId?.name} icon={User} editing={false} field="salesUserId" />
+          )}
           <FieldDisplay label="Lead Status" value={lead.leadStatusId?.name} icon={CheckCircle} editing={false} field="leadStatusId" />
-          <FieldDisplay label="Lead Sub Status" value={lead.leadSubStatusId?.name} icon={AlertCircle} editing={false} field="leadSubStatusId" />
+          {!isPresalesAgent && (
+            <FieldDisplay label="Lead Sub Status" value={lead.leadSubStatusId?.name} icon={AlertCircle} editing={false} field="leadSubStatusId" />
+          )}
           <FieldDisplay label="Centre" value={lead.centreId?.name} icon={MapPin} editing={false} field="centreId" />
         </div>
       </div>
@@ -566,9 +581,14 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FieldDisplay label="Project Type" value={lead.projectTypeId?.name} icon={Building} editing={false} field="projectTypeId" />
           <FieldDisplay label="House Type" value={lead.houseTypeId?.name} icon={Building} editing={false} field="houseTypeId" />
-          <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
+          {!isPresalesAgent && (
+            <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
+          )}
           <FieldDisplay label="Apartment Name" value={lead.apartmentName} icon={Building} editing={editing} field="apartmentName" />
-          <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
+          {!isPresalesAgent && (
+            <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
+          )}
+          {!isPresalesAgent && (
           <FieldDisplay label="Payment Method" value={lead.paymentMethod} icon={DollarSign} editing={editing} field="paymentMethod" type="select" options={[
             { value: 'cod', label: 'Cash on Delivery' },
             { value: 'upi', label: 'UPI' },
@@ -578,10 +598,12 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
             { value: 'cheque', label: 'Cheque' },
             { value: 'loan', label: 'Loan' }
           ]} />
+          )}
         </div>
       </div>
 
       {/* Visit Information */}
+      {!isPresalesAgent && (
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <MapPin size={20} className="mr-2" />
@@ -596,18 +618,17 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
         </div>
       </div>
+      )}
 
 
-
-      {/* Comments & Notes */}
+      {/* Comments */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <FileText size={20} className="mr-2" />
-          Comments & Notes
+          Comments
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FieldDisplay label="Comment" value={lead.comment} icon={MessageSquare} editing={editing} field="comment" type="textarea" />
-          <FieldDisplay label="Notes" value={lead.notes} icon={FileText} editing={editing} field="notes" type="textarea" />
         </div>
       </div>
 

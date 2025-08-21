@@ -32,14 +32,23 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
+    const currentPath = window.location.pathname;
     
-    if (status === 401 || (status === 403 && error.response?.data?.error?.includes('inactive'))) {
-      // Token expired or user is inactive, force logout
+    // Only redirect on 401 if we're not already on login page and it's not a login attempt
+    if (status === 401 && currentPath !== '/' && currentPath !== '/login' && !error.config?.url?.includes('/auth/login')) {
+      // Token expired, force logout
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('currentPage');
       localStorage.removeItem('lastVisitedPage');
-      window.location.href = '/login';
+      window.location.href = '';
+    } else if (status === 403 && error.response?.data?.error?.includes('inactive')) {
+      // User is inactive, force logout
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('currentPage');
+      localStorage.removeItem('lastVisitedPage');
+      window.location.href = '';
     } else if ([500, 502, 503, 504].includes(status)) {
       // Server errors - store error info for error page
       localStorage.setItem('lastError', JSON.stringify({

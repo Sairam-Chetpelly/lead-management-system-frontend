@@ -171,7 +171,7 @@ export default function LeadActivityForm({ isOpen, onClose, onSubmit }: LeadActi
         </div>
 
         {/* Activity Guidelines */}
-        <div className={`p-4 rounded-xl border-l-4 ${
+        {/* <div className={`p-4 rounded-xl border-l-4 ${
           type === 'call' 
             ? 'bg-green-50 border-green-400' 
             : 'bg-blue-50 border-blue-400'
@@ -202,7 +202,7 @@ export default function LeadActivityForm({ isOpen, onClose, onSubmit }: LeadActi
               </>
             )}
           </ul>
-        </div>
+        </div> */}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">

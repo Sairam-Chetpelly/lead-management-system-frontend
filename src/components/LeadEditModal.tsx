@@ -35,7 +35,7 @@ interface FormData {
   centerVisitDate: string;
   virtualMeeting: boolean;
   virtualMeetingDate: string;
-  notes: string;
+  cifDate: string;
   comment: string;
 }
 
@@ -60,6 +60,23 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Get current user role
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isSalesAgent = userRole === 'sales_agent';
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -82,8 +99,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     centerVisitDate: '',
     virtualMeeting: false,
     virtualMeetingDate: '',
-
-    notes: '',
+    cifDate: '',
     comment: ''
   });
 
@@ -136,8 +152,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         centerVisitDate: lead.centerVisitDate ? new Date(lead.centerVisitDate).toISOString().split('T')[0] : '',
         virtualMeeting: lead.virtualMeeting || false,
         virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
-
-        notes: lead.notes || '',
+        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().split('T')[0] : '',
         comment: lead.comment || ''
       });
     } catch (error) {
@@ -237,6 +252,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       if (leadActivityData.virtualMeetingDate) {
         leadActivityData.virtualMeetingDate = new Date(leadActivityData.virtualMeetingDate).toISOString();
       }
+      if (leadActivityData.cifDate) {
+        leadActivityData.cifDate = new Date(leadActivityData.cifDate).toISOString();
+      }
 
 
       // Create new lead activity entry with all data and files
@@ -276,8 +294,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       centerVisitDate: '',
       virtualMeeting: false,
       virtualMeetingDate: '',
-
-      notes: '',
+      cifDate: '',
       comment: ''
     });
     setFiles([]);
@@ -339,7 +356,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 value={formData.sourceId || ''}
                 onChange={(e) => handleInputChange('sourceId', e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSalesAgent}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isSalesAgent ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               >
                 <option value="">Select Source ({dropdownData.leadSources.length} available)</option>
                 {dropdownData.leadSources.map((source: any) => (
@@ -365,9 +383,11 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Status</option>
-                {dropdownData.leadStatuses.map((status: any) => (
-                  <option key={status._id} value={status._id}>{status.name}</option>
-                ))}
+                {dropdownData.leadStatuses
+                  .filter((status: any) => isSalesAgent ? ['qualified', 'won', 'lost'].includes(status.slug) : true)
+                  .map((status: any) => (
+                    <option key={status._id} value={status._id}>{status.name}</option>
+                  ))}
               </select>
             </div>
             {(() => {
@@ -381,10 +401,33 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select Sub-Status</option>
-                    {dropdownData.leadSubStatuses.map((subStatus: any) => (
-                      <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
-                    ))}
+                    {dropdownData.leadSubStatuses
+                      .filter((subStatus: any) => {
+                        if (isSalesAgent) {
+                          // For sales agents, show all sub-statuses except restrict CIF based on selection
+                          return true;
+                        }
+                        return true;
+                      })
+                      .map((subStatus: any) => (
+                        <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
+                      ))}
                   </select>
+                </div>
+              ) : null;
+            })()}
+            
+            {(() => {
+              const selectedSubStatus = dropdownData.leadSubStatuses.find((s: DropdownItem) => s._id === formData.leadSubStatusId);
+              return selectedSubStatus?.slug === 'cif' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CIF Date</label>
+                  <input
+                    type="datetime-local"
+                    value={formData.cifDate}
+                    onChange={(e) => handleInputChange('cifDate', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 </div>
               ) : null;
             })()}
@@ -589,36 +632,24 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
           </div>
         </div>
 
-        {/* Notes & Comments */}
+        {/* Activity Comments */}
         <div className="bg-orange-50 p-4 rounded-xl">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <MessageSquare className="mr-2" size={20} />
-            Notes & Activity Comments
+            Activity Comments
           </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter general notes about the lead..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Activity Comment</label>
-              <textarea
-                value={formData.comment}
-                onChange={(e) => handleInputChange('comment', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter activity comment (this will create a new lead activity entry)..."
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                This comment will be saved as a new lead activity entry when you update the lead.
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Activity Comment</label>
+            <textarea
+              value={formData.comment}
+              onChange={(e) => handleInputChange('comment', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Enter activity comment (this will create a new lead activity entry)..."
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              This comment will be saved as a new lead activity entry when you update the lead.
+            </p>
           </div>
         </div>
 
