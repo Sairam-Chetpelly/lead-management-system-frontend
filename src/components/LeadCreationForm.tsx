@@ -1,16 +1,27 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MessageSquare, Users, Building, Globe, Home, TrendingUp, FileText } from 'lucide-react';
-import { authAPI } from '@/lib/auth';
-import { useToast } from '@/contexts/ToastContext';
+import React, { useState, useEffect } from "react";
+import {
+  User,
+  Mail,
+  Phone,
+  MessageSquare,
+  Users,
+  Building,
+  Globe,
+  Home,
+  TrendingUp,
+  FileText,
+} from "lucide-react";
+import { authAPI } from "@/lib/auth";
+import { useToast } from "@/contexts/ToastContext";
 
 interface FormData {
   name: string;
   email: string;
   contactNumber: string;
   comment: string;
-  assignmentType: 'presales' | 'sales' | '';
+  assignmentType: "presales" | "sales" | "";
   centreId: string;
   languageId: string;
   projectTypeId: string;
@@ -32,19 +43,22 @@ interface LeadCreationFormProps {
   onCancel?: () => void;
 }
 
-export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFormProps = {}) {
+export default function LeadCreationForm({
+  onSuccess,
+  onCancel,
+}: LeadCreationFormProps = {}) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    contactNumber: '',
-    comment: '',
-    assignmentType: '',
-    centreId: '',
-    languageId: '',
-    projectTypeId: '',
-    houseTypeId: '',
-    leadValue: ''
+    name: "",
+    email: "",
+    contactNumber: "",
+    comment: "",
+    assignmentType: "",
+    centreId: "",
+    languageId: "",
+    projectTypeId: "",
+    houseTypeId: "",
+    leadValue: "",
   });
 
   const [dropdownData, setDropdownData] = useState<DropdownData>({
@@ -53,7 +67,7 @@ export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFo
     leadSources: [],
     projectTypes: [],
     houseTypes: [],
-    leadValues: []
+    leadValues: [],
   });
 
   const [loading, setLoading] = useState(false);
@@ -65,24 +79,26 @@ export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFo
 
   // Debug logging
   useEffect(() => {
-    console.log('Dropdown data updated:', dropdownData);
+    console.log("Dropdown data updated:", dropdownData);
   }, [dropdownData]);
 
   const fetchDropdownData = async () => {
     try {
       const response = await authAPI.getLeadFormData();
-      console.log('Form data response:', response.data);
-      setDropdownData(response.data || {
-        centres: [],
-        languages: [],
-        leadSources: [],
-        projectTypes: [],
-        houseTypes: [],
-        leadValues: []
-      });
+      console.log("Form data response:", response.data);
+      setDropdownData(
+        response.data || {
+          centres: [],
+          languages: [],
+          leadSources: [],
+          projectTypes: [],
+          houseTypes: [],
+          leadValues: [],
+        }
+      );
     } catch (error) {
-      console.error('Error fetching form data:', error);
-      showToast('Failed to load form data', 'error');
+      console.error("Error fetching form data:", error);
+      showToast("Failed to load form data", "error");
     } finally {
       setDataLoading(false);
     }
@@ -94,33 +110,36 @@ export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFo
 
     try {
       await authAPI.createLead(formData);
-      showToast('Lead created successfully', 'success');
-      
+      showToast("Lead created successfully", "success");
+
       // Reset form
       setFormData({
-        name: '',
-        email: '',
-        contactNumber: '',
-        comment: '',
-        assignmentType: '',
-        centreId: '',
-        languageId: '',
-        projectTypeId: '',
-        houseTypeId: '',
-        leadValue: ''
+        name: "",
+        email: "",
+        contactNumber: "",
+        comment: "",
+        assignmentType: "",
+        centreId: "",
+        languageId: "",
+        projectTypeId: "",
+        houseTypeId: "",
+        leadValue: "",
       });
-      
+
       // Call success callback
       onSuccess?.();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to create lead', 'error');
+      showToast(
+        error.response?.data?.error || "Failed to create lead",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   if (dataLoading) {
@@ -133,223 +152,229 @@ export default function LeadCreationForm({ onSuccess, onCancel }: LeadCreationFo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <User size={16} className="inline mr-2" />
-                Name
-              </label>
+      {/* Basic Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <User size={16} className="inline mr-2" />
+            Name
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Enter full name"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <Mail size={16} className="inline mr-2" />
+            Email *
+          </label>
+          <input
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Enter email address"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <Phone size={16} className="inline mr-2" />
+            Contact Number *
+          </label>
+          <input
+            type="tel"
+            value={formData.contactNumber}
+            onChange={(e) => handleInputChange("contactNumber", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Enter contact number"
+            required
+          />
+        </div>
+
+        {/* Assignment Type */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Assignment Type *
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex items-center p-3 border border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-all">
               <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter full name"
+                type="radio"
+                name="assignmentType"
+                value="presales"
+                checked={formData.assignmentType === "presales"}
+                onChange={(e) =>
+                  handleInputChange("assignmentType", e.target.value)
+                }
+                className="mr-3"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <Mail size={16} className="inline mr-2" />
-                Email *
-              </label>
+              <span className="font-medium">Presales</span>
+            </label>
+            <label className="flex items-center p-3 border border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-all">
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter email address"
-                required
+                type="radio"
+                name="assignmentType"
+                value="sales"
+                checked={formData.assignmentType === "sales"}
+                onChange={(e) =>
+                  handleInputChange("assignmentType", e.target.value)
+                }
+                className="mr-3"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <Phone size={16} className="inline mr-2" />
-                Contact Number *
-              </label>
-              <input
-                type="tel"
-                value={formData.contactNumber}
-                onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter contact number"
-                required
-              />
-            </div>
-
-
+              <span className="font-medium">Sales</span>
+            </label>
           </div>
+        </div>
+      </div>
 
-          {/* Assignment Type */}
+      {/* Sales-specific fields */}
+      {formData.assignmentType === "sales" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-blue-50 rounded-xl">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Assignment Type *
+              <Building size={16} className="inline mr-2" />
+              Centre
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center p-4 border border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-all">
-                <input
-                  type="radio"
-                  name="assignmentType"
-                  value="presales"
-                  checked={formData.assignmentType === 'presales'}
-                  onChange={(e) => handleInputChange('assignmentType', e.target.value)}
-                  className="mr-3"
-                />
-                <span className="font-medium">Presales</span>
-              </label>
-              <label className="flex items-center p-4 border border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-all">
-                <input
-                  type="radio"
-                  name="assignmentType"
-                  value="sales"
-                  checked={formData.assignmentType === 'sales'}
-                  onChange={(e) => handleInputChange('assignmentType', e.target.value)}
-                  className="mr-3"
-                />
-                <span className="font-medium">Sales</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Sales-specific fields */}
-          {formData.assignmentType === 'sales' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-blue-50 rounded-xl">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Building size={16} className="inline mr-2" />
-                  Centre
-                </label>
-                <select
-                  value={formData.centreId}
-                  onChange={(e) => handleInputChange('centreId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select Centre</option>
-                  {dropdownData.centres.map((centre) => (
-                    <option key={centre._id} value={centre._id}>
-                      {centre.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Globe size={16} className="inline mr-2" />
-                  Language
-                </label>
-                <select
-                  value={formData.languageId}
-                  onChange={(e) => handleInputChange('languageId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select Language</option>
-                  {dropdownData.languages.map((language) => (
-                    <option key={language._id} value={language._id}>
-                      {language.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Building size={16} className="inline mr-2" />
-                  Project Type
-                </label>
-                <select
-                  value={formData.projectTypeId}
-                  onChange={(e) => handleInputChange('projectTypeId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select Project Type</option>
-                  {dropdownData.projectTypes.map((type) => (
-                    <option key={type._id} value={type._id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Home size={16} className="inline mr-2" />
-                  House Type
-                </label>
-                <select
-                  value={formData.houseTypeId}
-                  onChange={(e) => handleInputChange('houseTypeId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select House Type</option>
-                  {dropdownData.houseTypes.map((type) => (
-                    <option key={type._id} value={type._id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <TrendingUp size={16} className="inline mr-2" />
-                  Lead Value
-                </label>
-                <select
-                  value={formData.leadValue}
-                  onChange={(e) => handleInputChange('leadValue', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select Lead Value</option>
-                  {dropdownData.leadValues.map((value) => (
-                    <option key={value.value} value={value.value}>
-                      {value.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Comments */}
-          <div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <MessageSquare size={16} className="inline mr-2" />
-                Comment
-              </label>
-              <textarea
-                value={formData.comment}
-                onChange={(e) => handleInputChange('comment', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                rows={4}
-                placeholder="Enter any comments"
-              />
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
-              style={{backgroundColor: '#0f172a'}}
+            <select
+              value={formData.centreId}
+              onChange={(e) => handleInputChange("centreId", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              {loading ? 'Creating Lead...' : 'Create Lead'}
-            </button>
+              <option value="">Select Centre</option>
+              {dropdownData.centres.map((centre) => (
+                <option key={centre._id} value={centre._id}>
+                  {centre.name}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Globe size={16} className="inline mr-2" />
+              Language
+            </label>
+            <select
+              value={formData.languageId}
+              onChange={(e) => handleInputChange("languageId", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select Language</option>
+              {dropdownData.languages.map((language) => (
+                <option key={language._id} value={language._id}>
+                  {language.name}
+                </option>
+              ))}
+            </select>
+            
+          </div>
+          <div className="">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <TrendingUp size={16} className="inline mr-2" />
+              Lead Value
+            </label>
+            <select
+              value={formData.leadValue}
+              onChange={(e) => handleInputChange("leadValue", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select Lead Value</option>
+              {dropdownData.leadValues.map((value) => (
+                <option key={value.value} value={value.value}>
+                  {value.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div hidden>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Building size={16} className="inline mr-2" />
+              Project Type
+            </label>
+            <select
+              value={formData.projectTypeId}
+              onChange={(e) =>
+                handleInputChange("projectTypeId", e.target.value)
+              }
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select Project Type</option>
+              {dropdownData.projectTypes.map((type) => (
+                <option key={type._id} value={type._id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div hidden>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Home size={16} className="inline mr-2" />
+              House Type
+            </label>
+            <select
+              value={formData.houseTypeId}
+              onChange={(e) => handleInputChange("houseTypeId", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select House Type</option>
+              {dropdownData.houseTypes.map((type) => (
+                <option key={type._id} value={type._id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          
+        </div>
+      )}
+
+      {/* Comments */}
+      <div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <MessageSquare size={16} className="inline mr-2" />
+            Comment
+          </label>
+          <textarea
+            value={formData.comment}
+            onChange={(e) => handleInputChange("comment", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            rows={4}
+            placeholder="Enter any comments"
+          />
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+          style={{ backgroundColor: "#0f172a" }}
+        >
+          {loading ? "Creating Lead..." : "Create Lead"}
+        </button>
+      </div>
     </form>
   );
 }

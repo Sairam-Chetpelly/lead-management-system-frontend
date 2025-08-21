@@ -54,6 +54,7 @@ interface LeadStats {
   statusDistribution: StatusDistributionItem[];
 }
 
+
 export default function Dashboard({ user }: DashboardProps) {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -97,6 +98,22 @@ export default function Dashboard({ user }: DashboardProps) {
       setStats({ totalUsers: 0, activeUsers: 0, totalRoles: 0, totalCentres: 0 });
     }
   };
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isSalesAgent = userRole === 'sales_agent';
+  const isPreSalesAgent = userRole === 'presales_agent';
 
   const fetchLeadStats = async () => {
     try {
@@ -174,7 +191,7 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center">
             <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
               <i className="fas fa-trophy text-emerald-600 text-sm sm:text-base"></i>
@@ -186,7 +203,7 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
               <i className="fas fa-times-circle text-red-600 text-sm sm:text-base"></i>
@@ -197,6 +214,64 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           </div>
         </div>
+      </div>
+       {/* System Stats Cards */}
+      <div hidden={isSalesAgent || isPreSalesAgent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+        <AccessControl>
+          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-users text-blue-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Users</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+              </div>
+            </div>
+          </div>
+        </AccessControl>
+
+        <AccessControl>
+          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-user-check text-green-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Users</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+              </div>
+            </div>
+          </div>
+        </AccessControl>
+
+        <AccessControl>
+          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-user-tag text-yellow-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Roles</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalRoles}</p>
+              </div>
+            </div>
+          </div>
+        </AccessControl>
+
+        <AccessControl >
+          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-building text-purple-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Centres</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalCentres}</p>
+              </div>
+            </div>
+          </div>
+        </AccessControl>
       </div>
 
       {/* Charts Section */}
@@ -297,67 +372,10 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
       </div>
 
-      {/* System Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-        <AccessControl>
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-users text-blue-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Users</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
-              </div>
-            </div>
-          </div>
-        </AccessControl>
-
-        <AccessControl>
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-user-check text-green-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Users</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
-              </div>
-            </div>
-          </div>
-        </AccessControl>
-
-        <AccessControl>
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-user-tag text-yellow-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Roles</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalRoles}</p>
-              </div>
-            </div>
-          </div>
-        </AccessControl>
-
-        <AccessControl>
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-building text-purple-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Centres</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalCentres}</p>
-              </div>
-            </div>
-          </div>
-        </AccessControl>
-      </div>
+     
 
       {/* Reports Section */}
-      <div className="bg-white rounded-lg sm:rounded-xl shadow">
+      <div hidden className="bg-white rounded-lg sm:rounded-xl shadow">
         <div className="p-4 sm:p-6 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Reports</h2>
         </div>

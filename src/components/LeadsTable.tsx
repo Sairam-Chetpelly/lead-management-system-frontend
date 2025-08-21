@@ -131,6 +131,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       setLoading(false);
     }
   }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
+    const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isSalesAgent = userRole === 'sales_agent';
+  const isPreSalesAgent = userRole === 'presales_agent';
   
   const fetchDropdownData = async () => {
     try {
@@ -243,6 +259,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <select
               value={filters.assignedTo}
               onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
+              hidden={isSalesAgent || isPreSalesAgent}
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
             >
               <option value="">All Agents</option>
@@ -263,6 +280,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <select
               value={filters.centre}
               onChange={(e) => handleFilterChange('centre', e.target.value)}
+              hidden={isSalesAgent || isPreSalesAgent}
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
             >
               <option value="">All Centres</option>
@@ -272,6 +290,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             </select>
             <select
               value={filters.leadStatus}
+              hidden={isSalesAgent || isPreSalesAgent}
               onChange={(e) => handleFilterChange('leadStatus', e.target.value)}
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
             >

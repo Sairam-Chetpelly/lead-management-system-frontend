@@ -75,7 +75,7 @@ interface Lead {
   centerVisitDate?: string;
   virtualMeeting?: boolean;
   virtualMeetingDate?: string;
-
+  cifDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -512,7 +512,9 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         ) : (
           <input
             type={type}
-            value={type === 'date' && editData[field] ? new Date(editData[field]).toISOString().split('T')[0] : editData[field] || ''}
+            value={type === 'date' && editData[field] ? new Date(editData[field]).toISOString().split('T')[0] : 
+                   type === 'datetime-local' && editData[field] ? new Date(editData[field]).toISOString().slice(0, 16) : 
+                   editData[field] || ''}
             onChange={(e) => handleInputChange(field, e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder={`Enter ${label.toLowerCase()}`}
@@ -523,7 +525,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           {Icon && <Icon size={16} className="mr-2 text-gray-400 flex-shrink-0" />}
           <span>
             {type === 'checkbox' ? (value ? 'Yes' : 'No') :
-             type === 'date' && value ? new Date(value).toLocaleDateString() :
+             (type === 'date' || type === 'datetime-local') && value ? new Date(value).toLocaleString() :
              value || 'Not specified'}
           </span>
         </div>
@@ -616,6 +618,9 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
           <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
           <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
+          {lead.leadSubStatusId?.slug === 'cif' && (
+            <FieldDisplay label="CIF Date" value={lead.cifDate} icon={Calendar} editing={editing} field="cifDate" type="datetime-local" />
+          )}
         </div>
       </div>
       )}

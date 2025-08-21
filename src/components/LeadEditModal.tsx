@@ -152,7 +152,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         centerVisitDate: lead.centerVisitDate ? new Date(lead.centerVisitDate).toISOString().split('T')[0] : '',
         virtualMeeting: lead.virtualMeeting || false,
         virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
-        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().split('T')[0] : '',
+        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().slice(0, 16) : '',
         comment: lead.comment || ''
       });
     } catch (error) {
@@ -712,7 +712,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
           <button
             type="submit"
             disabled={submitting}
-            className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+            className="px-4 py-2 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
             style={{backgroundColor: '#0f172a'}}
           >
             {submitting ? (
@@ -722,8 +722,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               </>
             ) : (
               <>
-                <Save size={16} />
-                <span>Create Lead Activity</span>
+                <span>Update Lead</span>
               </>
             )}
           </button>
