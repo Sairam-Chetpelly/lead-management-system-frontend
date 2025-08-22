@@ -13,7 +13,7 @@ interface ToastContainerProps {
 
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 space-y-2" style={{ zIndex: 999999 }}>
       {toasts.map((toast) => (
         <div
           key={toast.id}

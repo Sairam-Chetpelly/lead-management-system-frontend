@@ -192,6 +192,14 @@ export default function UsersTable() {
     setShowModal(false);
   };
 
+  const handleCloseModal = () => {
+    resetForm();
+  };
+
+  const handleCloseViewModal = () => {
+    setViewUser(null);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -490,7 +498,7 @@ export default function UsersTable() {
 
       <Modal
         isOpen={showModal}
-        onClose={resetForm}
+        onClose={handleCloseModal}
         title={editUser ? '✏️ Edit User' : '➕ Add New User'}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -798,7 +806,7 @@ export default function UsersTable() {
       {/* View User Modal */}
       <Modal
         isOpen={!!viewUser}
-        onClose={() => setViewUser(null)}
+        onClose={handleCloseViewModal}
         title="User Details"
       >
         {viewUser && (

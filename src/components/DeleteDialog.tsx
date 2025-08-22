@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Trash2, AlertTriangle } from 'lucide-react';
 
 interface DeleteDialogProps {
@@ -18,11 +19,48 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
   onConfirm,
   onCancel
 }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-4 sm:p-6 max-w-md w-full shadow-2xl">
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    };
+
+    document.body.classList.add('modal-open');
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, onCancel, mounted]);
+
+  if (!mounted || !isOpen) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onCancel();
+    }
+  };
+
+  const dialogContent = (
+    <div className="modal-overlay flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+        onClick={handleBackdropClick}
+      />
+      <div 
+        className="modal-content bg-white rounded-2xl p-4 sm:p-6 max-w-md w-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
             <AlertTriangle size={20} className="text-red-600 sm:w-6 sm:h-6" />
@@ -48,6 +86,8 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(dialogContent, document.body);
 };
 
 export default DeleteDialog;

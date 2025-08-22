@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, Download } from 'lucide-react';
+import Modal from './Modal';
 
 interface FileViewerModalProps {
   isOpen: boolean;
@@ -11,7 +12,6 @@ interface FileViewerModalProps {
 }
 
 export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: FileViewerModalProps) {
-  if (!isOpen) return null;
 
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || '';
@@ -96,39 +96,25 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      
-      <div className="relative w-full max-w-6xl h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900 truncate pr-4">{fileName}</h3>
-          <div className="flex items-center space-x-2">
-            <a 
-              href={fileUrl} 
-              download 
-              className="inline-flex items-center space-x-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              <Download size={14} />
-              <span>Download</span>
-            </a>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg"
-            >
-              <X size={20} />
-            </button>
-          </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={fileName} size="2xl">
+      <div className="flex flex-col h-full">
+        {/* Download Button */}
+        <div className="flex justify-end mb-4">
+          <a 
+            href={fileUrl} 
+            download 
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download size={16} />
+            <span>Download</span>
+          </a>
         </div>
         
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden rounded-lg border border-gray-200">
           {renderFileContent()}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
