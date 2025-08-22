@@ -238,6 +238,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     }
   };
 
+  if (showLeadView) {
+    return (
+      <LeadView
+        leadId={showLeadView}
+        onBack={() => setShowLeadView(null)}
+      />
+    );
+  }
+
   return (
     <div className="p-4 lg:p-8 space-y-6 min-h-full">
       {/* Filters */}
@@ -678,15 +687,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         />
       )}
 
-      {/* Lead View */}
-      {showLeadView && (
-        <div className="fixed inset-0 z-50 bg-white">
-          <LeadView
-            leadId={showLeadView}
-            onBack={() => setShowLeadView(null)}
-          />
-        </div>
-      )}
+
     </div>
   );
 }
