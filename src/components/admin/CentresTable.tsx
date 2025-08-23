@@ -78,9 +78,10 @@ export default function CentresTable() {
       await authAPI.admin.deleteCentre(deleteDialog.id);
       showToast('Centre deleted successfully', 'success');
       fetchCentres();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting centre:', error);
-      showToast('Failed to delete centre', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete centre';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -180,9 +181,9 @@ export default function CentresTable() {
                     <button onClick={() => handleEdit(centre)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(centre._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                     <button onClick={() => setDeleteDialog({isOpen: true, id: centre._id, name: centre.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -210,9 +211,9 @@ export default function CentresTable() {
                   <button onClick={() => handleEdit(centre)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
-                  {/* <button onClick={() => handleDelete(centre._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: centre._id, name: centre.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
-                  </button> */}
+                  </button>
                 </div>
               </div>
             ))}

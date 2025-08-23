@@ -218,12 +218,13 @@ export default function UsersTable() {
 
   const handleDelete = async () => {
     try {
-      await authAPI.deleteUser(deleteDialog.id);
+      await authAPI.admin.deleteUser(deleteDialog.id);
       showToast('User deleted successfully', 'success');
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
-      showToast('Failed to delete user', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete user';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -423,9 +424,9 @@ export default function UsersTable() {
                     <button onClick={() => handleEdit(user)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(user._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: user._id, name: user.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}

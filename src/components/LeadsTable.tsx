@@ -185,12 +185,13 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   const handleDelete = async () => {
     try {
-      await authAPI.deleteLead(deleteDialog.id);
+      await authAPI.admin.deleteLead(deleteDialog.id);
       showToast('Lead deleted successfully', 'success');
       fetchLeads();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting lead:', error);
-      showToast('Failed to delete lead', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete lead';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -499,6 +500,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                      <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
                       <PhoneCall size={14} />
                     </button>
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete Lead">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -553,6 +557,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   </button>
                   <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <PhoneCall size={16} className="mr-1" /> Call
+                  </button>
+                  <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                    <Trash2 size={16} className="mr-1" /> Delete
                   </button>
                 </div>
               </div>

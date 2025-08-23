@@ -98,9 +98,10 @@ export default function LeadSourcesTable() {
       await authAPI.deleteLeadSource(deleteDialog.id);
       showToast('Lead source deleted successfully', 'success');
       fetchLeadSources();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting lead source:', error);
-      showToast('Failed to delete lead source', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete lead source';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -257,9 +258,9 @@ export default function LeadSourcesTable() {
                     <button onClick={() => openModal(source)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Pencil size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(source._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: source._id, name: source.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}

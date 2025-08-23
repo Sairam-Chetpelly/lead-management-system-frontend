@@ -98,9 +98,10 @@ export default function ProjectHouseTypesTable() {
       await authAPI.deleteProjectHouseType(deleteDialog.id);
       showToast('Type deleted successfully', 'success');
       fetchTypes();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting type:', error);
-      showToast('Failed to delete type', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete type';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -242,9 +243,9 @@ export default function ProjectHouseTypesTable() {
                     <button onClick={() => openModal(type)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
                       <Pencil size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(type._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: type._id, name: type.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}

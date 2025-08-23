@@ -77,6 +77,10 @@ export const authAPI = {
     
     // Users
     getUsers: adminServices.users.getAll,
+    deleteUser: (id: string) => api.delete(`/api/admin/users/${id}`),
+    
+    // Leads
+    deleteLead: (id: string) => api.delete(`/api/admin/leads/${id}`),
     
     // Lead Sources
     getAllLeadSources: () => api.get('/api/lead-sources/all'),

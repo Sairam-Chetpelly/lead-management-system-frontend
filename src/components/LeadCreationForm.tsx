@@ -22,6 +22,7 @@ interface FormData {
   contactNumber: string;
   comment: string;
   assignmentType: "presales" | "sales" | "";
+  leadSourceId: string;
   centreId: string;
   languageId: string;
   projectTypeId: string;
@@ -54,6 +55,7 @@ export default function LeadCreationForm({
     contactNumber: "",
     comment: "",
     assignmentType: "",
+    leadSourceId: "",
     centreId: "",
     languageId: "",
     projectTypeId: "",
@@ -119,6 +121,7 @@ export default function LeadCreationForm({
         contactNumber: "",
         comment: "",
         assignmentType: "",
+        leadSourceId: "",
         centreId: "",
         languageId: "",
         projectTypeId: "",
@@ -138,7 +141,7 @@ export default function LeadCreationForm({
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -199,6 +202,28 @@ export default function LeadCreationForm({
         </div>
 
         {/* Assignment Type */}
+        {/* Lead Source */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FileText size={16} className="inline mr-2" />
+            Lead Source *
+          </label>
+          <select
+            value={formData.leadSourceId}
+            onChange={(e) => handleInputChange("leadSourceId", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            required
+          >
+            <option value="">Select Lead Source</option>
+            {dropdownData.leadSources.map((source) => (
+              <option key={source._id} value={source._id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Assignment Type */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Assignment Type *
@@ -233,6 +258,8 @@ export default function LeadCreationForm({
           </div>
         </div>
       </div>
+
+
 
       {/* Sales-specific fields */}
       {formData.assignmentType === "sales" && (

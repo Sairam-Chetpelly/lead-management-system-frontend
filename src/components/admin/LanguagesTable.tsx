@@ -79,9 +79,10 @@ export default function LanguagesTable() {
       await authAPI.admin.deleteLanguage(deleteDialog.id);
       showToast('Language deleted successfully', 'success');
       fetchLanguages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting language:', error);
-      showToast('Failed to delete language', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to delete language';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }
@@ -191,9 +192,9 @@ export default function LanguagesTable() {
                     <button onClick={() => handleEdit(language)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
                       <Edit size={14} />
                     </button>
-                    {/* <button onClick={() => handleDelete(language._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: language._id, name: language.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
