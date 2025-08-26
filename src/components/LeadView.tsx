@@ -251,46 +251,43 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-white/20 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+        <div className="px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
               </button>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{lead.leadID}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{lead.name || 'Lead Details'}</p>
+                <h1 className="text-sm sm:text-lg font-bold text-gray-900 truncate">{lead.leadID}</h1>
+                <p className="text-xs text-gray-600 truncate">{lead.name || 'Lead Details'}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-1 flex-shrink-0">
               {!editing ? (
                 <>
                   <button
                     onClick={() => handleCall(lead.contactNumber)}
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    <PhoneCall size={16} />
-                    <span className="hidden sm:inline">Call</span>
+                    <PhoneCall size={14} />
                   </button>
                   
                   <button
                     onClick={() => setShowActivityForm(true)}
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    <MessageSquare size={16} />
-                    <span className="hidden sm:inline">Add Activity</span>
+                    <MessageSquare size={14} />
                   </button>
                   {currentUser?.role === 'presales_agent' && (
                     <button
                       onClick={() => setShowLanguageModal(true)}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                     >
-                      <Globe size={16} />
-                      <span className="hidden lg:inline">Language Change</span>
+                      <Globe size={14} />
                     </button>
                   )}
                 </>
@@ -298,17 +295,15 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                 <>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >
-                    <X size={16} />
-                    <span className="hidden sm:inline">Cancel</span>
+                    <X size={14} />
                   </button>
                   <button
                     onClick={handleSave}
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    <Save size={16} />
-                    <span className="hidden sm:inline">Save</span>
+                    <Save size={14} />
                   </button>
                 </>
               )}
@@ -318,7 +313,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
         {/* Status Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-white/20 shadow-lg">
@@ -379,9 +374,9 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/20 shadow-lg mb-6 sm:mb-8">
+        <div className="bg-white/80 backdrop-blur-xl rounded-xl border border-white/20 shadow-lg mb-4 sm:mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex px-4 sm:px-6">
+            <nav className="flex px-2 sm:px-4">
               {[
                 { id: 'overview', label: 'Overview', icon: User },
                 { id: 'timeline', label: 'Timeline', icon: Clock },
@@ -390,20 +385,20 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id as any)}
-                  className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors ${
+                  className={`flex-1 flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 sm:py-3 px-1 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors ${
                     activeTab === id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   <Icon size={14} className="sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{label}</span>
+                  <span className="text-xs sm:text-sm">{label}</span>
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="p-2 sm:p-4 lg:p-6">
             {activeTab === 'overview' && (
               <LeadOverview 
                 lead={lead} 
@@ -413,18 +408,22 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
               />
             )}
             {activeTab === 'timeline' && (
-              <LeadTimeline 
-                leadId={lead._id} 
-                callLogs={callLogs} 
-                activityLogs={activityLogs} 
-              />
+              <div className="-mx-2 sm:mx-0">
+                <LeadTimeline 
+                  leadId={lead._id} 
+                  callLogs={callLogs} 
+                  activityLogs={activityLogs} 
+                />
+              </div>
             )}
             {activeTab === 'activities' && (
-              <LeadActivities 
-                callLogs={callLogs} 
-                activityLogs={activityLogs}
-                leadActivities={leadActivities}
-              />
+              <div className="-mx-2 sm:mx-0">
+                <LeadActivities 
+                  callLogs={callLogs} 
+                  activityLogs={activityLogs}
+                  leadActivities={leadActivities}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -661,154 +660,204 @@ function LeadActivities({ callLogs, activityLogs, leadActivities }: {
   leadActivities: any[];
 }) {
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-      <div className="text-white px-6 py-4" style={{backgroundColor: '#0f172a'}}>
-        <h3 className="text-lg font-semibold flex items-center">
-          <Activity size={20} className="mr-2" />
-          Lead Activities ({leadActivities.length})
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-slate-900 text-white px-3 sm:px-6 py-3 sm:py-4 rounded-t-lg">
+        <h3 className="text-sm sm:text-lg font-semibold flex items-center">
+          <Activity size={16} className="sm:w-5 sm:h-5 mr-2" />
+          Activities ({leadActivities.length})
         </h3>
       </div>
       
       {leadActivities.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">#</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sub-Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Value</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Source</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Centre</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Language</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">House Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Apartment</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project Value</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">CIF Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Meeting Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Presales Agent</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sales Agent</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Comment</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Updated By</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Files</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {leadActivities.map((activity, index) => (
-                <tr key={activity._id} className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
+        <>
+          {/* Mobile Card View */}
+          <div className="block md:hidden p-3 space-y-4">
+            {leadActivities.map((activity, index) => (
+              <div key={activity._id} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
                       {leadActivities.length - index}
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-700 font-medium">{activity.name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.email || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.contactNumber || '-'}</td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.leadStatusId ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-800">
-                        {activity.leadStatusId.name}
-                      </span>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.leadSubStatusId ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-orange-100 text-orange-800">
-                        {activity.leadSubStatusId.name}
-                      </span>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.leadValue ? (
-                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${
-                        activity.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                        activity.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {activity.leadValue}
-                      </span>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.sourceId ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800">
-                        {activity.sourceId.name}
-                      </span>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.centreId?.name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.languageId?.name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.projectTypeId?.name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.houseTypeId?.name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.apartmentName || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{activity.projectValue || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {activity.cifDate ? (
-                      <div>
-                        <div className="font-medium">{new Date(activity.cifDate).toLocaleDateString()}</div>
-                        <div className="text-xs text-slate-500">{new Date(activity.cifDate).toLocaleTimeString()}</div>
-                      </div>
-                    ) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {activity.meetingArrangedDate ? (
-                      <div>
-                        <div className="font-medium">{new Date(activity.meetingArrangedDate).toLocaleDateString()}</div>
-                        <div className="text-xs text-slate-500">{new Date(activity.meetingArrangedDate).toLocaleTimeString()}</div>
-                      </div>
-                    ) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.presalesUserId ? (
-                      <div className="text-blue-600 font-medium">{activity.presalesUserId.name}</div>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.salesUserId ? (
-                      <div className="text-purple-600 font-medium">{activity.salesUserId.name}</div>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 max-w-xs">
-                    {activity.comment ? (
-                      <div className="truncate" title={activity.comment}>{activity.comment}</div>
-                    ) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 font-medium">{activity.updatedPerson?.name || 'System'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    <div className="font-medium">{new Date(activity.createdAt).toLocaleDateString()}</div>
-                    <div className="text-xs text-slate-500">{new Date(activity.createdAt).toLocaleTimeString()}</div>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {activity.files && activity.files.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {activity.files.map((file: any, fileIndex: number) => (
-                          <a 
-                            key={fileIndex}
-                            href={`/api/leads/document/${file.filename}`}
-                            download
-                            className="p-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                            title={file.originalname}
-                          >
-                            <FileText size={12} />
-                          </a>
-                        ))}
-                      </div>
-                    ) : <span className="text-slate-400">-</span>}
-                  </td>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 text-sm">{activity.name || 'Unknown'}</h4>
+                      <p className="text-xs text-slate-600">{activity.email || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500 bg-white px-2 py-1 rounded-lg">
+                    {new Date(activity.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Contact:</span> 
+                      <span className="text-slate-900">{activity.contactNumber || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Centre:</span> 
+                      <span className="text-slate-900">{activity.centreId?.name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Language:</span> 
+                      <span className="text-slate-900">{activity.languageId?.name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-medium">Updated By:</span> 
+                      <span className="text-slate-900">{activity.updatedPerson?.name || 'System'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {activity.leadStatusId && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                      {activity.leadStatusId.name}
+                    </span>
+                  )}
+                  {activity.leadSubStatusId && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200">
+                      {activity.leadSubStatusId.name}
+                    </span>
+                  )}
+                  {activity.leadValue && (
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold capitalize border ${
+                      activity.leadValue === 'high value' ? 'bg-red-100 text-red-800 border-red-200' :
+                      activity.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                      'bg-blue-100 text-blue-800 border-blue-200'
+                    }`}>
+                      {activity.leadValue}
+                    </span>
+                  )}
+                </div>
+                
+                {activity.comment && (
+                  <div className="bg-white rounded-lg p-3 mb-3 border-l-4 border-blue-400">
+                    <p className="text-sm text-slate-700">{activity.comment}</p>
+                  </div>
+                )}
+                
+                {activity.files && activity.files.length > 0 && (
+                  <div className="bg-white rounded-lg p-3">
+                    <p className="text-xs font-medium text-slate-600 mb-2">Attachments:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activity.files.map((file: any, fileIndex: number) => (
+                        <a 
+                          key={fileIndex}
+                          href={`/api/leads/document/${file.filename}`}
+                          download
+                          className="flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs hover:bg-blue-100 transition-colors border border-blue-200"
+                          title={file.originalname}
+                        >
+                          <FileText size={14} />
+                          <span className="truncate max-w-24">{file.originalname || file.filename}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sub-Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Value</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Source</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Centre</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Language</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Updated By</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Files</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {leadActivities.map((activity, index) => (
+                  <tr key={activity._id} className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
+                        {leadActivities.length - index}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 font-medium">{activity.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{activity.email || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{activity.contactNumber || '-'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {activity.leadStatusId ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-800">
+                          {activity.leadStatusId.name}
+                        </span>
+                      ) : <span className="text-slate-400">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {activity.leadSubStatusId ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-orange-100 text-orange-800">
+                          {activity.leadSubStatusId.name}
+                        </span>
+                      ) : <span className="text-slate-400">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {activity.leadValue ? (
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold capitalize ${
+                          activity.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
+                          activity.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {activity.leadValue}
+                        </span>
+                      ) : <span className="text-slate-400">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {activity.sourceId ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">
+                          {activity.sourceId.name}
+                        </span>
+                      ) : <span className="text-slate-400">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{activity.centreId?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{activity.languageId?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 font-medium">{activity.updatedPerson?.name || 'System'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      <div className="font-medium">{new Date(activity.createdAt).toLocaleDateString()}</div>
+                      <div className="text-xs text-slate-500">{new Date(activity.createdAt).toLocaleTimeString()}</div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {activity.files && activity.files.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {activity.files.map((file: any, fileIndex: number) => (
+                            <a 
+                              key={fileIndex}
+                              href={`/api/leads/document/${file.filename}`}
+                              download
+                              className="p-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                              title={file.originalname}
+                            >
+                              <FileText size={12} />
+                            </a>
+                          ))}
+                        </div>
+                      ) : <span className="text-slate-400">-</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       ) : (
-        <div className="text-center py-12">
-          <Activity size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">No lead activities yet</p>
+        <div className="text-center py-8 sm:py-12">
+          <Activity size={32} className="sm:w-12 sm:h-12 mx-auto text-slate-300 mb-4" />
+          <p className="text-slate-500 text-sm sm:text-base">No lead activities yet</p>
         </div>
       )}
     </div>

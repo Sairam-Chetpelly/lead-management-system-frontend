@@ -149,7 +149,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-8 sm:py-12">
         <ModernLoader size="md" variant="primary" />
       </div>
     );
@@ -158,18 +158,18 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
   // Error state with retry option
   if (error && timeline.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="w-24 h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-          <Info size={32} className="text-red-500" />
+      <div className="text-center py-8 sm:py-12">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+          <Info size={24} className="sm:w-8 sm:h-8 text-red-500" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Timeline</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Failed to Load Timeline</h3>
+        <p className="text-sm sm:text-base text-gray-600 mb-4 px-4">{error}</p>
         <button
           onClick={() => {
             timelineService.clearCache(leadId);
             fetchTimeline();
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm"
           aria-label="Retry loading timeline"
         >
           Retry
@@ -185,34 +185,36 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
         showToast('Timeline component encountered an error', 'error');
       }}
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
       {/* Timeline Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
-            <Clock size={24} className="text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
-            <p className="text-sm text-gray-600">
-              {timelineStats.totalActivities} activities • Latest activity {timelineStats.latestActivity}
-            </p>
-          </div>
-        </div>
-        
-        {/* Stats */}
-        <div className="flex items-center space-x-4">
-          <div className="text-center">
-            <div className="text-lg font-bold text-green-600">
-              {timelineStats.callCount}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+              <Clock size={20} className="text-white" />
             </div>
-            <div className="text-xs text-gray-500">Calls</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">
-              {timelineStats.manualCount}
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Activity Timeline</h3>
+              <p className="text-sm text-gray-600">
+                {timelineStats.totalActivities} activities • Latest activity {timelineStats.latestActivity}
+              </p>
             </div>
-            <div className="text-xs text-gray-500">Activities</div>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex items-center space-x-6">
+            <div className="text-center bg-white rounded-lg px-4 py-2 shadow-sm">
+              <div className="text-lg font-bold text-green-600">
+                {timelineStats.callCount}
+              </div>
+              <div className="text-xs text-gray-500">Calls</div>
+            </div>
+            <div className="text-center bg-white rounded-lg px-4 py-2 shadow-sm">
+              <div className="text-lg font-bold text-blue-600">
+                {timelineStats.manualCount}
+              </div>
+              <div className="text-xs text-gray-500">Activities</div>
+            </div>
           </div>
         </div>
       </div>
@@ -221,43 +223,45 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
       {timeline.length > 0 ? (
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-purple-200 to-transparent"></div>
+          <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-purple-200 to-transparent"></div>
           
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {timeline.map((item, index) => (
-              <div key={item._id} className="relative flex items-start space-x-4">
+              <div key={item._id} className="relative flex items-start space-x-3 sm:space-x-4">
                 {/* Timeline Dot */}
-                <div className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-2xl border-2 ${getTimelineColorClass(item.type)} shadow-lg`}>
+                <div className={`relative z-10 flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl border-2 ${getTimelineColorClass(item.type)} shadow-lg`}>
                   {getTimelineIcon(item.type)}
                 </div>
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                  <div className="bg-gradient-to-r from-white to-blue-50 rounded-xl border border-blue-200 p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="flex flex-col space-y-3">
+                      <div className="flex items-start justify-between">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-900">
                           {item.title}
                         </h4>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                          <User size={14} />
-                          <span>{item.userId?.name || 'Unknown User'}</span>
-                          <span>•</span>
-                          <Calendar size={14} />
-                          <span>{new Date(item.timestamp).toLocaleString()}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Relative Time Badge */}
-                      <div className="flex-shrink-0">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
                           {formatRelativeTime(item.timestamp)}
                         </span>
                       </div>
+                      
+                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                        <div className="flex flex-col space-y-2 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <User size={14} className="text-blue-600" />
+                            <span className="font-medium text-gray-900">{item.userId?.name || 'Unknown User'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar size={14} className="text-purple-600" />
+                            <span className="text-gray-600">{new Date(item.timestamp).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="text-gray-700 leading-relaxed mb-3">
-                      {item.description}
+                    <div className="bg-white rounded-lg p-3 border-l-4 border-blue-400 mb-3">
+                      <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
                     </div>
                     
                     {item.document && (() => {
@@ -300,17 +304,17 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                       };
                       
                       return (
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
                           <MediaPreview />
                           <div className="flex items-center space-x-2">
-                            <FileText size={16} className="text-blue-600" />
+                            <FileText size={14} className="sm:w-4 sm:h-4 text-blue-600" />
                             <a 
                               href={documentUrl}
                               download={item.document}
-                              className="text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1 transition-colors"
+                              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1 transition-colors"
                               aria-label={`Download ${item.document}`}
                             >
-                              <Download size={14} />
+                              <Download size={12} className="sm:w-3.5 sm:h-3.5" />
                               <span>Download {item.document}</span>
                             </a>
                           </div>
@@ -319,8 +323,8 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                     })()}
                     
                     {/* Activity Type Badge */}
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${getActivityBadgeClass(item.type)}`}>
+                    <div className="mt-3 sm:mt-4 flex items-center justify-between">
+                      <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium capitalize ${getActivityBadgeClass(item.type)}`}>
                         {getActivityDisplayName(item.type)}
                       </span>
                       
@@ -337,21 +341,21 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
           </div>
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <Clock size={32} className="text-gray-400" />
+        <div className="text-center py-8 sm:py-12">
+          <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+            <Clock size={24} className="sm:w-8 sm:h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Activity Yet</h3>
-          <p className="text-gray-600 mb-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Activity Yet</h3>
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
             This lead doesn't have any recorded activities. Start by making a call or adding a manual activity.
           </p>
-          <div className="flex items-center justify-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <PhoneCall size={16} className="text-green-500" />
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+              <PhoneCall size={14} className="sm:w-4 sm:h-4 text-green-500" />
               <span>Make calls to track interactions</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <MessageSquare size={16} className="text-blue-500" />
+            <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+              <MessageSquare size={14} className="sm:w-4 sm:h-4 text-blue-500" />
               <span>Add manual activities for notes</span>
             </div>
           </div>

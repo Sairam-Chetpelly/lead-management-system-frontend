@@ -268,8 +268,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         
         {/* Filter Controls */}
         <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-10 gap-4">
-            <div className="relative lg:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="relative xl:col-span-2">
               <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -390,23 +390,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         )}
         
         {/* Desktop Table */}
-        <div className="hidden lg:flex flex-col flex-1 min-h-0">
+        <div className="hidden xl:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{backgroundColor: '#0f172a'}}>
-            <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Lead ID</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Contact Info</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Source & Centre</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Assigned To</div>
-              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Lead Value</div>
-              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Status</div>
-              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Created</div>
-              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
+            <div className="grid grid-cols-10 gap-3 px-4 py-4">
+              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Lead ID</div>
+              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Contact</div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Source</div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Assigned</div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Value</div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Status</div>
+              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Actions</div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {leads.map((lead, index) => (
-                <div key={lead._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 animate-stagger ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`} style={{animationDelay: `${index * 0.05}s`}}>
+                <div key={lead._id} className={`grid grid-cols-10 gap-3 px-4 py-3 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                   <div className="col-span-2 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {lead.leadID.slice(-3)}
@@ -428,18 +427,13 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     </div>
                   </div>
                   
-                  <div className="col-span-2 flex flex-col justify-center">
-                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800 mb-1 w-fit">
+                  <div className="col-span-1 flex items-center">
+                    <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-green-100 text-green-800 truncate">
                       {lead.sourceId?.name || 'N/A'}
                     </span>
-                    {lead.centreId && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 w-fit">
-                        {lead.centreId.name}
-                      </span>
-                    )}
                   </div>
                   
-                  <div className="col-span-2 flex items-center">
+                  <div className="col-span-1 flex items-center">
                     {lead.presalesUserId && (
                       <div className="text-sm">
                         <div className="font-medium text-blue-600">Presales</div>
@@ -471,26 +465,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     )}
                   </div>
                   
-                  <div className="col-span-1 flex flex-col justify-center">
-                    {lead.leadStatusId && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-800 mb-1 w-fit">
+                  <div className="col-span-1 flex items-center">
+                    {lead.leadStatusId ? (
+                      <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-800 truncate">
                         {lead.leadStatusId.name}
                       </span>
-                    )}
-                    {lead.leadSubStatusId && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-orange-100 text-orange-800 w-fit">
-                        {lead.leadSubStatusId.name}
-                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">No Status</span>
                     )}
                   </div>
                   
-                  <div className="col-span-1 flex items-center">
-                    <span className="text-gray-500 text-xs">
-                      {new Date(lead.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  
-                  <div className="col-span-1 flex items-center space-x-1">
+                  <div className="col-span-2 flex items-center space-x-1">
                     <button onClick={() => handleViewDetails(lead._id)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all" title="View Details">
                       <Eye size={14} />
                     </button>
@@ -516,7 +501,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         </div>
         
         {/* Mobile Cards */}
-        <div className="lg:hidden flex-1 overflow-y-auto p-4">
+        <div className="xl:hidden flex-1 overflow-y-auto p-4">
           <div className={`space-y-4 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
             {leads.map((lead) => (
               <div key={lead._id} className="bg-white rounded-2xl p-4 shadow-lg border border-slate-100">
@@ -550,22 +535,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <div className="text-gray-500">Created: {new Date(lead.createdAt).toLocaleDateString()}</div>
                 </div>
                 
-                <div className="flex space-x-2 mt-4">
-                  <button onClick={() => handleViewDetails(lead._id)} className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm">
-                    <Eye size={16} className="mr-1" /> View
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <button onClick={() => handleViewDetails(lead._id)} className="flex items-center justify-center px-2 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-xs">
+                    <Eye size={14} className="mr-1" /> View
                   </button>
-                  <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-xl font-medium text-sm">
-                    <Edit size={16} className="mr-1" /> Edit
+                  <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="flex items-center justify-center px-2 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-xs">
+                    <Edit size={14} className="mr-1" /> Edit
                   </button>
-                  <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">
-                    <FileText size={16} className="mr-1" /> Log
+                  <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex items-center justify-center px-2 py-2 bg-green-100 text-green-700 rounded-lg font-medium text-xs">
+                    <PhoneCall size={14} className="mr-1" /> Call
                   </button>
-                  <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
-                    <PhoneCall size={16} className="mr-1" /> Call
+                  <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex items-center justify-center px-2 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium text-xs">
+                    <FileText size={14} className="mr-1" /> Log
                   </button>
                   {isAdmin && (
-                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
-                      <Trash2 size={16} className="mr-1" /> Delete
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="col-span-2 flex items-center justify-center px-2 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-xs">
+                      <Trash2 size={14} className="mr-1" /> Delete
                     </button>
                   )}
                 </div>
