@@ -1,21 +1,38 @@
 import api from './api';
 import { adminServices, leadServices } from './apiService';
+import { API_ENDPOINTS, buildQueryString } from '@/config/apiEndpoints';
+import { Lead, LeadResponse } from '@/types/lead';
+import { timelineService } from '@/services/timelineService';
 
-interface PaginationParams {
+export interface PaginationParams {
   page?: number;
   limit?: number;
   search?: string;
   role?: string;
   status?: string;
   centre?: string;
+  presalesUserId?: string;
+  salesUserId?: string;
+  leadStatusId?: string;
+  leadSubStatusId?: string;
+  languageId?: string;
+  sourceId?: string;
+  centreId?: string;
+  leadValue?: string;
 }
 
 export const authAPI = {
   // Auth endpoints
   login: (credentials: { email: string; password: string }) =>
-    api.post('/api/auth/login', credentials),
+    api.post(API_ENDPOINTS.AUTH_LOGIN, credentials),
   
-  checkStatus: () => api.get('/api/auth/status'),
+  forgotPassword: (data: { email: string }) =>
+    api.post('/api/auth/forgot-password', data),
+  
+  resetPassword: (data: { token: string; password: string }) =>
+    api.post(API_ENDPOINTS.AUTH_RESET_PASSWORD, data),
+  
+  checkStatus: () => api.get(API_ENDPOINTS.AUTH_STATUS),
   
   get: (url: string) => api.get(url),
   
@@ -29,7 +46,7 @@ export const authAPI = {
   uploadProfileImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('profileImage', file);
-    return api.post(`/api/users/${id}/profile-image`, formData, {
+    return api.post(API_ENDPOINTS.USERS_PROFILE_IMAGE(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -77,13 +94,13 @@ export const authAPI = {
     
     // Users
     getUsers: adminServices.users.getAll,
-    deleteUser: (id: string) => api.delete(`/api/admin/users/${id}`),
+    deleteUser: (id: string) => api.delete(API_ENDPOINTS.ADMIN_USERS_DELETE(id)),
     
     // Leads
-    deleteLead: (id: string) => api.delete(`/api/admin/leads/${id}`),
+    deleteLead: (id: string) => api.delete(API_ENDPOINTS.ADMIN_LEADS_DELETE(id)),
     
     // Lead Sources
-    getAllLeadSources: () => api.get('/api/lead-sources/all'),
+    getAllLeadSources: () => api.get(API_ENDPOINTS.LEAD_SOURCES_ALL),
   },
   
   // Lead Sources CRUD
@@ -102,22 +119,19 @@ export const authAPI = {
   
   // Leads CRUD
   getLeads: (params: PaginationParams = {}) => {
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value.toString());
-      }
-    });
-    const queryString = queryParams.toString();
-    return api.get(`/api/leads${queryString ? `?${queryString}` : ''}`);
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.LEADS}${queryString ? `?${queryString}` : ''}`);
   },
-  getLead: (id: string) => api.get(`/api/leads/${id}`),
-  getLeadActivities: (id: string) => api.get(`/api/leads/${id}/activities`),
-  getLeadTimeline: (id: string) => api.get(`/api/leads/${id}/timeline`),
-  createLead: (leadData: any) => api.post('/api/leads', leadData),
-  updateLead: (id: string, leadData: any) => api.put(`/api/leads/${id}`, leadData),
-  deleteLead: (id: string) => api.delete(`/api/leads/${id}`),
-  createCallLog: (leadId: string) => api.post(`/api/leads/${leadId}/call`),
+  getLead: (id: string) => api.get(API_ENDPOINTS.LEADS_BY_ID(id)),
+  getLeadActivities: (id: string) => api.get(API_ENDPOINTS.LEADS_ACTIVITIES(id)),
+  getLeadTimeline: (id: string) => api.get(API_ENDPOINTS.LEADS_TIMELINE(id)),
+  createLead: (leadData: any) => api.post(API_ENDPOINTS.LEADS, leadData),
+  updateLead: (id: string, leadData: any) => api.put(API_ENDPOINTS.LEADS_BY_ID(id), leadData),
+  deleteLead: (id: string) => api.delete(API_ENDPOINTS.LEADS_BY_ID(id)),
+  createCallLog: (leadId: string) => {
+    timelineService.clearCache(leadId);
+    return api.post(API_ENDPOINTS.LEADS_CALL(leadId));
+  },
   createActivityLog: (leadId: string, type: 'call' | 'manual', comment: string, document?: File) => {
     const formData = new FormData();
     formData.append('type', type);
@@ -125,7 +139,8 @@ export const authAPI = {
     if (document) {
       formData.append('document', document);
     }
-    return api.post(`/api/leads/${leadId}/activity`, formData, {
+    timelineService.clearCache(leadId);
+    return api.post(API_ENDPOINTS.LEADS_ACTIVITY(leadId), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -143,7 +158,7 @@ export const authAPI = {
         formData.append('files', file);
       });
     }
-    return api.post(`/api/leads/${leadId}/lead-activity`, formData, {
+    return api.post(API_ENDPOINTS.LEADS_LEAD_ACTIVITY(leadId), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -161,22 +176,25 @@ export const authAPI = {
         formData.append('files', file);
       });
     }
-    return api.post(`/api/leads/${leadId}/presales-activity`, formData, {
+    return api.post(API_ENDPOINTS.LEADS_PRESALES_ACTIVITY(leadId), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
   },
-  exportLeads: () => api.get('/api/leads/export'),
-  getLeadFormData: () => api.get('/api/leads/form/data'),
+  exportLeads: () => api.get(API_ENDPOINTS.LEADS_EXPORT),
+  getLeadFormData: () => api.get(API_ENDPOINTS.LEADS_FORM_DATA),
   bulkUploadLeads: (formData: FormData) => 
-    api.post('/api/leads/bulk-upload', formData, {
+    api.post(API_ENDPOINTS.LEADS_BULK_UPLOAD, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }),
   changeLanguage: (leadId: string, data: { languageId: string; presalesUserId: string }) => 
-    api.post(`/api/leads/${leadId}/change-language`, data),
+    api.post(API_ENDPOINTS.LEADS_CHANGE_LANGUAGE(leadId), data),
+  getUnsignedLeads: () => api.get(API_ENDPOINTS.LEADS_UNSIGNED),
+  assignLead: (id: string, data: { presalesUserId?: string; salesUserId?: string }) => 
+    api.post(API_ENDPOINTS.LEADS_ASSIGN(id), data),
 };
 
 export default api;

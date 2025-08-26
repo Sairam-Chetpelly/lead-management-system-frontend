@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
+import { API_ENDPOINTS } from '@/config/apiEndpoints';
 import AccessControl from './AccessControl';
 import {
   Chart as ChartJS,
@@ -81,15 +82,14 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const fetchDashboardStats = async () => {
     try {
-      const [usersRes, rolesRes, centresRes] = await Promise.all([
-        authAPI.getUsers({ limit: 1 }),
+      const [rolesRes, centresRes] = await Promise.all([
         authAPI.admin.getAllRoles(),
         authAPI.admin.getAllCentres()
       ]);
-      
+
       setStats({
-        totalUsers: usersRes.data.pagination?.total || 0,
-        activeUsers: usersRes.data.pagination?.total || 0,
+        totalUsers: 0, // Will be set from leadStats
+        activeUsers: 0, // Will be set from leadStats
         totalRoles: rolesRes.data.data?.length || rolesRes.data.length || 0,
         totalCentres: centresRes.data.data?.length || centresRes.data.length || 0
       });
@@ -114,13 +114,27 @@ export default function Dashboard({ user }: DashboardProps) {
   const userRole = getCurrentUserRole();
   const isSalesAgent = userRole === 'sales_agent';
   const isPreSalesAgent = userRole === 'presales_agent';
+  const isSalesManager = userRole === 'sales_manager';
+  const isHodSales = userRole === 'hod_sales';
+  const isPreSalesManager = userRole === 'manager_presales';
+  const isPreSalesHod = userRole === 'hod_presales';
+  const isAdmin = userRole === 'admin';
 
   const fetchLeadStats = async () => {
     try {
-      const response = await authAPI.get('/api/dashboard/stats');
+      const response = await authAPI.get(API_ENDPOINTS.DASHBOARD_STATS);
       const data = response.data;
       console.log('Lead stats data:', data);
       setLeadStats(data);
+
+      // Update user stats from lead stats response
+      if (data.totalUsers !== undefined && data.activeUsers !== undefined) {
+        setStats(prev => ({
+          ...prev,
+          totalUsers: data.totalUsers,
+          activeUsers: data.activeUsers
+        }));
+      }
     } catch (error) {
       console.error('Error fetching lead stats:', error);
     } finally {
@@ -190,32 +204,34 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           </div>
         </div>
-
-        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
-              <i className="fas fa-trophy text-emerald-600 text-sm sm:text-base"></i>
-            </div>
-            <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Won Leads</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.wonLeads}</p>
-            </div>
-          </div>
-        </div>
-
-        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
-              <i className="fas fa-times-circle text-red-600 text-sm sm:text-base"></i>
-            </div>
-            <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Lost Leads</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.lostLeads}</p>
+        {isAdmin && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-trophy text-emerald-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Won Leads</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.wonLeads}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+        {isAdmin && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                <i className="fas fa-times-circle text-red-600 text-sm sm:text-base"></i>
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Lost Leads</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.lostLeads}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-       {/* System Stats Cards */}
+      {/* System Stats Cards */}
       <div hidden={isSalesAgent || isPreSalesAgent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         <AccessControl>
           <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
@@ -244,34 +260,36 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           </div>
         </AccessControl>
-
-        <AccessControl>
-          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-user-tag text-yellow-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Roles</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalRoles}</p>
-              </div>
-            </div>
-          </div>
-        </AccessControl>
-
-        <AccessControl >
-          <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-building text-purple-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Centres</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalCentres}</p>
+        {isAdmin && (
+          <AccessControl>
+            <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
+                  <i className="fas fa-user-tag text-yellow-600 text-sm sm:text-base"></i>
+                </div>
+                <div className="ml-3 sm:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Roles</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalRoles}</p>
+                </div>
               </div>
             </div>
-          </div>
-        </AccessControl>
+          </AccessControl>
+        )}
+        {isAdmin && (
+          <AccessControl >
+            <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                  <i className="fas fa-building text-purple-600 text-sm sm:text-base"></i>
+                </div>
+                <div className="ml-3 sm:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Centres</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalCentres}</p>
+                </div>
+              </div>
+            </div>
+          </AccessControl>
+        )}
       </div>
 
       {/* Charts Section */}
@@ -282,7 +300,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <div className="h-64">
             <Line
               data={{
-                labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => 
+                labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) =>
                   new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
                 ),
                 datasets: [
@@ -320,7 +338,7 @@ export default function Dashboard({ user }: DashboardProps) {
             <div className="h-64">
               <Line
                 data={{
-                  labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => 
+                  labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) =>
                     new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
                   ),
                   datasets: [
@@ -360,10 +378,9 @@ export default function Dashboard({ user }: DashboardProps) {
               {leadStats.leadValueDistribution && leadStats.leadValueDistribution.length > 0 ? (
                 <Doughnut
                   data={{
-                    labels: leadStats.leadValueDistribution.map((item: StatusDistributionItem) => 
+                    labels: leadStats.leadValueDistribution.map((item: StatusDistributionItem) =>
                       item._id === 'high value' ? 'High Value' :
-                      item._id === 'medium value' ? 'Medium Value' :
-                      item._id === 'low value' ? 'Low Value' : 'Not Set'
+                        item._id === 'low value' ? 'Low Value' : 'Not Set'
                     ),
                     datasets: [
                       {
@@ -392,7 +409,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       },
                       tooltip: {
                         callbacks: {
-                          label: function(context) {
+                          label: function (context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
                             return `${label}: ${value} leads`;
@@ -453,7 +470,7 @@ export default function Dashboard({ user }: DashboardProps) {
                     },
                     tooltip: {
                       callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                           const label = context.label || '';
                           const value = context.parsed || 0;
                           return `${label}: ${value} leads`;
@@ -487,7 +504,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       data: leadStats.statusDistribution.map((item: StatusDistributionItem) => item.count),
                       backgroundColor: [
                         '#3B82F6',
-                        '#10B981', 
+                        '#10B981',
                         '#F59E0B',
                         '#EF4444',
                         '#8B5CF6',
@@ -511,7 +528,7 @@ export default function Dashboard({ user }: DashboardProps) {
                     },
                     tooltip: {
                       callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                           const label = context.label || '';
                           const value = context.parsed || 0;
                           return `${label}: ${value} leads`;
@@ -558,7 +575,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
                       tooltip: {
                         callbacks: {
-                          label: function(context) {
+                          label: function (context) {
                             return `${context.label}: ${context.parsed} leads`;
                           }
                         }
@@ -604,7 +621,7 @@ export default function Dashboard({ user }: DashboardProps) {
                     legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
                     tooltip: {
                       callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                           return `${context.label}: ${context.parsed} leads`;
                         }
                       }
@@ -650,7 +667,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
                       tooltip: {
                         callbacks: {
-                          label: function(context) {
+                          label: function (context) {
                             return `${context.label}: ${context.parsed} leads`;
                           }
                         }

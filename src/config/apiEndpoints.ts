@@ -1,0 +1,62 @@
+export const API_ENDPOINTS = {
+  AUTH_LOGIN: '/api/auth/login',
+  AUTH_STATUS: '/api/auth/status',
+  AUTH_RESET_PASSWORD: '/api/auth/reset-password',
+  DASHBOARD_STATS: '/api/dashboard/stats',
+  USERS: '/api/users',
+  USERS_BY_ID: (id: string) => `/api/users/${id}`,
+  USERS_PROFILE_IMAGE: (id: string) => `/api/users/${id}/profile-image`,
+  USERS_ALL: '/api/users/all',
+  USERS_EXPORT: '/api/users/export',
+  ADMIN_ROLES: '/api/admin/roles',
+  ADMIN_ROLES_BY_ID: (id: string) => `/api/admin/roles/${id}`,
+  ADMIN_ROLES_ALL: '/api/admin/roles/all',
+  ADMIN_ROLES_EXPORT: '/api/admin/roles/export',
+  ADMIN_CENTRES: '/api/admin/centres',
+  ADMIN_CENTRES_BY_ID: (id: string) => `/api/admin/centres/${id}`,
+  ADMIN_CENTRES_ALL: '/api/admin/centres/all',
+  ADMIN_CENTRES_EXPORT: '/api/admin/centres/export',
+  ADMIN_LANGUAGES: '/api/admin/languages',
+  ADMIN_LANGUAGES_BY_ID: (id: string) => `/api/admin/languages/${id}`,
+  ADMIN_LANGUAGES_ALL: '/api/admin/languages/all',
+  ADMIN_LANGUAGES_EXPORT: '/api/admin/languages/export',
+  ADMIN_STATUSES: '/api/admin/statuses',
+  ADMIN_STATUSES_BY_ID: (id: string) => `/api/admin/statuses/${id}`,
+  ADMIN_STATUSES_ALL: '/api/admin/statuses/all',
+  ADMIN_STATUSES_EXPORT: '/api/admin/statuses/export',
+  ADMIN_USERS_DELETE: (id: string) => `/api/admin/users/${id}`,
+  ADMIN_LEADS_DELETE: (id: string) => `/api/admin/leads/${id}`,
+  LEADS: '/api/leads',
+  LEADS_BY_ID: (id: string) => `/api/leads/${id}`,
+  LEADS_ACTIVITIES: (id: string) => `/api/leads/${id}/activities`,
+  LEADS_TIMELINE: (id: string) => `/api/leads/${id}/timeline`,
+  LEADS_CALL: (id: string) => `/api/leads/${id}/call`,
+  LEADS_ACTIVITY: (id: string) => `/api/leads/${id}/activity`,
+  LEADS_LEAD_ACTIVITY: (id: string) => `/api/leads/${id}/lead-activity`,
+  LEADS_PRESALES_ACTIVITY: (id: string) => `/api/leads/${id}/presales-activity`,
+  LEADS_CHANGE_LANGUAGE: (id: string) => `/api/leads/${id}/change-language`,
+  LEADS_DOCUMENT: (filename: string) => `/api/leads/document/${filename}`,
+  LEADS_EXPORT: '/api/leads/export',
+  LEADS_FORM_DATA: '/api/leads/form/data',
+  LEADS_BULK_UPLOAD: '/api/leads/bulk-upload',
+  LEADS_UNSIGNED: '/api/leads/unsigned',
+  LEADS_ASSIGN: (id: string) => `/api/leads/${id}/assign`,
+  LEAD_SOURCES: '/api/lead-sources',
+  LEAD_SOURCES_BY_ID: (id: string) => `/api/lead-sources/${id}`,
+  LEAD_SOURCES_ALL: '/api/lead-sources/all',
+  LEAD_SOURCES_EXPORT: '/api/lead-sources/export',
+  PROJECT_HOUSE_TYPES: '/api/project-house-types',
+  PROJECT_HOUSE_TYPES_BY_ID: (id: string) => `/api/project-house-types/${id}`,
+  PROJECT_HOUSE_TYPES_ALL: '/api/project-house-types/all',
+  PROJECT_HOUSE_TYPES_EXPORT: '/api/project-house-types/export',
+} as const;
+
+export const buildQueryString = (params: Record<string, any>): string => {
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, value.toString());
+    }
+  });
+  return queryParams.toString();
+};

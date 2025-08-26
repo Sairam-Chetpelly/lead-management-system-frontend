@@ -1,109 +1,152 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  PhoneCall, MessageSquare, Clock, User, Calendar,
-  CheckCircle, AlertCircle, Info, TrendingUp, FileText, Download
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  PhoneCall,
+  MessageSquare,
+  Clock,
+  User,
+  Calendar,
+  Info,
+  FileText,
+  Download,
 } from 'lucide-react';
 import { authAPI } from '@/lib/auth';
+import { timelineService, TimelineItem as ServiceTimelineItem } from '@/services/timelineService';
+import {
+  formatRelativeTime,
+  getFileType,
+  getTimelineColorClass,
+  getActivityBadgeClass,
+  getActivityDisplayName,
+  calculateTimelineStats,
+  getDocumentUrl,
+  MEDIA_EXTENSIONS,
+} from '@/utils/timelineUtils';
 import { useToast } from '@/contexts/ToastContext';
 import ModernLoader from './ModernLoader';
+import { ErrorBoundary } from './ErrorBoundary';
 
-interface TimelineItem {
+// Types
+interface User {
+  name: string;
+  email: string;
+}
+
+// Use the service interface
+type TimelineItem = ServiceTimelineItem;
+
+interface CallLog {
+  _id: string;
+  userId: User;
+  createdAt: string;
+  [key: string]: any;
+}
+
+interface ActivityLog {
   _id: string;
   type: 'call' | 'manual';
-  title: string;
-  description: string;
-  userId: {
-    name: string;
-    email: string;
-  };
-  document?: string;
-  timestamp: string;
+  comment: string;
+  userId: User;
   createdAt: string;
+  [key: string]: any;
 }
 
 interface LeadTimelineProps {
   leadId: string;
-  callLogs: any[];
-  activityLogs: any[];
+  callLogs: CallLog[];
+  activityLogs: ActivityLog[];
 }
+
+type TimelineType = 'call' | 'manual';
+type FileExtension = string;
+
+
 
 export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTimelineProps) {
   const { showToast } = useToast();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTimeline();
-  }, [leadId, callLogs, activityLogs]);
+  // Memoized fallback timeline from props
+  const fallbackTimeline = useMemo(() => {
+    const combined = [
+      ...callLogs.map((log): TimelineItem => ({
+        ...log,
+        type: 'call' as const,
+        title: 'Call Made',
+        description: `Call made by ${log.userId?.name || 'Unknown User'}`,
+        timestamp: log.createdAt,
+      })),
+      ...activityLogs.map((log): TimelineItem => ({
+        ...log,
+        type: log.type,
+        title: log.type === 'call' ? 'Call Activity' : 'Manual Activity',
+        description: log.comment || 'No description provided',
+        timestamp: log.createdAt,
+      })),
+    ];
+    
+    return combined.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [callLogs, activityLogs]);
 
-  const fetchTimeline = async () => {
+  // Fetch timeline with proper error handling using service
+  const fetchTimeline = useCallback(async () => {
+    if (!leadId) return;
+    
     setLoading(true);
+    setError(null);
+    
     try {
-      const response = await authAPI.getLeadTimeline(leadId);
-      setTimeline(response.data.timeline || []);
-    } catch (error) {
-      console.error('Error fetching timeline:', error);
-      // Fallback to combining local data
-      const combinedTimeline = [
-        ...callLogs.map(log => ({
-          ...log,
-          type: 'call' as const,
-          title: 'Call Made',
-          description: `Call made by ${log.userId?.name || 'Unknown'}`,
-          timestamp: log.createdAt
-        })),
-        ...activityLogs.map(log => ({
-          ...log,
-          type: log.type,
-          title: log.type === 'call' ? 'Call Activity' : 'Manual Activity',
-          description: log.comment,
-          timestamp: log.createdAt
-        }))
-      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const response = await timelineService.getLeadTimeline(leadId);
+      const timelineData = response.data?.timeline || [];
       
-      setTimeline(combinedTimeline);
+      if (timelineData.length > 0) {
+        setTimeline(timelineData);
+      } else {
+        setTimeline(fallbackTimeline);
+      }
+    } catch (err) {
+      console.error('Timeline fetch error:', err);
+      setTimeline(fallbackTimeline);
     } finally {
       setLoading(false);
     }
-  };
+  }, [leadId, fallbackTimeline]);
 
-  const getTimelineIcon = (type: string) => {
+  useEffect(() => {
+    fetchTimeline();
+  }, [fetchTimeline]);
+
+  // Refresh timeline when callLogs or activityLogs change
+  useEffect(() => {
+    if (leadId) {
+      timelineService.clearCache(leadId);
+      fetchTimeline();
+    }
+  }, [callLogs.length, activityLogs.length, leadId, fetchTimeline]);
+
+  // Helper functions
+  const getTimelineIcon = useCallback((type: 'call' | 'manual') => {
+    const iconProps = { size: 16 };
+    
     switch (type) {
       case 'call':
-        return <PhoneCall size={16} className="text-green-600" />;
+        return <PhoneCall {...iconProps} className="text-green-600" />;
       case 'manual':
-        return <MessageSquare size={16} className="text-blue-600" />;
+        return <MessageSquare {...iconProps} className="text-blue-600" />;
       default:
-        return <Info size={16} className="text-gray-600" />;
+        return <Info {...iconProps} className="text-gray-600" />;
     }
-  };
+  }, []);
 
-  const getTimelineColor = (type: string) => {
-    switch (type) {
-      case 'call':
-        return 'bg-green-100 border-green-200';
-      case 'manual':
-        return 'bg-blue-100 border-blue-200';
-      default:
-        return 'bg-gray-100 border-gray-200';
-    }
-  };
+  // Memoized statistics using utility function
+  const timelineStats = useMemo(() => calculateTimelineStats(timeline), [timeline]);
 
-  const formatRelativeTime = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - time.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
-    return time.toLocaleDateString();
-  };
-
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -112,8 +155,37 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
     );
   }
 
+  // Error state with retry option
+  if (error && timeline.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-24 h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+          <Info size={32} className="text-red-500" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Timeline</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={() => {
+            timelineService.clearCache(leadId);
+            fetchTimeline();
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Retry loading timeline"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('LeadTimeline Error:', error);
+        showToast('Timeline component encountered an error', 'error');
+      }}
+    >
+      <div className="space-y-6">
       {/* Timeline Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -123,7 +195,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
             <p className="text-sm text-gray-600">
-              {timeline.length} activities • Latest activity {timeline.length > 0 ? formatRelativeTime(timeline[0].timestamp) : 'None'}
+              {timelineStats.totalActivities} activities • Latest activity {timelineStats.latestActivity}
             </p>
           </div>
         </div>
@@ -132,13 +204,13 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
         <div className="flex items-center space-x-4">
           <div className="text-center">
             <div className="text-lg font-bold text-green-600">
-              {timeline.filter(item => item.type === 'call').length}
+              {timelineStats.callCount}
             </div>
             <div className="text-xs text-gray-500">Calls</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-blue-600">
-              {timeline.filter(item => item.type === 'manual').length}
+              {timelineStats.manualCount}
             </div>
             <div className="text-xs text-gray-500">Activities</div>
           </div>
@@ -155,7 +227,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
             {timeline.map((item, index) => (
               <div key={item._id} className="relative flex items-start space-x-4">
                 {/* Timeline Dot */}
-                <div className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-2xl border-2 ${getTimelineColor(item.type)} shadow-lg`}>
+                <div className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-2xl border-2 ${getTimelineColorClass(item.type)} shadow-lg`}>
                   {getTimelineIcon(item.type)}
                 </div>
                 
@@ -189,72 +261,67 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                     </div>
                     
                     {item.document && (() => {
+                      const fileType = getFileType(item.document);
                       const ext = item.document.split('.').pop()?.toLowerCase() || '';
-                      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-                      const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(ext);
-                      const isAudio = ['mp3', 'wav', 'ogg', 'aac'].includes(ext);
+                      const documentUrl = getDocumentUrl(item.document);
                       
-                      if (isImage || isVideo || isAudio) {
-                        return (
-                          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            {isImage && (
+                      const MediaPreview = () => {
+                        switch (fileType) {
+                          case 'image':
+                            return (
                               <img 
-                                src={`/api/leads/document/${item.document}`} 
+                                src={documentUrl}
                                 alt={item.document}
                                 className="max-w-sm max-h-64 object-contain rounded border mb-2"
+                                loading="lazy"
                               />
-                            )}
-                            {isVideo && (
+                            );
+                          case 'video':
+                            return (
                               <video 
                                 controls 
                                 className="max-w-sm max-h-64 rounded border mb-2"
+                                preload="metadata"
                               >
-                                <source src={`/api/leads/document/${item.document}`} type={`video/${ext}`} />
+                                <source src={documentUrl} type={`video/${ext}`} />
+                                Your browser does not support video playback.
                               </video>
-                            )}
-                            {isAudio && (
-                              <audio controls className="w-full max-w-sm mb-2">
-                                <source src={`/api/leads/document/${item.document}`} type={`audio/${ext}`} />
+                            );
+                          case 'audio':
+                            return (
+                              <audio controls className="w-full max-w-sm mb-2" preload="metadata">
+                                <source src={documentUrl} type={`audio/${ext}`} />
+                                Your browser does not support audio playback.
                               </audio>
-                            )}
-                            <div className="flex items-center space-x-2">
-                              <FileText size={16} className="text-blue-600" />
-                              <a 
-                                href={`/api/leads/document/${item.document}`}
-                                download
-                                className="text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1"
-                              >
-                                <Download size={14} />
-                                <span>Download</span>
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      }
+                            );
+                          default:
+                            return null;
+                        }
+                      };
                       
                       return (
-                        <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <FileText size={16} className="text-blue-600" />
-                          <a 
-                            href={`/api/leads/document/${item.document}`}
-                            download
-                            className="text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1"
-                          >
-                            <Download size={14} />
-                            <span>Download</span>
-                          </a>
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <MediaPreview />
+                          <div className="flex items-center space-x-2">
+                            <FileText size={16} className="text-blue-600" />
+                            <a 
+                              href={documentUrl}
+                              download={item.document}
+                              className="text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1 transition-colors"
+                              aria-label={`Download ${item.document}`}
+                            >
+                              <Download size={14} />
+                              <span>Download {item.document}</span>
+                            </a>
+                          </div>
                         </div>
                       );
                     })()}
                     
                     {/* Activity Type Badge */}
                     <div className="mt-4 flex items-center justify-between">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                        item.type === 'call' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {item.type === 'call' ? 'Phone Call' : 'Manual Activity'}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${getActivityBadgeClass(item.type)}`}>
+                        {getActivityDisplayName(item.type)}
                       </span>
                       
                       {index === 0 && (
@@ -292,6 +359,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
       )}
       
 
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -96,8 +96,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
     // Admin and management features
     if (['admin', 'hod_presales', 'hod_sales', 'manager_presales', 'sales_manager'].includes(userRole)) {
       
-      // User management for admin and HODs
-      if (['admin', 'hod_presales', 'hod_sales'].includes(userRole)) {
+      // User management for admin, HODs, and managers
+      if (['admin', 'hod_presales', 'hod_sales', 'manager_presales', 'sales_manager'].includes(userRole)) {
         baseItems.push({
           id: 'user-management',
           name: 'User Management',
@@ -121,7 +121,6 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
             { id: 'statuses', name: 'Statuses', icon: Activity },
             { id: 'lead-sources', name: 'Lead Sources', icon: Activity },
             { id: 'project-house-types', name: 'Project & House Types', icon: Building },
-
           ]
         });
       }

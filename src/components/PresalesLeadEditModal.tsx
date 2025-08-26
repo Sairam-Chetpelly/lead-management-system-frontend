@@ -19,12 +19,15 @@ interface FormData {
   contactNumber: string;
   sourceId: string;
   leadStatusId: string;
+  leadSubStatusId: string;
   centreId: string;
   languageId: string;
   projectTypeId: string;
   houseTypeId: string;
   apartmentName: string;
   leadValue: string;
+  cifDate: string;
+  meetingArrangedDate: string;
   comment: string;
 }
 
@@ -41,6 +44,7 @@ interface DropdownData {
   projectTypes: any[];
   houseTypes: any[];
   leadStatuses: DropdownItem[];
+  leadSubStatuses: DropdownItem[];
 }
 
 export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSuccess }: PresalesLeadEditModalProps) {
@@ -53,12 +57,15 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     contactNumber: '',
     sourceId: '',
     leadStatusId: '',
+    leadSubStatusId: '',
     centreId: '',
     languageId: '',
     projectTypeId: '',
     houseTypeId: '',
     apartmentName: '',
     leadValue: '',
+    cifDate: '',
+    meetingArrangedDate: '',
     comment: ''
   });
 
@@ -68,7 +75,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     languages: [],
     projectTypes: [],
     houseTypes: [],
-    leadStatuses: []
+    leadStatuses: [],
+    leadSubStatuses: []
   });
 
   const [files, setFiles] = useState<File[]>([]);
@@ -92,12 +100,15 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         contactNumber: lead.contactNumber || '',
         sourceId: lead.sourceId?._id || '',
         leadStatusId: lead.leadStatusId?._id || '',
+        leadSubStatusId: lead.leadSubStatusId?._id || '',
         centreId: lead.centreId?._id || '',
         languageId: lead.languageId?._id || '',
         projectTypeId: lead.projectTypeId?._id || '',
         houseTypeId: lead.houseTypeId?._id || '',
         apartmentName: lead.apartmentName || '',
         leadValue: lead.leadValue || '',
+        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().slice(0, 16) : '',
+        meetingArrangedDate: lead.meetingArrangedDate ? new Date(lead.meetingArrangedDate).toISOString().slice(0, 16) : '',
         comment: ''
       });
     } catch (error) {
@@ -126,7 +137,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         languages: languagesRes.data.data || languagesRes.data || [],
         projectTypes: formDataRes.data.projectTypes || [],
         houseTypes: formDataRes.data.houseTypes || [],
-        leadStatuses: statuses.filter((s: any) => s.type === 'leadStatus' && ['lead', 'qualified', 'lost'].includes(s.slug))
+        leadStatuses: statuses.filter((s: any) => s.type === 'leadStatus' && ['lead', 'qualified', 'lost'].includes(s.slug)),
+        leadSubStatuses: statuses.filter((s: any) => s.type === 'leadSubStatus')
       });
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
@@ -135,7 +147,27 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+
+      if (field === 'leadStatusId') {
+        newData.leadSubStatusId = '';
+        newData.cifDate = '';
+        newData.meetingArrangedDate = '';
+      }
+
+      if (field === 'leadSubStatusId') {
+        const selectedSubStatus = dropdownData.leadSubStatuses.find((s: DropdownItem) => s._id === value);
+        if (selectedSubStatus?.slug !== 'cif') {
+          newData.cifDate = '';
+        }
+        if (selectedSubStatus?.slug !== 'meeting-arranged') {
+          newData.meetingArrangedDate = '';
+        }
+      }
+
+      return newData;
+    });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,12 +238,15 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       contactNumber: '',
       sourceId: '',
       leadStatusId: '',
+      leadSubStatusId: '',
       centreId: '',
       languageId: '',
       projectTypeId: '',
       houseTypeId: '',
       apartmentName: '',
       leadValue: '',
+      cifDate: '',
+      meetingArrangedDate: '',
       comment: ''
     });
     setFiles([]);
@@ -304,6 +339,65 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 ))}
               </select>
             </div>
+            {(() => {
+              const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
+              let allowedSubStatuses: any[] = [];
+
+              if (selectedStatus?.slug === 'lead') {
+                allowedSubStatuses = dropdownData.leadSubStatuses.filter((s: any) =>
+                  ['interested', 'cif', 'meeting-arranged'].includes(s.slug)
+                );
+              } else if (selectedStatus?.slug === 'qualified') {
+                allowedSubStatuses = dropdownData.leadSubStatuses.filter((s: any) =>
+                  ['cif', 'hot', 'warm'].includes(s.slug)
+                );
+              }
+
+              return allowedSubStatuses.length > 0 ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Lead Sub-Status</label>
+                  <select
+                    value={formData.leadSubStatusId}
+                    onChange={(e) => handleInputChange('leadSubStatusId', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Sub-Status</option>
+                    {allowedSubStatuses.map((subStatus: any) => (
+                      <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null;
+            })()}
+            {(() => {
+              const selectedSubStatus = dropdownData.leadSubStatuses.find((s: DropdownItem) => s._id === formData.leadSubStatusId);
+              if (selectedSubStatus?.slug === 'cif') {
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">CIF Date</label>
+                    <input
+                      type="datetime-local"
+                      value={formData.cifDate}
+                      onChange={(e) => handleInputChange('cifDate', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                );
+              } else if (selectedSubStatus?.slug === 'meeting-arranged') {
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Arranged Date</label>
+                    <input
+                      type="datetime-local"
+                      value={formData.meetingArrangedDate}
+                      onChange={(e) => handleInputChange('meetingArrangedDate', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Centre</label>
               <select
@@ -339,7 +433,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
               >
                 <option value="">Select Lead Value</option>
                 <option value="high value">High Value</option>
-                <option value="medium value">Medium Value</option>
                 <option value="low value">Low Value</option>
               </select>
             </div>

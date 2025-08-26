@@ -1,4 +1,5 @@
 import api from './api';
+import { API_ENDPOINTS, buildQueryString } from '@/config/apiEndpoints';
 
 interface PaginationParams {
   page?: number;
@@ -16,13 +17,7 @@ export const createApiService = (baseEndpoint: string) => {
   return {
     // Get all items with pagination
     getAll: (params: PaginationParams = {}) => {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, value.toString());
-        }
-      });
-      const queryString = queryParams.toString();
+      const queryString = buildQueryString(params);
       return api.get(`${baseEndpoint}${queryString ? `?${queryString}` : ''}`);
     },
 
@@ -48,14 +43,14 @@ export const createApiService = (baseEndpoint: string) => {
 
 // Pre-configured services
 export const adminServices = {
-  roles: createApiService('/api/admin/roles'),
-  centres: createApiService('/api/admin/centres'),
-  languages: createApiService('/api/admin/languages'),
-  statuses: createApiService('/api/admin/statuses'),
-  users: createApiService('/api/users')
+  roles: createApiService(API_ENDPOINTS.ADMIN_ROLES),
+  centres: createApiService(API_ENDPOINTS.ADMIN_CENTRES),
+  languages: createApiService(API_ENDPOINTS.ADMIN_LANGUAGES),
+  statuses: createApiService(API_ENDPOINTS.ADMIN_STATUSES),
+  users: createApiService(API_ENDPOINTS.USERS)
 };
 
 export const leadServices = {
-  sources: createApiService('/api/lead-sources'),
-  projectHouseTypes: createApiService('/api/project-house-types')
+  sources: createApiService(API_ENDPOINTS.LEAD_SOURCES),
+  projectHouseTypes: createApiService(API_ENDPOINTS.PROJECT_HOUSE_TYPES)
 };

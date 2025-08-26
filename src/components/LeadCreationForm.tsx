@@ -189,7 +189,7 @@ export default function LeadCreationForm({
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             <Phone size={16} className="inline mr-2" />
-            Contact Number *
+            Contact Number <span className="text-xs text-red-500">*</span>
           </label>
           <input
             type="tel"
@@ -206,7 +206,7 @@ export default function LeadCreationForm({
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             <FileText size={16} className="inline mr-2" />
-            Lead Source *
+            Lead Source <span className="text-xs text-red-500">*</span>
           </label>
           <select
             value={formData.leadSourceId}
@@ -226,7 +226,7 @@ export default function LeadCreationForm({
         {/* Assignment Type */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Assignment Type *
+            Assignment Type <span className="text-xs text-red-500">*</span>
           </label>
           <div className="grid grid-cols-2 gap-4">
             <label className="flex items-center p-3 border border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-all">
@@ -267,18 +267,17 @@ export default function LeadCreationForm({
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <Building size={16} className="inline mr-2" />
-              Centre
+              Centre <span className="text-xs text-red-500">*</span>
             </label>
             <select
               value={formData.centreId}
               onChange={(e) => handleInputChange("centreId", e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              required={formData.assignmentType === "sales"}
             >
               <option value="">Select Centre</option>
-              {dropdownData.centres.map((centre) => (
-                <option key={centre._id} value={centre._id}>
-                  {centre.name}
-                </option>
+              {dropdownData.centres.filter(centre => !centre.name.toLowerCase().includes('main')).map(centre => (
+                        <option key={centre._id} value={centre._id}>{centre.name}</option>
               ))}
             </select>
           </div>
@@ -286,12 +285,13 @@ export default function LeadCreationForm({
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <Globe size={16} className="inline mr-2" />
-              Language
+              Language <span className="text-xs text-red-500">*</span>
             </label>
             <select
               value={formData.languageId}
               onChange={(e) => handleInputChange("languageId", e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              required={formData.assignmentType === "sales"}
             >
               <option value="">Select Language</option>
               {dropdownData.languages.map((language) => (
@@ -305,12 +305,13 @@ export default function LeadCreationForm({
           <div className="">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <TrendingUp size={16} className="inline mr-2" />
-              Lead Value
+              Lead Value <span className="text-xs text-red-500">*</span>
             </label>
             <select
               value={formData.leadValue}
               onChange={(e) => handleInputChange("leadValue", e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              required={formData.assignmentType === "sales"}
             >
               <option value="">Select Lead Value</option>
               {dropdownData.leadValues.map((value) => (

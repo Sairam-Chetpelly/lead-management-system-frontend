@@ -15,6 +15,7 @@ import ActivityLogModal from './ActivityLogModal';
 import LeadView from './LeadView';
 import LeadEditModal from './LeadEditModal';
 import PresalesLeadEditModal from './PresalesLeadEditModal';
+import SearchableAgentDropdown from './SearchableAgentDropdown';
 
 interface LeadsTableProps {
   user: any;
@@ -22,10 +23,7 @@ interface LeadsTableProps {
 
 interface Lead {
   _id: string;
-  leadId: {
-    leadID: string;
-    _id: string;
-  };
+  leadID: string;
   name: string;
   email: string;
   contactNumber: string;
@@ -147,6 +145,11 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const userRole = getCurrentUserRole();
   const isSalesAgent = userRole === 'sales_agent';
   const isPreSalesAgent = userRole === 'presales_agent';
+  const isSalesManager = userRole === 'sales_manager';
+  const isHodSales = userRole === 'hod_sales';
+  const isPreSalesManager = userRole === 'manager_presales';
+  const isPreSalesHod = userRole === 'hod_presales';
+  const isAdmin = userRole === 'admin';
   
   const fetchDropdownData = async () => {
     try {
@@ -286,17 +289,14 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <option key={source._id} value={source._id}>{source.name}</option>
               ))}
             </select>
-            <select
-              value={filters.assignedTo}
-              onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
-              hidden={isSalesAgent || isPreSalesAgent}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            >
-              <option value="">All Agents</option>
-              {users.map(user => (
-                <option key={user._id} value={user._id}>{user.name}</option>
-              ))}
-            </select>
+            <div className={isSalesAgent || isPreSalesAgent ? 'hidden' : ''}>
+              <SearchableAgentDropdown
+                agents={users}
+                value={filters.assignedTo}
+                onChange={(value) => handleFilterChange('assignedTo', value)}
+                placeholder="All Agents"
+              />
+            </div>
             <select
               value={filters.leadValue}
               onChange={(e) => handleFilterChange('leadValue', e.target.value)}
@@ -304,9 +304,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             >
               <option value="">All Values</option>
               <option value="high value">High Value</option>
-              <option value="medium value">Medium Value</option>
               <option value="low value">Low Value</option>
             </select>
+            {isAdmin && (
             <select
               value={filters.centre}
               onChange={(e) => handleFilterChange('centre', e.target.value)}
@@ -318,6 +318,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <option key={centre._id} value={centre._id}>{centre.name}</option>
               ))}
             </select>
+          )}
+          {isAdmin && (
             <select
               value={filters.leadStatus}
               hidden={isSalesAgent || isPreSalesAgent}
@@ -329,6 +331,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <option key={status._id} value={status._id}>{status.name}</option>
               ))}
             </select>
+          )}
             <select
               value={filters.leadSubStatus}
               onChange={(e) => handleFilterChange('leadSubStatus', e.target.value)}
@@ -406,10 +409,10 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <div key={lead._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 animate-stagger ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`} style={{animationDelay: `${index * 0.05}s`}}>
                   <div className="col-span-2 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {lead.leadId.leadID.slice(-3)}
+                      {lead.leadID.slice(-3)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-slate-900 font-bold truncate">{lead.leadId.leadID}</div>
+                      <div className="text-slate-900 font-bold truncate">{lead.leadID}</div>
                       <div className="text-slate-600 text-sm truncate">{lead.name || 'N/A'}</div>
                     </div>
                   </div>
@@ -417,17 +420,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <div className="col-span-2 flex flex-col justify-center min-w-0">
                     <div className="text-slate-700 font-medium truncate flex items-center">
                       <Mail size={12} className="mr-1 text-slate-400" />
-                      {lead.email}
+                      {lead.email || 'N/A'}
                     </div>
                     <div className="text-slate-500 text-sm truncate flex items-center">
                       <Phone size={12} className="mr-1 text-slate-400" />
-                      {lead.contactNumber}
+                      {lead.contactNumber || 'N/A'}
                     </div>
                   </div>
                   
                   <div className="col-span-2 flex flex-col justify-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800 mb-1 w-fit">
-                      {lead.sourceId.name}
+                      {lead.sourceId?.name || 'N/A'}
                     </span>
                     {lead.centreId && (
                       <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 w-fit">
@@ -458,7 +461,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     {lead.leadValue ? (
                       <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${
                         lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                        lead.leadValue === 'medium value' ? 'bg-yellow-100 text-yellow-800' :
+                        lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {lead.leadValue}
@@ -500,9 +503,11 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                      <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
                       <PhoneCall size={14} />
                     </button>
-                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete Lead">
-                      <Trash2 size={14} />
-                    </button>
+                    {isAdmin && (
+                      <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete Lead">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -518,17 +523,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
-                      {lead.leadId.leadID.slice(-3)}
+                      {lead.leadID.slice(-3)}
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900">{lead.leadId.leadID}</div>
+                      <div className="font-bold text-slate-900">{lead.leadID}</div>
                       <div className="text-sm text-slate-600">{lead.name || 'N/A'}</div>
                     </div>
                   </div>
                   {lead.leadValue && (
                     <span className={`px-3 py-1 rounded-xl text-xs font-semibold capitalize ${
                       lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                      lead.leadValue === 'medium value' ? 'bg-yellow-100 text-yellow-800' :
+                      lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-blue-100 text-blue-800'
                     }`}>
                       {lead.leadValue}
@@ -537,9 +542,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 </div>
                 
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Email:</span> {lead.email}</div>
-                  <div><span className="font-medium">Phone:</span> {lead.contactNumber}</div>
-                  <div><span className="font-medium">Source:</span> {lead.sourceId.name}</div>
+                  <div><span className="font-medium">Email:</span> {lead.email || 'N/A'}</div>
+                  <div><span className="font-medium">Phone:</span> {lead.contactNumber || 'N/A'}</div>
+                  <div><span className="font-medium">Source:</span> {lead.sourceId?.name || 'N/A'}</div>
                   {lead.centreId && <div><span className="font-medium">Centre:</span> {lead.centreId.name}</div>}
                   <div><span className="font-medium">Assigned:</span> {lead.presalesUserId ? `Presales: ${lead.presalesUserId.name}` : lead.salesUserId ? `Sales: ${lead.salesUserId.name}` : 'Unassigned'}</div>
                   <div className="text-gray-500">Created: {new Date(lead.createdAt).toLocaleDateString()}</div>
@@ -558,9 +563,11 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex-1 flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-xl font-medium text-sm">
                     <PhoneCall size={16} className="mr-1" /> Call
                   </button>
-                  <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadId.leadID})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
-                    <Trash2 size={16} className="mr-1" /> Delete
-                  </button>
+                  {isAdmin && (
+                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
+                      <Trash2 size={16} className="mr-1" /> Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -586,7 +593,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Lead ID</label>
-                <p className="text-sm text-gray-900">{viewLead.leadId.leadID}</p>
+                <p className="text-sm text-gray-900">{viewLead.leadID}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -596,17 +603,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="text-sm text-gray-900">{viewLead.email}</p>
+                <p className="text-sm text-gray-900">{viewLead.email || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <p className="text-sm text-gray-900">{viewLead.contactNumber}</p>
+                <p className="text-sm text-gray-900">{viewLead.contactNumber || 'N/A'}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Source</label>
-                <p className="text-sm text-gray-900">{viewLead.sourceId.name}</p>
+                <p className="text-sm text-gray-900">{viewLead.sourceId?.name || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Lead Value</label>

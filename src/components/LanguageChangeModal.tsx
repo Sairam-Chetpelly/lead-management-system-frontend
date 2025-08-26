@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Globe, User } from 'lucide-react';
+import { X, Save, Globe } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -25,27 +25,14 @@ export default function LanguageChangeModal({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedLanguageId, setSelectedLanguageId] = useState(currentLanguageId || '');
-  const [selectedPresalesUserId, setSelectedPresalesUserId] = useState('');
   const [languages, setLanguages] = useState<any[]>([]);
-  const [presalesUsers, setPresalesUsers] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       fetchLanguages();
       setSelectedLanguageId(currentLanguageId || '');
-      setSelectedPresalesUserId('');
-      setPresalesUsers([]);
     }
   }, [isOpen, currentLanguageId]);
-
-  useEffect(() => {
-    if (selectedLanguageId) {
-      fetchPresalesUsers();
-    } else {
-      setPresalesUsers([]);
-      setSelectedPresalesUserId('');
-    }
-  }, [selectedLanguageId]);
 
   const fetchLanguages = async () => {
     setLoading(true);
@@ -60,49 +47,28 @@ export default function LanguageChangeModal({
     }
   };
 
-  const fetchPresalesUsers = async () => {
-    try {
-      const response = await authAPI.getUsers({ 
-        role: 'presales_agent',
-        limit: 1000 
-      });
-      const allUsers = response.data.data || response.data || [];
-      
-      // Filter users by selected language
-      const filteredUsers = allUsers.filter((user: any) => 
-        user.languageIds && user.languageIds.some((lang: any) => 
-          (typeof lang === 'string' ? lang : lang._id) === selectedLanguageId
-        )
-      );
-      
-      setPresalesUsers(filteredUsers);
-    } catch (error) {
-      console.error('Error fetching presales users:', error);
-      showToast('Failed to fetch presales users', 'error');
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedLanguageId || !selectedPresalesUserId) {
-      showToast('Please select both language and presales agent', 'error');
+    if (!selectedLanguageId) {
+      showToast('Please select a language', 'error');
       return;
     }
 
     setSubmitting(true);
     try {
       await authAPI.changeLanguage(leadId, {
-        languageId: selectedLanguageId,
-        presalesUserId: selectedPresalesUserId
+        languageId: selectedLanguageId
       });
 
-      showToast('Lead reassigned successfully', 'success');
+      showToast('Language changed successfully', 'success');
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error reassigning lead:', error);
-      showToast('Failed to reassign lead', 'error');
+      console.error('Error changing language:', error);
+      showToast('Failed to change language', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -110,13 +76,11 @@ export default function LanguageChangeModal({
 
   const handleClose = () => {
     setSelectedLanguageId(currentLanguageId || '');
-    setSelectedPresalesUserId('');
-    setPresalesUsers([]);
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Change Language & Reassign Lead">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Change Language">
       <form onSubmit={handleSubmit} className="space-y-6">
         {loading ? (
           <div className="flex justify-center py-8">
@@ -145,40 +109,13 @@ export default function LanguageChangeModal({
               </select>
             </div>
 
-            {/* Presales Agent Selection */}
-            {selectedLanguageId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <User size={16} className="inline mr-2" />
-                  Select Presales Agent *
-                </label>
-                {presalesUsers.length > 0 ? (
-                  <select
-                    value={selectedPresalesUserId}
-                    onChange={(e) => setSelectedPresalesUserId(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select Presales Agent</option>
-                    {presalesUsers.map((user) => (
-                      <option key={user._id} value={user._id}>
-                        {user.name} ({user.email})
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                    No presales agents available for selected language
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* Info Message */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Changing the language will reassign this lead to the selected presales agent. 
-                The lead will be removed from your panel and added to the selected agent's panel.
+                <strong>Note:</strong> If you can handle this language, the lead will remain with you. 
+                Otherwise, it will be automatically assigned to an available presales agent who speaks this language.
               </p>
             </div>
           </>
@@ -198,18 +135,18 @@ export default function LanguageChangeModal({
           
           <button
             type="submit"
-            disabled={!selectedLanguageId || !selectedPresalesUserId || submitting || presalesUsers.length === 0}
+            disabled={!selectedLanguageId || submitting}
             className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
           >
             {submitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Reassigning...</span>
+                <span>Updating...</span>
               </>
             ) : (
               <>
                 <Save size={16} />
-                <span>Reassign Lead</span>
+                <span>Change Language</span>
               </>
             )}
           </button>

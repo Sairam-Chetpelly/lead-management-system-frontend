@@ -15,6 +15,8 @@ interface Centre {
   _id: string;
   name: string;
   slug: string;
+  userCount?: number;
+  leadCount?: number;
 }
 
 export default function CentresTable() {
@@ -157,27 +159,39 @@ export default function CentresTable() {
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-5 text-left font-semibold text-sm uppercase tracking-wider">Centre Name</div>
-              <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
+              <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Centre Name</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Users</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Leads</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {centres.map((centre, index) => (
                 <div key={centre._id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-teal-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                  <div className="col-span-5 flex items-center space-x-3">
+                  <div className="col-span-4 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
                       🏢
                     </div>
                     <div className="text-slate-900 font-bold truncate">{centre.name}</div>
                   </div>
-                  <div className="col-span-4 flex items-center">
+                  <div className="col-span-2 flex items-center">
                     <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 truncate">
                       {centre.slug}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center space-x-2">
+                  <div className="col-span-2 flex items-center">
+                    <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-blue-100 text-blue-700">
+                      {centre.userCount || 0}
+                    </span>
+                  </div>
+                  <div className="col-span-2 flex items-center">
+                    <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-orange-100 text-orange-700">
+                      {centre.leadCount || 0}
+                    </span>
+                  </div>
+                  <div className="col-span-2 flex items-center space-x-2">
                     <button onClick={() => handleEdit(centre)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
                       <Edit size={14} />
                     </button>
@@ -204,6 +218,9 @@ export default function CentresTable() {
                     <div>
                       <div className="font-bold text-slate-900">{centre.name}</div>
                       <div className="text-sm text-slate-600">{centre.slug}</div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Users: {centre.userCount || 0} | Leads: {centre.leadCount || 0}
+                      </div>
                     </div>
                   </div>
                 </div>

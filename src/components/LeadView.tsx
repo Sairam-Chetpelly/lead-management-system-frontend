@@ -22,14 +22,11 @@ interface LeadViewProps {
 
 interface Lead {
   _id: string;
-  leadId: {
-    leadID: string;
-    _id: string;
-  };
-  name: string;
-  email: string;
-  contactNumber: string;
-  comment: string;
+  leadID: string;
+  name?: string;
+  email?: string;
+  contactNumber?: string;
+  comment?: string;
   presalesUserId?: {
     name: string;
     email: string;
@@ -42,7 +39,7 @@ interface Lead {
     _id: string;
     name: string;
   };
-  sourceId: {
+  sourceId?: {
     name: string;
   };
   projectTypeId?: {
@@ -64,11 +61,12 @@ interface Lead {
     name: string;
     slug: string;
   };
+  meetingArrangedDate?: string;
   leadValue?: string;
   projectValue?: string;
   apartmentName?: string;
   expectedPossessionDate?: string;
-  paymentMethod?: string;
+
   siteVisit?: boolean;
   siteVisitDate?: string;
   centerVisit?: boolean;
@@ -198,7 +196,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     }
     
     try {
-      await authAPI.createCallLog(lead?.leadId?._id);
+      await authAPI.createCallLog(lead?._id);
       if (!isMobileOrTablet) {
         showToast('Call logged successfully', 'success');
       }
@@ -213,7 +211,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     if (!lead) return;
     
     try {
-      await authAPI.createActivityLog(lead?.leadId?._id, type, comment, document);
+      await authAPI.createActivityLog(lead?._id, type, comment, document);
       showToast('Activity logged successfully', 'success');
       setShowActivityForm(false);
       fetchLeadData(); // Refresh data
@@ -263,7 +261,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                 <ArrowLeft size={20} />
               </button>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{lead.leadId.leadID}</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{lead.leadID}</h1>
                 <p className="text-xs sm:text-sm text-gray-600 truncate">{lead.name || 'Lead Details'}</p>
               </div>
             </div>
@@ -555,14 +553,13 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           Basic Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <FieldDisplay label="Name" value={lead.name} icon={User} editing={editing} field="name" />
-          <FieldDisplay label="Email" value={lead.email} icon={Mail} editing={editing} field="email" type="email" />
-          <FieldDisplay label="Contact Number" value={lead.contactNumber} icon={Phone} editing={editing} field="contactNumber" type="tel" />
+          <FieldDisplay label="Name" value={lead.name || ''} icon={User} editing={editing} field="name" />
+          <FieldDisplay label="Email" value={lead.email || ''} icon={Mail} editing={editing} field="email" type="email" />
+          <FieldDisplay label="Contact Number" value={lead.contactNumber || ''} icon={Phone} editing={editing} field="contactNumber" type="tel" />
           <FieldDisplay label="Source" value={lead.sourceId?.name} icon={Globe} editing={false} field="sourceId" />
           <FieldDisplay label="Language" value={lead.languageId?.name} icon={Globe} editing={false} field="languageId" />
           <FieldDisplay label="Lead Value" value={lead.leadValue} icon={TrendingUp} editing={editing} field="leadValue" type="select" options={[
             { value: 'high value', label: 'High Value' },
-            { value: 'medium value', label: 'Medium Value' },
             { value: 'low value', label: 'Low Value' }
           ]} />
         </div>
@@ -580,9 +577,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
             <FieldDisplay label="Sales User" value={lead.salesUserId?.name} icon={User} editing={false} field="salesUserId" />
           )}
           <FieldDisplay label="Lead Status" value={lead.leadStatusId?.name} icon={CheckCircle} editing={false} field="leadStatusId" />
-          {!isPresalesAgent && (
-            <FieldDisplay label="Lead Sub Status" value={lead.leadSubStatusId?.name} icon={AlertCircle} editing={false} field="leadSubStatusId" />
-          )}
+          <FieldDisplay label="Lead Sub Status" value={lead.leadSubStatusId?.name} icon={AlertCircle} editing={false} field="leadSubStatusId" />
           <FieldDisplay label="Centre" value={lead.centreId?.name} icon={MapPin} editing={false} field="centreId" />
         </div>
       </div>
@@ -596,47 +591,41 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FieldDisplay label="Project Type" value={lead.projectTypeId?.name} icon={Building} editing={false} field="projectTypeId" />
           <FieldDisplay label="House Type" value={lead.houseTypeId?.name} icon={Building} editing={false} field="houseTypeId" />
+          <FieldDisplay label="Apartment Name" value={lead.apartmentName} icon={Building} editing={isPresalesAgent ? editing : false} field="apartmentName" />
           {!isPresalesAgent && (
-            <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
-          )}
-          <FieldDisplay label="Apartment Name" value={lead.apartmentName} icon={Building} editing={editing} field="apartmentName" />
-          {!isPresalesAgent && (
-            <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
-          )}
-          {!isPresalesAgent && (
-          <FieldDisplay label="Payment Method" value={lead.paymentMethod} icon={DollarSign} editing={editing} field="paymentMethod" type="select" options={[
-            { value: 'cod', label: 'Cash on Delivery' },
-            { value: 'upi', label: 'UPI' },
-            { value: 'debit card', label: 'Debit Card' },
-            { value: 'credit card', label: 'Credit Card' },
-            { value: 'emi', label: 'EMI' },
-            { value: 'cheque', label: 'Cheque' },
-            { value: 'loan', label: 'Loan' }
-          ]} />
+            <>
+              <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
+              <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
+            </>
           )}
         </div>
       </div>
 
-      {/* Visit Information */}
-      {!isPresalesAgent && (
+      {/* Important Dates */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <MapPin size={20} className="mr-2" />
-          Visit Information
+          <Calendar size={20} className="mr-2" />
+          Important Dates
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <FieldDisplay label="Site Visit" value={lead.siteVisit} icon={MapPin} editing={editing} field="siteVisit" type="checkbox" />
-          <FieldDisplay label="Site Visit Date" value={lead.siteVisitDate} icon={Calendar} editing={editing} field="siteVisitDate" type="date" />
-          <FieldDisplay label="Center Visit" value={lead.centerVisit} icon={Building} editing={editing} field="centerVisit" type="checkbox" />
-          <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
-          <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
-          <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
           {lead.leadSubStatusId?.slug === 'cif' && (
-            <FieldDisplay label="CIF Date" value={lead.cifDate} icon={Calendar} editing={editing} field="cifDate" type="datetime-local" />
+            <FieldDisplay label="CIF Date" value={lead.cifDate} icon={Calendar} editing={false} field="cifDate" type="datetime-local" />
+          )}
+          {lead.leadSubStatusId?.slug === 'meeting-arranged' && (
+            <FieldDisplay label="Meeting Arranged Date" value={lead.meetingArrangedDate} icon={Calendar} editing={false} field="meetingArrangedDate" type="datetime-local" />
+          )}
+          {!isPresalesAgent && (
+            <>
+              <FieldDisplay label="Site Visit" value={lead.siteVisit} icon={MapPin} editing={editing} field="siteVisit" type="checkbox" />
+              <FieldDisplay label="Site Visit Date" value={lead.siteVisitDate} icon={Calendar} editing={editing} field="siteVisitDate" type="date" />
+              <FieldDisplay label="Center Visit" value={lead.centerVisit} icon={Building} editing={editing} field="centerVisit" type="checkbox" />
+              <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
+              <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
+              <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
+            </>
           )}
         </div>
       </div>
-      )}
 
 
       {/* Comments */}
@@ -672,186 +661,156 @@ function LeadActivities({ callLogs, activityLogs, leadActivities }: {
   leadActivities: any[];
 }) {
   return (
-    <div className="space-y-6">
-      {/* Lead Activities */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+      <div className="text-white px-6 py-4" style={{backgroundColor: '#0f172a'}}>
+        <h3 className="text-lg font-semibold flex items-center">
           <Activity size={20} className="mr-2" />
           Lead Activities ({leadActivities.length})
         </h3>
-        {leadActivities.length > 0 ? (
-          <div className="space-y-3">
-            {leadActivities.map((activity, index) => (
-              <div key={activity._id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Activity size={16} className="text-purple-600" />
+      </div>
+      
+      {leadActivities.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sub-Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Centre</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Language</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">House Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Apartment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Project Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">CIF Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Meeting Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Presales Agent</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sales Agent</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Comment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Updated By</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Files</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {leadActivities.map((activity, index) => (
+                <tr key={activity._id} className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                  <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
+                      {leadActivities.length - index}
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">Activity #{leadActivities.length - index}</p>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Updated by {activity.updatedPerson?.name || 'System'}
-                      </p>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                        {activity.leadStatusId && (
-                          <div>
-                            <span className="font-medium text-gray-700">Status:</span>
-                            <span className="ml-1 text-gray-900">{activity.leadStatusId.name}</span>
-                          </div>
-                        )}
-                        {activity.leadSubStatusId && (
-                          <div>
-                            <span className="font-medium text-gray-700">Sub-Status:</span>
-                            <span className="ml-1 text-gray-900">{activity.leadSubStatusId.name}</span>
-                          </div>
-                        )}
-                        {activity.leadValue && (
-                          <div>
-                            <span className="font-medium text-gray-700">Value:</span>
-                            <span className="ml-1 text-gray-900 capitalize">{activity.leadValue}</span>
-                          </div>
-                        )}
-                        {activity.projectValue && (
-                          <div>
-                            <span className="font-medium text-gray-700">Project Value:</span>
-                            <span className="ml-1 text-gray-900">{activity.projectValue}</span>
-                          </div>
-                        )}
-                        {activity.apartmentName && (
-                          <div>
-                            <span className="font-medium text-gray-700">Apartment:</span>
-                            <span className="ml-1 text-gray-900">{activity.apartmentName}</span>
-                          </div>
-                        )}
-                        {activity.paymentMethod && (
-                          <div>
-                            <span className="font-medium text-gray-700">Payment:</span>
-                            <span className="ml-1 text-gray-900 capitalize">{activity.paymentMethod}</span>
-                          </div>
-                        )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-700 font-medium">{activity.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.email || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.contactNumber || '-'}</td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.leadStatusId ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-800">
+                        {activity.leadStatusId.name}
+                      </span>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.leadSubStatusId ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-orange-100 text-orange-800">
+                        {activity.leadSubStatusId.name}
+                      </span>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.leadValue ? (
+                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${
+                        activity.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
+                        activity.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {activity.leadValue}
+                      </span>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.sourceId ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800">
+                        {activity.sourceId.name}
+                      </span>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.centreId?.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.languageId?.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.projectTypeId?.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.houseTypeId?.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.apartmentName || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{activity.projectValue || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    {activity.cifDate ? (
+                      <div>
+                        <div className="font-medium">{new Date(activity.cifDate).toLocaleDateString()}</div>
+                        <div className="text-xs text-slate-500">{new Date(activity.cifDate).toLocaleTimeString()}</div>
                       </div>
-                      
-                      {activity.comment && (
-                        <div className="mt-2">
-                          <span className="font-medium text-gray-700">Comment:</span>
-                          <p className="text-gray-900 mt-1">{activity.comment}</p>
-                        </div>
-                      )}
-                      
-                      {activity.files && activity.files.length > 0 && (
-                        <div className="mt-2">
-                          <span className="font-medium text-gray-700">Files:</span>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {activity.files.map((file: any, fileIndex: number) => (
-                              <a 
-                                key={fileIndex}
-                                href={`/api/leads/document/${file.filename}`}
-                                download
-                                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center space-x-1 bg-white px-2 py-1 rounded"
-                              >
-                                <FileText size={12} />
-                                <span>{file.originalname}</span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-900">{new Date(activity.createdAt).toLocaleDateString()}</p>
-                    <p className="text-xs text-gray-500">{new Date(activity.createdAt).toLocaleTimeString()}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">No lead activities yet</p>
-        )}
-      </div>
-
-      {/* Call Logs */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <PhoneCall size={20} className="mr-2" />
-          Call Logs ({callLogs.length})
-        </h3>
-        {callLogs.length > 0 ? (
-          <div className="space-y-3">
-            {callLogs.map((log) => (
-              <div key={log._id} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <PhoneCall size={16} className="text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">Call - {log.callId}</p>
-                      <p className="text-sm text-gray-600 mb-2">by {log.userId.name}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-900">{new Date(log.createdAt).toLocaleDateString()}</p>
-                    <p className="text-xs text-gray-500">{new Date(log.createdAt).toLocaleTimeString()}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">No call logs yet</p>
-        )}
-      </div>
-
-      {/* Activity Logs */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <MessageSquare size={20} className="mr-2" />
-          Activity Logs ({activityLogs.length})
-        </h3>
-        {activityLogs.length > 0 ? (
-          <div className="space-y-3">
-            {activityLogs.map((log) => (
-              <div key={log._id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <MessageSquare size={16} className="text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 capitalize">{log.type} Activity</p>
-                      <p className="text-sm text-gray-600 mb-2">by {log.userId.name}</p>
-                      <p className="text-gray-900 mb-2">{log.comment}</p>
-                      {log.document && (
-                        <div className="flex items-center space-x-2">
-                          <FileText size={14} className="text-blue-600" />
+                    ) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    {activity.meetingArrangedDate ? (
+                      <div>
+                        <div className="font-medium">{new Date(activity.meetingArrangedDate).toLocaleDateString()}</div>
+                        <div className="text-xs text-slate-500">{new Date(activity.meetingArrangedDate).toLocaleTimeString()}</div>
+                      </div>
+                    ) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.presalesUserId ? (
+                      <div className="text-blue-600 font-medium">{activity.presalesUserId.name}</div>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.salesUserId ? (
+                      <div className="text-purple-600 font-medium">{activity.salesUserId.name}</div>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 max-w-xs">
+                    {activity.comment ? (
+                      <div className="truncate" title={activity.comment}>{activity.comment}</div>
+                    ) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 font-medium">{activity.updatedPerson?.name || 'System'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    <div className="font-medium">{new Date(activity.createdAt).toLocaleDateString()}</div>
+                    <div className="text-xs text-slate-500">{new Date(activity.createdAt).toLocaleTimeString()}</div>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {activity.files && activity.files.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {activity.files.map((file: any, fileIndex: number) => (
                           <a 
-                            href={`/api/leads/document/${log.document}`}
+                            key={fileIndex}
+                            href={`/api/leads/document/${file.filename}`}
                             download
-                            className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center space-x-1"
+                            className="p-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                            title={file.originalname}
                           >
-                            <Download size={12} />
-                            <span>Download</span>
+                            <FileText size={12} />
                           </a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-900">{new Date(log.createdAt).toLocaleDateString()}</p>
-                    <p className="text-xs text-gray-500">{new Date(log.createdAt).toLocaleTimeString()}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">No activity logs yet</p>
-        )}
-      </div>
+                        ))}
+                      </div>
+                    ) : <span className="text-slate-400">-</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <Activity size={48} className="mx-auto text-slate-300 mb-4" />
+          <p className="text-slate-500">No lead activities yet</p>
+        </div>
+      )}
     </div>
   );
 }

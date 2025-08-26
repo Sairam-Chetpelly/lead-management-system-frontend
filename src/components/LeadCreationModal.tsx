@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { User, Upload, FileText, Download } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { authAPI } from '@/lib/auth';
@@ -15,6 +15,7 @@ interface LeadCreationModalProps {
 
 export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCreationModalProps) {
   const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'manual' | 'bulk'>('manual');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +29,9 @@ export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCr
     setUploadResult(null);
     setUploading(false);
     setDragActive(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     onClose();
   };
 
@@ -94,12 +98,12 @@ export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCr
   };
 
   const downloadSampleCSV = () => {
-    const csvContent = `name,email,contactNumber,comment
-John Doe,john.doe@example.com,+1234567890,Interested in premium properties
-Jane Smith,jane.smith@example.com,9876543210,Looking for budget-friendly options
-Mike Johnson,mike.johnson@example.com,+91-9999999999,Needs consultation for investment
-Sarah Wilson,sarah.wilson@example.com,1122334455,Enquiry about 2BHK apartments
-David Brown,david.brown@example.com,+44-7700900123,International client interested in luxury homes`;
+    const csvContent = `name,email,contactNumber,comment,leadSource
+John Doe,john.doe@example.com,+1234567890,Interested in premium properties,organic
+Jane Smith,jane.smith@example.com,9876543210,Looking for budget-friendly options,facebook
+Mike Johnson,mike.johnson@example.com,+91-9999999999,Needs consultation for investment,instagram
+Sarah Wilson,sarah.wilson@example.com,1122334455,Enquiry about 2BHK apartments,instagram-dm
+David Brown,david.brown@example.com,+44-7700900123,International client interested in luxury homes,cp`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -108,6 +112,23 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
     a.download = 'leads_sample.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const downloadFailedEntries = async () => {
+    if (uploadResult?.failedFileUrl) {
+      try {
+        const response = await authAPI.get(uploadResult.failedFileUrl);
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `failed_leads_${Date.now()}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        showToast('Failed to download file', 'error');
+      }
+    }
   };
 
   const handleBulkUpload = async () => {
@@ -134,6 +155,9 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
         } else {
           showToast(`Success: ${result.successful} leads created successfully`, 'success');
           setFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
           onSuccess?.();
         }
       } else {
@@ -150,6 +174,11 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
       }
     } finally {
       setUploading(false);
+      // Clear file input after upload attempt (success or failure)
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -164,6 +193,9 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
     if (tab === 'manual') {
       setFile(null);
       setUploadResult(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -225,11 +257,12 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                 </button>
               </div>
               <div className="text-xs text-gray-600 space-y-1">
-                <div><strong>Required Values:</strong> name, email, contactNumber, comment, but contactNumber is manderatry </div>
+                <div><strong>Required Values:</strong> name, email, contactNumber, comment, leadSource (contactNumber & leadSource are mandatory)</div>
                 <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
                 <div><strong>Contact Number format:</strong> 10-15 digits, can include +, -, (), spaces</div>
-                <div><strong>Assignment:</strong> All leads will be assigned to presales team in round-robin</div>
+                <div><strong>Lead Source:</strong> Must match existing lead source names (partial matching supported)</div>
+                <div><strong>Assignment:</strong> CP sources assigned to CP presales, others to regular presales</div>
               </div>
             </div>
 
@@ -248,6 +281,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
               onDrop={handleDrop}
             >
               <input
+                ref={fileInputRef}
                 type="file"
                 accept=".csv"
                 onChange={handleFileChange}
@@ -306,7 +340,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                       <div className="max-h-32 overflow-y-auto bg-white rounded-lg p-2 border">
                         {uploadResult.results.slice(0, 10).map((result: any, index: number) => (
                           <div key={index} className="text-xs text-gray-600 py-1">
-                            Row {result.row}: {result.name} ({result.email}) → {result.assignedTo}
+                            Row {result.row}: {result.name} ({result.email}) | Source: {result.leadSource} → {result.assignedTo}
                           </div>
                         ))}
                         {uploadResult.results.length > 10 && (
@@ -319,7 +353,18 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                   {/* Errors */}
                   {uploadResult.errors && uploadResult.errors.length > 0 && (
                     <div>
-                      <h4 className="font-medium text-red-700 mb-2">Errors:</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-red-700">Errors:</h4>
+                        {uploadResult.failedFileUrl && (
+                          <button
+                            onClick={downloadFailedEntries}
+                            className="flex items-center px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            <Download size={12} className="mr-1" />
+                            Download Failed Entries
+                          </button>
+                        )}
+                      </div>
                       <div className="max-h-32 overflow-y-auto bg-white rounded-lg p-2 border">
                         {uploadResult.errors.slice(0, 20).map((error: string, index: number) => (
                           <div key={index} className="text-xs text-red-600 py-1">
@@ -330,6 +375,11 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                           <div className="text-xs text-gray-500 italic">... and {uploadResult.errors.length - 20} more errors</div>
                         )}
                       </div>
+                      {uploadResult.failedFileUrl && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                          <strong>Tip:</strong> Download the failed entries file to see all original data with failure reasons. Fix the issues and re-upload.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -340,6 +390,9 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                       onClick={() => {
                         setFile(null);
                         setUploadResult(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
                         onSuccess?.();
                         handleClose();
                       }}

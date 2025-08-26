@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
 import UserManagement from '@/components/UserManagement';
 import GlobalLoader from '@/components/GlobalLoader';
@@ -13,9 +14,17 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const { isActive, loading: statusLoading } = useUserStatus();
+  const searchParams = useSearchParams();
+  const resetToken = searchParams.get('token');
 
   useEffect(() => {
-    // Check for existing login
+    // If there's a reset token, don't auto-login
+    if (resetToken) {
+      setLoading(false);
+      return;
+    }
+
+    // Check for existing login synchronously
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     
@@ -23,20 +32,14 @@ export default function Home() {
       try {
         const userData = JSON.parse(savedUser);
         setUser(userData);
-        // Preserve current page on refresh
-        const currentPath = window.location.pathname;
-        if (currentPath !== '/' && currentPath !== '/login') {
-          localStorage.setItem('lastVisitedPage', currentPath);
-        }
       } catch (error) {
-        console.error('Error parsing saved user:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
     }
     
     setLoading(false);
-  }, []);
+  }, [resetToken]);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -59,21 +62,17 @@ export default function Home() {
     return <GlobalLoader />;
   }
 
-  if (!user) {
-    return <LoginForm onLogin={handleLogin} />;
+  if (!user || resetToken) {
+    return <LoginForm onLogin={handleLogin} resetToken={resetToken} />;
   }
 
-  // If user just logged in, skip status check for a moment to avoid race condition
+  // If user just logged in, skip status check
   if (justLoggedIn) {
     return <UserManagement user={user} onLogout={handleLogout} />;
   }
 
-  // Only check status if we have a user and status loading is complete
-  if (statusLoading) {
-    return <GlobalLoader />;
-  }
-
-  if (!isActive) {
+  // Quick status check without showing loader
+  if (user && !statusLoading && !isActive) {
     return <InactiveUserNotification onLogout={handleLogout} />;
   }
 

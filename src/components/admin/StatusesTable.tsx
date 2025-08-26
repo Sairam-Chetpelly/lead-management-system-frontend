@@ -165,7 +165,7 @@ export default function StatusesTable() {
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Slug</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Type</div>
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Description</div>
-              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
+              {/* <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div> */}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -199,14 +199,14 @@ export default function StatusesTable() {
                   <div className="col-span-3 flex items-center">
                     <span className="text-slate-600 text-sm truncate">{status.description}</span>
                   </div>
-                  <div className="col-span-2 flex items-center space-x-2">
+                  {/* <div className="col-span-2 flex items-center space-x-2">
                     <button onClick={() => handleEdit(status)} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all">
                       <Edit size={14} />
                     </button>
                     <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
                       <Trash2 size={14} />
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               ))}
             </div>
@@ -233,14 +233,14 @@ export default function StatusesTable() {
                     </div>
                   </div>
                 </div>
-                <div className="flex space-x-2 mt-4">
+                {/* <div className="flex space-x-2 mt-4">
                   <button onClick={() => handleEdit(status)} className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-xl font-medium text-sm">
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
                   <button onClick={() => setDeleteDialog({isOpen: true, id: status._id, name: status.name})} className="flex-1 flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-xl font-medium text-sm">
                     <Trash2 size={16} className="mr-1" /> Delete
                   </button>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>

@@ -42,6 +42,42 @@ export default function UsersTable() {
   const { showToast } = useToast();
   const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
   
+  // Get current user role
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+  
+  const currentUserRole = getCurrentUserRole();
+  const isHodPresales = currentUserRole === 'hod_presales';
+  const isManagerPresales = currentUserRole === 'manager_presales';
+  const isHodSales = currentUserRole === 'hod_sales';
+  const isSalesManager = currentUserRole === 'sales_manager';
+  
+  // Get current user's center for HOD sales
+  const getCurrentUserCenter = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.centreId;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+  
+  const currentUserCenter = getCurrentUserCenter();
+  
   // Pagination and filters
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [filters, setFilters] = useState({
@@ -162,7 +198,9 @@ export default function UsersTable() {
       designation: user.designation,
       roleId: user.roleId._id || '',
       statusId: user.statusId._id || '',
-      centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
+      centreId: isHodSales 
+        ? currentUserCenter || user.centreId?._id || ''
+        : selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
         ? mainBranch._id
         : user.centreId?._id || '',
       languageIds: user.languageIds?.map(lang => lang._id) || [],
@@ -181,7 +219,7 @@ export default function UsersTable() {
       designation: '',
       roleId: '',
       statusId: '',
-      centreId: '',
+      centreId: (isHodSales || isSalesManager) ? currentUserCenter || '' : '',
       languageIds: [],
       qualification: 'high_value',
       userType: ''
@@ -265,9 +303,20 @@ export default function UsersTable() {
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
             >
               <option value="">All Roles</option>
-              {roles.map(role => (
-                <option key={role._id} value={role._id}>{role.name}</option>
-              ))}
+              {roles
+                .filter(role => {
+                  // Filter roles based on current user's role
+                  if (isHodPresales || isManagerPresales) {
+                    return ['presales_agent', 'hod_presales', 'manager_presales'].includes(role.slug);
+                  } else if (isHodSales || isSalesManager) {
+                    return ['hod_sales', 'sales_manager', 'sales_agent'].includes(role.slug);
+                  }
+                  return true;
+                })
+                .map(role => (
+                  <option key={role._id} value={role._id}>{role.name}</option>
+                ))
+              }
             </select>
             <select
               value={filters.status}
@@ -632,9 +681,20 @@ export default function UsersTable() {
                   required
                 >
                   <option value="">Select Role</option>
-                  {roles.map(role => (
-                    <option key={role._id} value={role._id}>{role.name}</option>
-                  ))}
+                  {roles
+                    .filter(role => {
+                      // Filter roles based on current user's role
+                      if (isHodPresales || isManagerPresales) {
+                        return ['presales_agent', 'hod_presales', 'manager_presales'].includes(role.slug);
+                      } else if (isHodSales || isSalesManager) {
+                        return ['hod_sales', 'sales_manager', 'sales_agent'].includes(role.slug);
+                      }
+                      return true;
+                    })
+                    .map(role => (
+                      <option key={role._id} value={role._id}>{role.name}</option>
+                    ))
+                  }
                 </select>
               </div>
               <div>
@@ -658,12 +718,12 @@ export default function UsersTable() {
                   onChange={(e) => setFormData({...formData, centreId: e.target.value})}
                   disabled={(() => {
                     const selectedRole = roles.find(r => r._id === formData.roleId);
-                    return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
+                    return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) || isHodSales || isSalesManager;
                   })()}
                   className={`w-full px-3 py-3 sm:px-5 sm:py-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base ${
                     (() => {
                       const selectedRole = roles.find(r => r._id === formData.roleId);
-                      return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug)
+                      return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) || isHodSales || isSalesManager
                         ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                         : 'bg-white'
                     })()
@@ -674,7 +734,12 @@ export default function UsersTable() {
                     const selectedRole = roles.find(r => r._id === formData.roleId);
                     const isRestrictedRole = selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
                     
-                    if (isRestrictedRole) {
+                    if (isHodSales || isSalesManager) {
+                      // HOD sales and sales manager can only select their own center
+                      return centres.filter(centre => centre._id === currentUserCenter).map(centre => (
+                        <option key={centre._id} value={centre._id}>{centre.name}</option>
+                      ));
+                    } else if (isRestrictedRole) {
                       return centres.map(centre => (
                         <option key={centre._id} value={centre._id}>{centre.name}</option>
                       ));
