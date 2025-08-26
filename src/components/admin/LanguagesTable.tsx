@@ -16,6 +16,8 @@ interface Language {
   name: string;
   slug: string;
   code: string;
+  userCount?: number;
+  leadCount?: number;
 }
 
 export default function LanguagesTable() {
@@ -158,9 +160,11 @@ export default function LanguagesTable() {
         <div className="hidden lg:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{backgroundColor: '#0f172a'}}>
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
-              <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Language Name</div>
-              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
+              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Language Name</div>
+              <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Code</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Users</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Leads</div>
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
@@ -172,13 +176,13 @@ export default function LanguagesTable() {
                   className={`grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all duration-200 animate-fadeInUp ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="col-span-4 flex items-center space-x-3">
+                  <div className="col-span-3 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
                       🌐
                     </div>
                     <div className="text-slate-900 font-bold truncate">{language.name}</div>
                   </div>
-                  <div className="col-span-3 flex items-center">
+                  <div className="col-span-2 flex items-center">
                     <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 truncate">
                       {language.slug}
                     </span>
@@ -186,6 +190,16 @@ export default function LanguagesTable() {
                   <div className="col-span-2 flex items-center">
                     <span className="inline-flex items-center px-3 py-1 rounded-xl text-sm font-bold bg-cyan-100 text-cyan-800 font-mono truncate">
                       {language.code}
+                    </span>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800">
+                      {language.userCount || 0}
+                    </span>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800">
+                      {language.leadCount || 0}
                     </span>
                   </div>
                   <div className="col-span-3 flex items-center space-x-2">
@@ -219,6 +233,10 @@ export default function LanguagesTable() {
                     <div>
                       <div className="font-bold text-slate-900">{language.name}</div>
                       <div className="text-sm text-slate-600">{language.slug} • {language.code}</div>
+                      <div className="flex space-x-2 mt-1">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-lg text-xs font-semibold">Users: {language.userCount || 0}</span>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">Leads: {language.leadCount || 0}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

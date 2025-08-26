@@ -9,10 +9,11 @@ import Modal from './Modal';
 interface ActivityLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  leadId: string;
+  leadId?: string;
+  onSubmit?: (type: 'call' | 'manual', comment: string, document?: File) => void;
 }
 
-export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLogModalProps) {
+export default function ActivityLogModal({ isOpen, onClose, leadId, onSubmit }: ActivityLogModalProps) {
   const { showToast } = useToast();
   const [type, setType] = useState<'call' | 'manual'>('manual');
   const [comment, setComment] = useState('');
@@ -46,8 +47,14 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
 
     setSubmitting(true);
     try {
-      await authAPI.createActivityLog(leadId, type, comment.trim(), document || undefined);
-      showToast('Activity logged successfully', 'success');
+      if (onSubmit) {
+        // Use custom submit handler (for LeadView)
+        await onSubmit(type, comment.trim(), document || undefined);
+      } else if (leadId) {
+        // Use default API call (for regular ActivityLogModal)
+        await authAPI.createActivityLog(leadId, type, comment.trim(), document || undefined);
+        showToast('Activity logged successfully', 'success');
+      }
       setComment('');
       setDocument(null);
       setFileName('');
@@ -73,45 +80,36 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Activity Log">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Activity Type Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Activity Type
+        <div className="grid grid-cols-2 gap-4">
+          <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
+            type === 'manual' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+          }`}>
+            <input
+              type="radio"
+              name="activityType"
+              value="manual"
+              checked={type === 'manual'}
+              onChange={(e) => setType(e.target.value as 'manual')}
+              className="mr-3"
+            />
+            <MessageSquare size={16} className="mr-2" />
+            <span className="font-medium">Manual Activity</span>
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            <label className={`flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
-              type === 'manual' 
-                ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-            }`}>
-              <input
-                type="radio"
-                name="activityType"
-                value="manual"
-                checked={type === 'manual'}
-                onChange={(e) => setType(e.target.value as 'manual')}
-                className="sr-only"
-              />
-              <MessageSquare size={20} className="mr-3" />
-              <span className="font-medium">Manual Activity</span>
-            </label>
-            
-            <label className={`flex items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
-              type === 'call' 
-                ? 'border-green-500 bg-green-50 text-green-700' 
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-            }`}>
-              <input
-                type="radio"
-                name="activityType"
-                value="call"
-                checked={type === 'call'}
-                onChange={(e) => setType(e.target.value as 'call')}
-                className="sr-only"
-              />
-              <PhoneCall size={20} className="mr-3" />
-              <span className="font-medium">Call Activity</span>
-            </label>
-          </div>
+          
+          <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
+            type === 'call' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+          }`}>
+            <input
+              type="radio"
+              name="activityType"
+              value="call"
+              checked={type === 'call'}
+              onChange={(e) => setType(e.target.value as 'call')}
+              className="mr-3"
+            />
+            <PhoneCall size={16} className="mr-2" />
+            <span className="font-medium">Call Activity</span>
+          </label>
         </div>
 
         {/* Activity Description */}
@@ -210,35 +208,30 @@ export default function ActivityLogModal({ isOpen, onClose, leadId }: ActivityLo
         </div> */}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
           <button
             type="button"
             onClick={handleClose}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
             disabled={submitting}
           >
-            <X size={16} />
-            <span>Cancel</span>
+            Cancel
           </button>
           
           <button
             type="submit"
             disabled={!comment.trim() || comment.length > 500 || submitting}
-            className={`flex items-center space-x-2 px-6 py-2 text-white rounded-lg transition-colors ${
-              type === 'call'
-                ? 'bg-green-600 hover:bg-green-700 disabled:bg-green-300'
-                : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300'
-            }`}
+            className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+            style={{backgroundColor: '#0f172a'}}
           >
             {submitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Adding...</span>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Adding...
               </>
             ) : (
               <>
-                <Send size={16} />
-                <span>Add Activity</span>
+                Add Activity
               </>
             )}
           </button>

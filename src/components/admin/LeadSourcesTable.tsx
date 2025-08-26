@@ -17,6 +17,7 @@ interface LeadSource {
   slug: string;
   description: string;
   isApiSource: boolean;
+  leadCount?: number;
   createdAt: string;
 }
 
@@ -224,8 +225,9 @@ export default function LeadSourcesTable() {
             <div className="grid grid-cols-12 gap-4 px-6 py-4">
               <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Source Name</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Identifier</div>
-              <div className="col-span-4 text-left font-semibold text-sm uppercase tracking-wider">Description</div>
+              <div className="col-span-3 text-left font-semibold text-sm uppercase tracking-wider">Description</div>
               <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Type</div>
+              <div className="col-span-1 text-left font-semibold text-sm uppercase tracking-wider">Leads</div>
               <div className="col-span-2 text-left font-semibold text-sm uppercase tracking-wider">Actions</div>
             </div>
           </div>
@@ -244,7 +246,7 @@ export default function LeadSourcesTable() {
                       {source.slug}
                     </span>
                   </div>
-                  <div className="col-span-4 flex items-center">
+                  <div className="col-span-3 flex items-center">
                     <span className="text-slate-600 text-sm truncate">{source.description}</span>
                   </div>
                   <div className="col-span-1 flex items-center">
@@ -252,6 +254,11 @@ export default function LeadSourcesTable() {
                       source.isApiSource ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {source.isApiSource ? 'API' : 'Manual'}
+                    </span>
+                  </div>
+                  <div className="col-span-1 flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-800">
+                      {source.leadCount || 0}
                     </span>
                   </div>
                   <div className="col-span-2 flex items-center space-x-1">
@@ -291,6 +298,7 @@ export default function LeadSourcesTable() {
                 </div>
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Description:</span> {source.description}</div>
+                  <div><span className="font-medium">Leads:</span> <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">{source.leadCount || 0}</span></div>
                 </div>
                 <div className="flex space-x-2 mt-4">
                   <button onClick={() => openModal(source)} className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-xl font-medium text-sm">

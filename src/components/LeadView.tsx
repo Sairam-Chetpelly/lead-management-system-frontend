@@ -11,7 +11,7 @@ import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
 import ModernLoader from './ModernLoader';
 import LeadTimeline from './LeadTimeline';
-import LeadActivityForm from './LeadActivityForm';
+import ActivityLogModal from './ActivityLogModal';
 
 import LanguageChangeModal from './LanguageChangeModal';
 
@@ -431,7 +431,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
 
       {/* Modals */}
       {showActivityForm && (
-        <LeadActivityForm
+        <ActivityLogModal
           isOpen={showActivityForm}
           onClose={() => setShowActivityForm(false)}
           onSubmit={handleActivitySubmit}

@@ -276,7 +276,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                               <img 
                                 src={documentUrl}
                                 alt={item.document}
-                                className="max-w-sm max-h-64 object-contain rounded border mb-2"
+                                className="w-full max-w-full sm:max-w-sm max-h-48 sm:max-h-64 object-contain rounded border mb-2"
                                 loading="lazy"
                               />
                             );
@@ -284,7 +284,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                             return (
                               <video 
                                 controls 
-                                className="max-w-sm max-h-64 rounded border mb-2"
+                                className="w-full max-w-full sm:max-w-sm max-h-48 sm:max-h-64 rounded border mb-2"
                                 preload="metadata"
                               >
                                 <source src={documentUrl} type={`video/${ext}`} />
@@ -293,7 +293,7 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                             );
                           case 'audio':
                             return (
-                              <audio controls className="w-full max-w-sm mb-2" preload="metadata">
+                              <audio controls className="w-full max-w-full sm:max-w-sm mb-2" preload="metadata">
                                 <source src={documentUrl} type={`audio/${ext}`} />
                                 Your browser does not support audio playback.
                               </audio>
@@ -304,18 +304,20 @@ export default function LeadTimeline({ leadId, callLogs, activityLogs }: LeadTim
                       };
                       
                       return (
-                        <div className="p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <MediaPreview />
-                          <div className="flex items-center space-x-2">
-                            <FileText size={14} className="sm:w-4 sm:h-4 text-blue-600" />
+                        <div className="p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                          <div className="w-full overflow-hidden">
+                            <MediaPreview />
+                          </div>
+                          <div className="flex items-center space-x-2 flex-wrap">
+                            <FileText size={14} className="sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
                             <a 
                               href={documentUrl}
                               download={item.document}
-                              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1 transition-colors"
+                              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center space-x-1 transition-colors min-w-0 flex-1"
                               aria-label={`Download ${item.document}`}
                             >
-                              <Download size={12} className="sm:w-3.5 sm:h-3.5" />
-                              <span>Download {item.document}</span>
+                              <Download size={12} className="sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                              <span className="truncate">Download {item.document}</span>
                             </a>
                           </div>
                         </div>
