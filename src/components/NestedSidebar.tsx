@@ -307,7 +307,7 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
             className={`w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-xl text-white hover:opacity-80 transition-all duration-300 shadow-lg mb-3 ${
               isCollapsed ? 'px-2' : ''
             }`}
-            style={{backgroundColor: '#0f172a'}}
+            style={{backgroundColor: '#c03232ff'}}
           >
             <LogOut size={18} />
             {!isCollapsed && <span className="font-semibold text-sm">Logout</span>}
