@@ -29,6 +29,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 // Types
 interface User {
+  _id: string;
   name: string;
   email: string;
 }

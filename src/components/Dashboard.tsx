@@ -53,6 +53,11 @@ interface LeadStats {
   lostLeads: number;
   weeklyTrend: WeeklyTrendItem[];
   statusDistribution: StatusDistributionItem[];
+  leadValueDistribution?: StatusDistributionItem[];
+  sourceDistribution?: StatusDistributionItem[];
+  centerDistribution?: StatusDistributionItem[];
+  languageDistribution?: StatusDistributionItem[];
+  leadSubStatusDistribution?: StatusDistributionItem[];
 }
 
 
@@ -71,7 +76,12 @@ export default function Dashboard({ user }: DashboardProps) {
     wonLeads: 0,
     lostLeads: 0,
     weeklyTrend: [],
-    statusDistribution: []
+    statusDistribution: [],
+    leadValueDistribution: [],
+    sourceDistribution: [],
+    centerDistribution: [],
+    languageDistribution: [],
+    leadSubStatusDistribution: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -344,7 +354,7 @@ export default function Dashboard({ user }: DashboardProps) {
                   datasets: [
                     {
                       label: 'Calls Made',
-                      data: (leadStats.weeklyCallTrend || []).map((item: WeeklyTrendItem) => item.count),
+                      data: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => item.count),
                       borderColor: 'rgb(16, 185, 129)',
                       backgroundColor: 'rgba(16, 185, 129, 0.1)',
                       tension: 0.4,

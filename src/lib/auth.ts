@@ -182,7 +182,16 @@ export const authAPI = {
       },
     });
   },
-  exportLeads: () => api.get(API_ENDPOINTS.LEADS_EXPORT),
+  exportLeads: (params: PaginationParams = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.LEADS_EXPORT}${queryString ? `?${queryString}` : ''}`);
+  },
+  exportLeadsExcel: (params: PaginationParams = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.LEADS_EXPORT_EXCEL}${queryString ? `?${queryString}` : ''}`, {
+      responseType: 'blob'
+    });
+  },
   getLeadFormData: () => api.get(API_ENDPOINTS.LEADS_FORM_DATA),
   bulkUploadLeads: (formData: FormData) => 
     api.post(API_ENDPOINTS.LEADS_BULK_UPLOAD, formData, {
@@ -190,7 +199,7 @@ export const authAPI = {
         'Content-Type': 'multipart/form-data',
       },
     }),
-  changeLanguage: (leadId: string, data: { languageId: string; presalesUserId: string }) => 
+  changeLanguage: (leadId: string, data: { languageId: string }) => 
     api.post(API_ENDPOINTS.LEADS_CHANGE_LANGUAGE(leadId), data),
   getUnsignedLeads: () => api.get(API_ENDPOINTS.LEADS_UNSIGNED),
   assignLead: (id: string, data: { presalesUserId?: string; salesUserId?: string }) => 

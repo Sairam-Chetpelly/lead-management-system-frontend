@@ -82,6 +82,7 @@ interface CallLog {
   _id: string;
   callId: string;
   userId: {
+    _id: string;
     name: string;
     email: string;
   };
@@ -92,6 +93,7 @@ interface CallLog {
 interface ActivityLog {
   _id: string;
   userId: {
+    _id: string;
     name: string;
     email: string;
   };

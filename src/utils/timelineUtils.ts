@@ -35,9 +35,9 @@ export const formatRelativeTime = (timestamp: string): string => {
 export const getFileType = (filename: string): FileType => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   
-  if (MEDIA_EXTENSIONS.images.includes(ext)) return 'image';
-  if (MEDIA_EXTENSIONS.videos.includes(ext)) return 'video';
-  if (MEDIA_EXTENSIONS.audio.includes(ext)) return 'audio';
+  if (MEDIA_EXTENSIONS.images.includes(ext as any)) return 'image';
+  if (MEDIA_EXTENSIONS.videos.includes(ext as any)) return 'video';
+  if (MEDIA_EXTENSIONS.audio.includes(ext as any)) return 'audio';
   
   return 'document';
 };

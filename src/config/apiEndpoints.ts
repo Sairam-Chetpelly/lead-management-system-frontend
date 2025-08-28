@@ -37,6 +37,7 @@ export const API_ENDPOINTS = {
   LEADS_CHANGE_LANGUAGE: (id: string) => `/api/leads/${id}/change-language`,
   LEADS_DOCUMENT: (filename: string) => `/api/leads/document/${filename}`,
   LEADS_EXPORT: '/api/leads/export',
+  LEADS_EXPORT_EXCEL: '/api/leads/export-excel',
   LEADS_FORM_DATA: '/api/leads/form/data',
   LEADS_BULK_UPLOAD: '/api/leads/bulk-upload',
   LEADS_UNSIGNED: '/api/leads/unsigned',

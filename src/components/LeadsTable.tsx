@@ -232,7 +232,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   const exportLeads = async () => {
     try {
-      const response = await authAPI.exportLeads();
+      const response = await authAPI.exportLeads(debouncedFilters);
       const { downloadCSV } = await import('@/lib/exportUtils');
       downloadCSV(response.data, 'leads.csv');
       showToast('Leads exported successfully', 'success');

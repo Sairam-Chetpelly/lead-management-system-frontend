@@ -28,6 +28,7 @@ export default function SearchableAgentDropdown({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedAgent = agents.find(agent => agent._id === value);
   
@@ -38,8 +39,14 @@ export default function SearchableAgentDropdown({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (triggerRef.current && !triggerRef.current.contains(event.target as Node) &&
-          (!dropdownRef.current || !dropdownRef.current.contains(event.target as Node))) {
+      const target = event.target as Node;
+      const isClickOutside = (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        inputRef.current && !inputRef.current.contains(target) &&
+        (!dropdownRef.current || !dropdownRef.current.contains(target))
+      );
+      
+      if (isClickOutside) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -50,13 +57,16 @@ export default function SearchableAgentDropdown({
   }, []);
 
   useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
+    if (isOpen) {
+      const element = triggerRef.current || inputRef.current;
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        });
+      }
     }
   }, [isOpen, searchTerm]);
 
@@ -101,7 +111,7 @@ export default function SearchableAgentDropdown({
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
-              ref={triggerRef}
+              ref={inputRef}
               type="text"
               placeholder="Type 3+ characters to search..."
               value={searchTerm}
