@@ -5,6 +5,7 @@ import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
+import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface LeadEditModalProps {
   isOpen: boolean;
@@ -204,6 +205,10 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   };
 
   const handleInputChange = (field: string, value: any) => {
+    if (field === 'contactNumber' && typeof value === 'string') {
+      value = formatContactNumber(value);
+    }
+    
     // Check if trying to change to qualified status
     if (field === 'leadStatusId') {
       const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === value);
@@ -281,6 +286,13 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate contact number format
+    const contactValidation = validateContactNumber(formData.contactNumber);
+    if (!contactValidation.isValid) {
+      showToast(contactValidation.error!, 'error');
+      return;
+    }
     
     // Validation based on lead status
     const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
+import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 import ModernLoader from './ModernLoader';
 import LeadTimeline from './LeadTimeline';
 import ActivityLogModal from './ActivityLogModal';
@@ -159,6 +160,13 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
 
   const handleSave = async () => {
     if (!lead) return;
+    
+    // Validate contact number format
+    const contactValidation = validateContactNumber(editData.contactNumber);
+    if (!contactValidation.isValid) {
+      showToast(contactValidation.error!, 'error');
+      return;
+    }
     
     try {
       const response = await authAPI.updateLead(lead._id, editData);
@@ -485,6 +493,9 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
   const isPresalesAgent = userRole === 'presales_agent';
 
   const handleInputChange = (field: string, value: any) => {
+    if (field === 'contactNumber' && typeof value === 'string') {
+      value = formatContactNumber(value);
+    }
     setEditData((prev: any) => ({ ...prev, [field]: value }));
   };
 
@@ -753,7 +764,7 @@ function LeadActivities({ callLogs, activityLogs, leadActivities }: {
                           title={file.originalname}
                         >
                           <FileText size={14} />
-                          <span className="truncate max-w-24">{file.originalname || file.filename}</span>
+                          <span className="truncate max-w-32">{file.originalname || file.filename}</span>
                         </a>
                       ))}
                     </div>
@@ -841,10 +852,11 @@ function LeadActivities({ callLogs, activityLogs, leadActivities }: {
                               key={fileIndex}
                               href={`/api/leads/document/${file.filename}`}
                               download
-                              className="p-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                              className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
                               title={file.originalname}
                             >
                               <FileText size={12} />
+                              <span className="truncate max-w-20">{file.originalname || file.filename}</span>
                             </a>
                           ))}
                         </div>

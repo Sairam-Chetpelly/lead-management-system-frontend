@@ -5,6 +5,7 @@ import { X, Save, Upload, FileText, User, Building, MessageSquare } from 'lucide
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
+import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface PresalesLeadEditModalProps {
   isOpen: boolean;
@@ -147,6 +148,9 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
   };
 
   const handleInputChange = (field: string, value: any) => {
+    if (field === 'contactNumber' && typeof value === 'string') {
+      value = formatContactNumber(value);
+    }
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
 
@@ -198,6 +202,13 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     // Basic validation
     if (!formData.email || !formData.contactNumber) {
       showToast('Email and contact number are required', 'error');
+      return;
+    }
+    
+    // Validate contact number format
+    const contactValidation = validateContactNumber(formData.contactNumber);
+    if (!contactValidation.isValid) {
+      showToast(contactValidation.error!, 'error');
       return;
     }
     
@@ -283,12 +294,11 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

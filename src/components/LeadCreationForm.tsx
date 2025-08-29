@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { authAPI } from "@/lib/auth";
 import { useToast } from "@/contexts/ToastContext";
+import { validateContactNumber, formatContactNumber } from "@/utils/validation";
 
 interface FormData {
   name: string;
@@ -108,6 +109,14 @@ export default function LeadCreationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate contact number
+    const contactValidation = validateContactNumber(formData.contactNumber);
+    if (!contactValidation.isValid) {
+      showToast(contactValidation.error!, 'error');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -142,6 +151,9 @@ export default function LeadCreationForm({
   };
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
+    if (field === 'contactNumber' && typeof value === 'string') {
+      value = formatContactNumber(value);
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -195,10 +207,19 @@ export default function LeadCreationForm({
             type="tel"
             value={formData.contactNumber}
             onChange={(e) => handleInputChange("contactNumber", e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            placeholder="Enter contact number"
+            className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+              formData.contactNumber && !/^\d{10}$/.test(formData.contactNumber) 
+                ? 'border-red-300 bg-red-50' 
+                : 'border-gray-300'
+            }`}
+            placeholder="Enter 10-digit contact number"
+            maxLength={10}
+            pattern="\d{10}"
             required
           />
+          {formData.contactNumber && !/^\d{10}$/.test(formData.contactNumber) && (
+            <p className="text-red-500 text-xs mt-1">Contact number must be exactly 10 digits</p>
+          )}
         </div>
 
         {/* Assignment Type */}

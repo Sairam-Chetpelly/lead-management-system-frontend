@@ -94,6 +94,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     centre: '',
     leadStatus: '',
     leadSubStatus: '',
+    siteVisit: '',
+    centerVisit: '',
+    virtualMeeting: '',
     dateFrom: '',
     dateTo: ''
   });
@@ -174,7 +177,33 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value };
+      
+      // Clear substatus when status changes and current substatus is not valid for new status
+      if (key === 'leadStatus') {
+        const selectedStatus = leadStatuses.find(s => s._id === value);
+        const currentSubStatus = leadSubStatuses.find(s => s._id === prev.leadSubStatus);
+        
+        if (selectedStatus && currentSubStatus) {
+          let isValidSubStatus = false;
+          
+          if (selectedStatus.slug === 'lead') {
+            isValidSubStatus = ['cif', 'interested', 'meeting-arranged'].includes(currentSubStatus.slug);
+          } else if (selectedStatus.slug === 'qualified') {
+            isValidSubStatus = ['hot', 'cif', 'warm'].includes(currentSubStatus.slug);
+          } else if (selectedStatus.slug === 'won' || selectedStatus.slug === 'lost') {
+            isValidSubStatus = false; // These statuses have no substatuses
+          }
+          
+          if (!isValidSubStatus) {
+            newFilters.leadSubStatus = '';
+          }
+        }
+      }
+      
+      return newFilters;
+    });
     handlePageChange(1);
   };
 
@@ -335,12 +364,64 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <select
               value={filters.leadSubStatus}
               onChange={(e) => handleFilterChange('leadSubStatus', e.target.value)}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              disabled={(() => {
+                const selectedStatus = leadStatuses.find(s => s._id === filters.leadStatus);
+                return selectedStatus && (selectedStatus.slug === 'won' || selectedStatus.slug === 'lost');
+              })()}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">All Sub-Status</option>
-              {leadSubStatuses.map(subStatus => (
-                <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
-              ))}
+              {leadSubStatuses
+                .filter(subStatus => {
+                  const selectedStatus = leadStatuses.find(s => s._id === filters.leadStatus);
+                  if (!selectedStatus) return true; // Show all if no status selected
+                  
+                  // Won/Lost have no substatuses
+                  if (selectedStatus.slug === 'won' || selectedStatus.slug === 'lost') return false;
+                  
+                  // Lead status can have: cif, interested, meeting-arranged
+                  if (selectedStatus.slug === 'lead') {
+                    return ['cif', 'interested', 'meeting-arranged'].includes(subStatus.slug);
+                  }
+                  
+                  // Qualified status can have: hot, cif, warm
+                  if (selectedStatus.slug === 'qualified') {
+                    return ['hot', 'cif', 'warm'].includes(subStatus.slug);
+                  }
+                  
+                  return true;
+                })
+                .map(subStatus => (
+                  <option key={subStatus._id} value={subStatus._id}>{subStatus.name}</option>
+                ))
+              }
+            </select>
+            <select
+              value={filters.siteVisit}
+              onChange={(e) => handleFilterChange('siteVisit', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Site Visit</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            <select
+              value={filters.centerVisit}
+              onChange={(e) => handleFilterChange('centerVisit', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Center Visit</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            <select
+              value={filters.virtualMeeting}
+              onChange={(e) => handleFilterChange('virtualMeeting', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Virtual Meeting</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
             </select>
             <input
               type="date"

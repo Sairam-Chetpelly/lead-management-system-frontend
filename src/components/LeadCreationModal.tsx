@@ -99,11 +99,11 @@ export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCr
 
   const downloadSampleCSV = () => {
     const csvContent = `name,email,contactNumber,comment,leadSource
-John Doe,john.doe@example.com,+1234567890,Interested in premium properties,organic
-Jane Smith,jane.smith@example.com,9876543210,Looking for budget-friendly options,facebook
-Mike Johnson,mike.johnson@example.com,+91-9999999999,Needs consultation for investment,instagram
-Sarah Wilson,sarah.wilson@example.com,1122334455,Enquiry about 2BHK apartments,instagram-dm
-David Brown,david.brown@example.com,+44-7700900123,International client interested in luxury homes,cp`;
+John Doe,john.doe@example.com,9876543210,Interested in premium properties,organic
+Jane Smith,jane.smith@example.com,9876543211,Looking for budget-friendly options,facebook
+Mike Johnson,mike.johnson@example.com,9876543212,Needs consultation for investment,instagram
+Sarah Wilson,sarah.wilson@example.com,9876543213,Enquiry about 2BHK apartments,instagram-dm
+David Brown,david.brown@example.com,9876543214,International client interested in luxury homes,cp`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -260,7 +260,7 @@ David Brown,david.brown@example.com,+44-7700900123,International client interest
                 <div><strong>Required Values:</strong> name, email, contactNumber, comment, leadSource (contactNumber & leadSource are mandatory)</div>
                 <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
-                <div><strong>Contact Number format:</strong> 10-15 digits, can include +, -, (), spaces</div>
+                <div><strong>Contact Number format:</strong> Exactly 10 digits only</div>
                 <div><strong>Lead Source:</strong> Must match existing lead source names (partial matching supported)</div>
                 <div><strong>Assignment:</strong> CP sources assigned to CP presales, others to regular presales</div>
               </div>

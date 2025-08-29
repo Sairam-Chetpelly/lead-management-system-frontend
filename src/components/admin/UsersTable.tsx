@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'luci
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface User {
   _id: string;
@@ -161,6 +162,14 @@ export default function UsersTable() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate mobile number format
+    const contactValidation = validateContactNumber(formData.mobileNumber);
+    if (!contactValidation.isValid) {
+      showToast(contactValidation.error!, 'error');
+      return;
+    }
+    
     try {
       let userId;
       if (editUser) {
@@ -620,11 +629,20 @@ export default function UsersTable() {
                 <input
                   type="tel"
                   value={formData.mobileNumber}
-                  onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})}
-                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Enter mobile number"
+                  onChange={(e) => setFormData({...formData, mobileNumber: formatContactNumber(e.target.value)})}
+                  className={`w-full px-3 py-2 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base ${
+                    formData.mobileNumber && !/^\d{10}$/.test(formData.mobileNumber) 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
+                  placeholder="Enter 10-digit mobile number"
+                  maxLength={10}
+                  pattern="\d{10}"
                   required
                 />
+                {formData.mobileNumber && !/^\d{10}$/.test(formData.mobileNumber) && (
+                  <p className="text-red-500 text-xs mt-1">Mobile number must be exactly 10 digits</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
