@@ -199,6 +199,12 @@ export const authAPI = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+  bulkUploadSalesLeads: (formData: FormData) => 
+    api.post(API_ENDPOINTS.LEADS_BULK_UPLOAD_SALES, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
   changeLanguage: (leadId: string, data: { languageId: string }) => 
     api.post(API_ENDPOINTS.LEADS_CHANGE_LANGUAGE(leadId), data),
   getUnsignedLeads: () => api.get(API_ENDPOINTS.LEADS_UNSIGNED),

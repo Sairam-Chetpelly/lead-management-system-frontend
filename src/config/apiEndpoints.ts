@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   LEADS_EXPORT_EXCEL: '/api/leads/export-excel',
   LEADS_FORM_DATA: '/api/leads/form/data',
   LEADS_BULK_UPLOAD: '/api/leads/bulk-upload',
+  LEADS_BULK_UPLOAD_SALES: '/api/leads/bulk-upload-sales',
   LEADS_UNSIGNED: '/api/leads/unsigned',
   LEADS_ASSIGN: (id: string) => `/api/leads/${id}/assign`,
   LEAD_SOURCES: '/api/lead-sources',

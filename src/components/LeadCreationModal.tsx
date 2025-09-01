@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { User, Upload, FileText, Download } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { authAPI } from '@/lib/auth';
@@ -16,11 +16,28 @@ interface LeadCreationModalProps {
 export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCreationModalProps) {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<'manual' | 'bulk'>('manual');
+  const [activeTab, setActiveTab] = useState<'manual' | 'bulk' | 'sales'>('manual');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadResult, setUploadResult] = useState<any>(null);
+
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isAdmin = userRole === 'admin';
+
 
   const handleClose = () => {
     // Reset all state when closing
@@ -114,6 +131,23 @@ David Brown,david.brown@example.com,9876543214,International client interested i
     window.URL.revokeObjectURL(url);
   };
 
+  const downloadSalesSampleCSV = () => {
+    const csvContent = `Client name,Centre,Phone Number,Lead Qualified date,Lead Generation Date,Value,Lead Source,Sales Person,Activity Comments,Status,Sub Status
+John Doe,Bangalore,9876543210,15-03-2024,10-03-2024,8,organic,Rajesh Kumar,Interested in 3BHK apartment,Qualified,Hot
+Jane Smith,Mumbai,9876543211,16-03-2024,12-03-2024,5,facebook,Priya Sharma,Looking for budget options,Qualified,Warm
+Mike Johnson,Delhi,9876543212,17-03-2024,13-03-2024,10,instagram,Amit Singh,Premium property inquiry,Qualified,CIF
+Sarah Wilson,Chennai,9876543213,18-03-2024,14-03-2024,7,google,Sunita Reddy,2BHK requirement,Qualified,Hot
+David Brown,Pune,9876543214,19-03-2024,15-03-2024,12,cp,Vikram Patel,Luxury home investment,Qualified,Hot`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sales_leads_sample.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const downloadFailedEntries = async () => {
     if (uploadResult?.failedFileUrl) {
       try {
@@ -182,12 +216,63 @@ David Brown,david.brown@example.com,9876543214,International client interested i
     }
   };
 
+  const handleSalesBulkUpload = async () => {
+    if (!file) {
+      showToast('Please select a CSV file', 'error');
+      return;
+    }
+
+    setUploading(true);
+    setUploadResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await authAPI.bulkUploadSalesLeads(formData);
+      const result = response.data;
+      
+      setUploadResult(result);
+      
+      if (result.successful > 0) {
+        if (result.failed > 0) {
+          showToast(`Partial success: ${result.successful} sales leads created, ${result.failed} failed`, 'info');
+        } else {
+          showToast(`Success: ${result.successful} sales leads created successfully`, 'success');
+          setFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          onSuccess?.();
+        }
+      } else {
+        showToast('No sales leads were created. Please check the errors below.', 'error');
+      }
+      
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to upload sales leads';
+      showToast(errorMessage, 'error');
+      
+      // If there's detailed error info, show it
+      if (error.response?.data?.errors) {
+        setUploadResult(error.response.data);
+      }
+    } finally {
+      setUploading(false);
+      // Clear file input after upload attempt (success or failure)
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleManualSuccess = () => {
     onSuccess?.();
     handleClose();
   };
 
-  const handleTabChange = (tab: 'manual' | 'bulk') => {
+  const handleTabChange = (tab: 'manual' | 'bulk' | 'sales') => {
     setActiveTab(tab);
     // Reset bulk upload state when switching tabs
     if (tab === 'manual') {
@@ -203,7 +288,7 @@ David Brown,david.brown@example.com,9876543214,International client interested i
     <Modal isOpen={isOpen} onClose={handleClose} title="Create Lead" size="lg">
       <div className="space-y-6">
         {/* Tabs */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className={`grid gap-4 ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
             activeTab === 'manual' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
           }`}>
@@ -232,12 +317,28 @@ David Brown,david.brown@example.com,9876543214,International client interested i
             <Upload size={16} className="mr-2" />
             <span className="font-medium">Bulk Upload</span>
           </label>
+          {isAdmin && (
+            <label className={`flex items-center justify-center p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${
+              activeTab === 'sales' ? 'bg-blue-50 border-blue-300' : 'hover:bg-blue-50'
+            }`}>
+              <input
+                type="radio"
+                name="leadCreationType"
+                value="sales"
+                checked={activeTab === 'sales'}
+                onChange={() => handleTabChange('sales')}
+                className="mr-3"
+              />
+              <Upload size={16} className="mr-2" />
+              <span className="font-medium">Sales Upload</span>
+            </label>
+          )}
         </div>
 
         {/* Tab Content */}
         {activeTab === 'manual' ? (
           <LeadCreationForm onSuccess={handleManualSuccess} onCancel={handleClose} />
-        ) : (
+        ) : activeTab === 'bulk' ? (
           <div className="space-y-6">
             {/* Sample CSV Download */}
             <div className="bg-blue-50 p-4 rounded-xl">
@@ -423,7 +524,193 @@ David Brown,david.brown@example.com,9876543214,International client interested i
               </button>
             </div>
           </div>
-        )}
+        ) : activeTab === 'sales' && isAdmin ? (
+          <div className="space-y-6">
+            {/* Sales CSV Sample Download */}
+            <div className="bg-green-50 p-4 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-800">Sales CSV Format Requirements</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Download the sample CSV file to see the required format for sales leads
+                  </p>
+                </div>
+                <button
+                  onClick={downloadSalesSampleCSV}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download size={16} className="mr-2" />
+                  Download Sample
+                </button>
+              </div>
+              <div className="text-xs text-gray-600 space-y-1">
+                <div><strong>Required Columns:</strong> Client name, Centre, Phone Number, Lead Qualified date, Lead Generation Date, Value, Lead Source, Sales Person, Activity Comments, Status, Sub Status</div>
+                <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
+                <div><strong>Phone Number format:</strong> Exactly 10 digits only</div>
+                <div><strong>Date format:</strong> DD-MM-YYYY (e.g., 15-03-2024)</div>
+                <div><strong>Value:</strong> Numeric value (>6 = high value, ≤6 = low value)</div>
+                <div><strong>Assignment:</strong> Sales person must exist in the specified centre</div>
+              </div>
+            </div>
+
+            {/* File Upload Area */}
+            <div
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                dragActive 
+                  ? 'border-green-400 bg-green-50' 
+                  : file 
+                    ? 'border-green-400 bg-green-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="hidden"
+                id="sales-csv-upload"
+              />
+              <label htmlFor="sales-csv-upload" className="cursor-pointer">
+                <div className="space-y-4">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FileText size={24} className="text-gray-500" />
+                  </div>
+                  {file ? (
+                    <div>
+                      <p className="text-green-600 font-medium">{file.name}</p>
+                      <p className="text-sm text-gray-500">File selected successfully</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-gray-600 font-medium">
+                        Drag and drop your sales CSV file here, or click to browse
+                      </p>
+                      <p className="text-sm text-gray-500">Only CSV files are accepted</p>
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Upload Results */}
+            {uploadResult && (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-xl border ${
+                  uploadResult.successful > 0 && uploadResult.failed === 0 
+                    ? 'bg-green-50 border-green-200' 
+                    : uploadResult.successful > 0 && uploadResult.failed > 0
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-800">Upload Results</h3>
+                    <div className="text-sm text-gray-600">
+                      Total: {uploadResult.totalRows || 0} | 
+                      Success: {uploadResult.successful || 0} | 
+                      Failed: {uploadResult.failed || 0}
+                    </div>
+                  </div>
+                  
+                  {uploadResult.message && (
+                    <p className="text-sm text-gray-700 mb-3">{uploadResult.message}</p>
+                  )}
+                  
+                  {/* Successful Results */}
+                  {uploadResult.results && uploadResult.results.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-green-700 mb-2">Successfully Created Sales Leads:</h4>
+                      <div className="max-h-32 overflow-y-auto bg-white rounded-lg p-2 border">
+                        {uploadResult.results.slice(0, 10).map((result: any, index: number) => (
+                          <div key={index} className="text-xs text-gray-600 py-1">
+                            Row {result.row}: {result.name} ({result.contactNumber}) | Centre: {result.centre} → {result.salesPerson}
+                          </div>
+                        ))}
+                        {uploadResult.results.length > 10 && (
+                          <div className="text-xs text-gray-500 italic">... and {uploadResult.results.length - 10} more</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Errors */}
+                  {uploadResult.errors && uploadResult.errors.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-red-700">Errors:</h4>
+                        {uploadResult.failedFileUrl && (
+                          <button
+                            onClick={downloadFailedEntries}
+                            className="flex items-center px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            <Download size={12} className="mr-1" />
+                            Download Failed Entries
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-32 overflow-y-auto bg-white rounded-lg p-2 border">
+                        {uploadResult.errors.slice(0, 20).map((error: string, index: number) => (
+                          <div key={index} className="text-xs text-red-600 py-1">
+                            {error}
+                          </div>
+                        ))}
+                        {uploadResult.errors.length > 20 && (
+                          <div className="text-xs text-gray-500 italic">... and {uploadResult.errors.length - 20} more errors</div>
+                        )}
+                      </div>
+                      {uploadResult.failedFileUrl && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                          <strong>Tip:</strong> Download the failed entries file to see all original data with failure reasons. Fix the issues and re-upload.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {uploadResult.successful > 0 && uploadResult.failed === 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        setFile(null);
+                        setUploadResult(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                        onSuccess?.();
+                        handleClose();
+                      }}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                onClick={handleClose}
+                className="px-6 py-3 text-gray-700 bg-gray-100 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSalesBulkUpload}
+                disabled={!file || uploading}
+                className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+                style={{backgroundColor: '#16a34a'}}
+              >
+                {uploading ? 'Uploading...' : 'Upload Sales Leads'}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </Modal>
   );

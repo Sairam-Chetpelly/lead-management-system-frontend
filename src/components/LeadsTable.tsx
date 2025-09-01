@@ -73,17 +73,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [showLeadView, setShowLeadView] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState<{isOpen: boolean, leadId: string}>({isOpen: false, leadId: ''});
-  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
-  const [activityLogModal, setActivityLogModal] = useState<{isOpen: boolean, leadId: string}>({isOpen: false, leadId: ''});
-  
+  const [showEditModal, setShowEditModal] = useState<{ isOpen: boolean, leadId: string }>({ isOpen: false, leadId: '' });
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean, id: string, name: string }>({ isOpen: false, id: '', name: '' });
+  const [activityLogModal, setActivityLogModal] = useState<{ isOpen: boolean, leadId: string }>({ isOpen: false, leadId: '' });
+
   // Dropdown data for filters
   const [leadSources, setLeadSources] = useState<any[]>([]);
   const [centres, setCentres] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [leadSubStatuses, setLeadSubStatuses] = useState<any[]>([]);
-  
+
   // Pagination and filters
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const [filters, setFilters] = useState({
@@ -115,7 +115,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      
+
       if (response.data.leads) {
         setLeads(response.data.leads);
         if (response.data.pagination) {
@@ -132,7 +132,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       setLoading(false);
     }
   }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
-    const getCurrentUserRole = () => {
+  const getCurrentUserRole = () => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
@@ -153,7 +153,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const isPreSalesManager = userRole === 'manager_presales';
   const isPreSalesHod = userRole === 'hod_presales';
   const isAdmin = userRole === 'admin';
-  
+
   const fetchDropdownData = async () => {
     try {
       const [sourcesRes, centresRes, usersRes, statusesRes] = await Promise.all([
@@ -162,11 +162,11 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         authAPI.getUsers({ limit: 1000 }),
         authAPI.admin.getAllStatuses()
       ]);
-      
+
       setLeadSources(sourcesRes.data.data || sourcesRes.data || []);
       setCentres(centresRes.data.data || centresRes.data || []);
       setUsers(usersRes.data.data || usersRes.data || []);
-      
+
       const statuses = statusesRes.data.data || statusesRes.data || [];
       setLeadStatuses(statuses.filter((s: any) => s.type === 'leadStatus'));
       setLeadSubStatuses(statuses.filter((s: any) => s.type === 'leadSubStatus'));
@@ -179,15 +179,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => {
       const newFilters = { ...prev, [key]: value };
-      
+
       // Clear substatus when status changes and current substatus is not valid for new status
       if (key === 'leadStatus') {
         const selectedStatus = leadStatuses.find(s => s._id === value);
         const currentSubStatus = leadSubStatuses.find(s => s._id === prev.leadSubStatus);
-        
+
         if (selectedStatus && currentSubStatus) {
           let isValidSubStatus = false;
-          
+
           if (selectedStatus.slug === 'lead') {
             isValidSubStatus = ['cif', 'interested', 'meeting-arranged'].includes(currentSubStatus.slug);
           } else if (selectedStatus.slug === 'qualified') {
@@ -195,13 +195,13 @@ export default function LeadsTable({ user }: LeadsTableProps) {
           } else if (selectedStatus.slug === 'won' || selectedStatus.slug === 'lost') {
             isValidSubStatus = false; // These statuses have no substatuses
           }
-          
+
           if (!isValidSubStatus) {
             newFilters.leadSubStatus = '';
           }
         }
       }
-      
+
       return newFilters;
     });
     handlePageChange(1);
@@ -225,20 +225,20 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       const errorMessage = error.response?.data?.error || 'Failed to delete lead';
       showToast(errorMessage, 'error');
     } finally {
-      setDeleteDialog({isOpen: false, id: '', name: ''});
+      setDeleteDialog({ isOpen: false, id: '', name: '' });
     }
   };
 
   const handleCall = async (leadId: string, contactNumber?: string) => {
     // Check if device is mobile or tablet
     const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
     if (isMobileOrTablet && contactNumber) {
       try {
         // Copy contact number to clipboard
         await navigator.clipboard.writeText(contactNumber);
         showToast('Contact number copied to clipboard', 'success');
-        
+
         // Open native dialer
         window.location.href = `tel:${contactNumber}`;
       } catch (error) {
@@ -247,7 +247,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         window.location.href = `tel:${contactNumber}`;
       }
     }
-    
+
     try {
       await authAPI.createCallLog(leadId);
       if (!isMobileOrTablet) {
@@ -265,12 +265,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       const response = await authAPI.exportLeads(debouncedFilters);
       console.log('Export response:', response);
       console.log('Export response data:', response.data);
-      
+
       if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
         showToast('No data to export', 'warning');
         return;
       }
-      
+
       const { downloadCSV } = await import('@/lib/exportUtils');
       downloadCSV(response.data, 'leads.csv');
       showToast('Leads exported successfully', 'success');
@@ -303,7 +303,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <span>Filters</span>
           </button>
         </div>
-        
+
         {/* Filter Controls */}
         <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -345,31 +345,31 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <option value="low value">Low Value</option>
             </select>
             {isAdmin && (
-            <select
-              value={filters.centre}
-              onChange={(e) => handleFilterChange('centre', e.target.value)}
-              hidden={isSalesAgent || isPreSalesAgent}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            >
-              <option value="">All Centres</option>
-              {centres.map(centre => (
-                <option key={centre._id} value={centre._id}>{centre.name}</option>
-              ))}
-            </select>
-          )}
-          {isAdmin && (
-            <select
-              value={filters.leadStatus}
-              hidden={isSalesAgent || isPreSalesAgent}
-              onChange={(e) => handleFilterChange('leadStatus', e.target.value)}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            >
-              <option value="">All Status</option>
-              {leadStatuses.map(status => (
-                <option key={status._id} value={status._id}>{status.name}</option>
-              ))}
-            </select>
-          )}
+              <select
+                value={filters.centre}
+                onChange={(e) => handleFilterChange('centre', e.target.value)}
+                hidden={isSalesAgent || isPreSalesAgent}
+                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              >
+                <option value="">All Centres</option>
+                {centres.map(centre => (
+                  <option key={centre._id} value={centre._id}>{centre.name}</option>
+                ))}
+              </select>
+            )}
+            {isAdmin && (
+              <select
+                value={filters.leadStatus}
+                hidden={isSalesAgent || isPreSalesAgent}
+                onChange={(e) => handleFilterChange('leadStatus', e.target.value)}
+                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              >
+                <option value="">All Status</option>
+                {leadStatuses.map(status => (
+                  <option key={status._id} value={status._id}>{status.name}</option>
+                ))}
+              </select>
+            )}
             <select
               value={filters.leadSubStatus}
               onChange={(e) => handleFilterChange('leadSubStatus', e.target.value)}
@@ -384,20 +384,20 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 .filter(subStatus => {
                   const selectedStatus = leadStatuses.find(s => s._id === filters.leadStatus);
                   if (!selectedStatus) return true; // Show all if no status selected
-                  
+
                   // Won/Lost have no substatuses
                   if (selectedStatus.slug === 'won' || selectedStatus.slug === 'lost') return false;
-                  
+
                   // Lead status can have: cif, interested, meeting-arranged
                   if (selectedStatus.slug === 'lead') {
                     return ['cif', 'interested', 'meeting-arranged'].includes(subStatus.slug);
                   }
-                  
+
                   // Qualified status can have: hot, cif, warm
                   if (selectedStatus.slug === 'qualified') {
                     return ['hot', 'cif', 'warm'].includes(subStatus.slug);
                   }
-                  
+
                   return true;
                 })
                 .map(subStatus => (
@@ -453,17 +453,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-3">
-          <button 
+          <button
             onClick={exportLeads}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
           >
             <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
             <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
           </button>
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-            style={{backgroundColor: '#0f172a'}}
+            style={{ backgroundColor: '#0f172a' }}
           >
             <div className="w-5 h-5">➕</div>
             <span className="font-semibold">Add Lead</span>
@@ -472,16 +472,16 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       </div>
 
       {/* Modern Table Card */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{minHeight: 'calc(100vh - 400px)'}}>
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden relative flex flex-col" style={{ minHeight: 'calc(100vh - 400px)' }}>
         {loading && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
             <ModernLoader size="lg" variant="primary" />
           </div>
         )}
-        
+
         {/* Desktop Table */}
         <div className="hidden xl:flex flex-col flex-1 min-h-0">
-          <div className="text-white" style={{backgroundColor: '#0f172a'}}>
+          <div className="text-white" style={{ backgroundColor: '#0f172a' }}>
             <div className="grid grid-cols-10 gap-3 px-4 py-4">
               <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Lead ID</div>
               <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Contact</div>
@@ -505,7 +505,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       <div className="text-slate-600 text-sm truncate">{lead.name || 'N/A'}</div>
                     </div>
                   </div>
-                  
+
                   <div className="col-span-2 flex flex-col justify-center min-w-0">
                     <div className="text-slate-700 font-medium truncate flex items-center">
                       <Mail size={12} className="mr-1 text-slate-400" />
@@ -516,13 +516,13 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       {lead.contactNumber || 'N/A'}
                     </div>
                   </div>
-                  
+
                   <div className="col-span-1 flex items-center">
                     <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-green-100 text-green-800 truncate">
                       {lead.sourceId?.name || 'N/A'}
                     </span>
                   </div>
-                  
+
                   <div className="col-span-1 flex items-center">
                     {lead.presalesUserId && (
                       <div className="text-sm">
@@ -540,21 +540,20 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       <span className="text-gray-400 text-sm">Unassigned</span>
                     )}
                   </div>
-                  
+
                   <div className="col-span-1 flex items-center">
                     {lead.leadValue ? (
-                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${
-                        lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                        lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
+                          lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                        }`}>
                         {lead.leadValue}
                       </span>
                     ) : (
                       <span className="text-gray-400 text-sm">Not set</span>
                     )}
                   </div>
-                  
+
                   <div className="col-span-1 flex items-center">
                     {lead.leadStatusId ? (
                       <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-800 truncate">
@@ -564,22 +563,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       <span className="text-gray-400 text-xs">No Status</span>
                     )}
                   </div>
-                  
+
                   <div className="col-span-2 flex items-center space-x-1">
                     <button onClick={() => handleViewDetails(lead._id)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all" title="View Details">
                       <Eye size={14} />
                     </button>
-                    <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Edit Lead">
+                    <button onClick={() => setShowEditModal({ isOpen: true, leadId: lead._id })} className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all" title="Edit Lead">
                       <Edit size={14} />
                     </button>
-                    <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Activity Log">
+                    <button onClick={() => setActivityLogModal({ isOpen: true, leadId: lead._id })} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all" title="Activity Log">
                       <FileText size={14} />
                     </button>
-                     <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
+                    <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all" title="Make Call">
                       <PhoneCall size={14} />
                     </button>
                     {isAdmin && (
-                      <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete Lead">
+                      <button onClick={() => setDeleteDialog({ isOpen: true, id: lead._id, name: lead.leadID })} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all" title="Delete Lead">
                         <Trash2 size={14} />
                       </button>
                     )}
@@ -589,7 +588,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Mobile Cards */}
         <div className="xl:hidden flex-1 overflow-y-auto p-4">
           <div className={`space-y-4 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
@@ -606,16 +605,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     </div>
                   </div>
                   {lead.leadValue && (
-                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold capitalize ${
-                      lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                      lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold capitalize ${lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
+                        lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-blue-100 text-blue-800'
+                      }`}>
                       {lead.leadValue}
                     </span>
                   )}
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Email:</span> {lead.email || 'N/A'}</div>
                   <div><span className="font-medium">Phone:</span> {lead.contactNumber || 'N/A'}</div>
@@ -624,22 +622,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <div><span className="font-medium">Assigned:</span> {lead.presalesUserId ? `Presales: ${lead.presalesUserId.name}` : lead.salesUserId ? `Sales: ${lead.salesUserId.name}` : 'Unassigned'}</div>
                   <div className="text-gray-500">Created: {new Date(lead.createdAt).toLocaleDateString()}</div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <button onClick={() => handleViewDetails(lead._id)} className="flex items-center justify-center px-2 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-xs">
                     <Eye size={14} className="mr-1" /> View
                   </button>
-                  <button onClick={() => setShowEditModal({isOpen: true, leadId: lead._id})} className="flex items-center justify-center px-2 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-xs">
+                  <button onClick={() => setShowEditModal({ isOpen: true, leadId: lead._id })} className="flex items-center justify-center px-2 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-xs">
                     <Edit size={14} className="mr-1" /> Edit
                   </button>
                   <button onClick={() => handleCall(lead._id, lead.contactNumber)} className="flex items-center justify-center px-2 py-2 bg-green-100 text-green-700 rounded-lg font-medium text-xs">
                     <PhoneCall size={14} className="mr-1" /> Call
                   </button>
-                  <button onClick={() => setActivityLogModal({isOpen: true, leadId: lead._id})} className="flex items-center justify-center px-2 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium text-xs">
+                  <button onClick={() => setActivityLogModal({ isOpen: true, leadId: lead._id })} className="flex items-center justify-center px-2 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium text-xs">
                     <FileText size={14} className="mr-1" /> Log
                   </button>
                   {isAdmin && (
-                    <button onClick={() => setDeleteDialog({isOpen: true, id: lead._id, name: lead.leadID})} className="col-span-2 flex items-center justify-center px-2 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-xs">
+                    <button onClick={() => setDeleteDialog({ isOpen: true, id: lead._id, name: lead.leadID })} className="col-span-2 flex items-center justify-center px-2 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-xs">
                       <Trash2 size={14} className="mr-1" /> Delete
                     </button>
                   )}
@@ -705,7 +703,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <label className="block text-sm font-medium text-gray-700">Assigned To</label>
               <p className="text-sm text-gray-900">
                 {viewLead.presalesUserId ? `Presales: ${viewLead.presalesUserId.name}` :
-                 viewLead.salesUserId ? `Sales: ${viewLead.salesUserId.name}` : 'Unassigned'}
+                  viewLead.salesUserId ? `Sales: ${viewLead.salesUserId.name}` : 'Unassigned'}
               </p>
             </div>
             {viewLead.comment && (
@@ -750,12 +748,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         title="Delete Lead"
         message={`Are you sure you want to delete lead "${deleteDialog.name}"? This action cannot be undone.`}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteDialog({isOpen: false, id: '', name: ''})}
+        onCancel={() => setDeleteDialog({ isOpen: false, id: '', name: '' })}
       />
 
       <ActivityLogModal
         isOpen={activityLogModal.isOpen}
-        onClose={() => setActivityLogModal({isOpen: false, leadId: ''})}
+        onClose={() => setActivityLogModal({ isOpen: false, leadId: '' })}
         leadId={activityLogModal.leadId}
       />
 
@@ -763,16 +761,16 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       {user?.role === 'presales_agent' ? (
         <PresalesLeadEditModal
           isOpen={showEditModal.isOpen}
-          onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
+          onClose={() => setShowEditModal({ isOpen: false, leadId: '' })}
           leadId={showEditModal.leadId}
-          onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
+          onSuccess={() => { setShowEditModal({ isOpen: false, leadId: '' }); fetchLeads(); }}
         />
       ) : (
         <LeadEditModal
           isOpen={showEditModal.isOpen}
-          onClose={() => setShowEditModal({isOpen: false, leadId: ''})}
+          onClose={() => setShowEditModal({ isOpen: false, leadId: '' })}
           leadId={showEditModal.leadId}
-          onSuccess={() => { setShowEditModal({isOpen: false, leadId: ''}); fetchLeads(); }}
+          onSuccess={() => { setShowEditModal({ isOpen: false, leadId: '' }); fetchLeads(); }}
         />
       )}
 
