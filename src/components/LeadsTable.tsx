@@ -261,7 +261,16 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   const exportLeads = async () => {
     try {
+      console.log('Exporting leads with filters:', debouncedFilters);
       const response = await authAPI.exportLeads(debouncedFilters);
+      console.log('Export response:', response);
+      console.log('Export response data:', response.data);
+      
+      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+        showToast('No data to export', 'warning');
+        return;
+      }
+      
       const { downloadCSV } = await import('@/lib/exportUtils');
       downloadCSV(response.data, 'leads.csv');
       showToast('Leads exported successfully', 'success');
