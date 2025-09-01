@@ -30,10 +30,11 @@ export default function LoginForm({ onLogin, resetToken }: LoginFormProps) {
     
     try {
       const response = await authAPI.login({ email, password });
-      const { token, user } = response.data;
+      const { token, user, expiresAt } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiresAt', expiresAt.toString());
       
       onLogin(user);
       showToast('Login successful! Welcome back.', 'success');

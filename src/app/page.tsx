@@ -27,14 +27,24 @@ export default function Home() {
     // Check for existing login synchronously
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
+    const tokenExpiresAt = localStorage.getItem('tokenExpiresAt');
     
-    if (token && savedUser) {
+    if (token && savedUser && tokenExpiresAt) {
+      const expiryTime = parseInt(tokenExpiresAt);
+      const currentTime = Date.now();
+      
+      if (currentTime >= expiryTime) {
+        // Token expired, logout
+        handleLogout();
+        setLoading(false);
+        return;
+      }
+      
       try {
         const userData = JSON.parse(savedUser);
         setUser(userData);
       } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        handleLogout();
       }
     }
     
@@ -51,12 +61,35 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('tokenExpiresAt');
     localStorage.removeItem('activeSection');
     localStorage.removeItem('lastVisitedPage');
     localStorage.removeItem('currentPage');
     setUser(null);
     setJustLoggedIn(false);
   };
+
+  // Check token expiry periodically when user is logged in
+  useEffect(() => {
+    if (!user) return;
+
+    const checkTokenExpiry = () => {
+      const tokenExpiresAt = localStorage.getItem('tokenExpiresAt');
+      if (tokenExpiresAt) {
+        const expiryTime = parseInt(tokenExpiresAt);
+        const currentTime = Date.now();
+        
+        if (currentTime >= expiryTime) {
+          handleLogout();
+        }
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkTokenExpiry, 60000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   if (loading) {
     return <GlobalLoader />;

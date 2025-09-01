@@ -39,6 +39,7 @@ api.interceptors.response.use(
       // Token expired, force logout
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('currentPage');
       localStorage.removeItem('lastVisitedPage');
       window.location.href = '';
@@ -46,6 +47,7 @@ api.interceptors.response.use(
       // User is inactive, force logout
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiresAt');
       localStorage.removeItem('currentPage');
       localStorage.removeItem('lastVisitedPage');
       window.location.href = '';
