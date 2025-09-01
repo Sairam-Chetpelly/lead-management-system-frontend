@@ -359,7 +359,7 @@ David Brown,Pune,9876543214,19-03-2024,15-03-2024,12,cp,Vikram Patel,Luxury home
               </div>
               <div className="text-xs text-gray-600 space-y-1">
                 <div><strong>Required Values:</strong> name, email, contactNumber, comment, leadSource (contactNumber & leadSource are mandatory)</div>
-                <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
+                <div><strong>File limits:</strong> Max 2000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
                 <div><strong>Contact Number format:</strong> Exactly 10 digits only</div>
                 <div><strong>Lead Source:</strong> Must match existing lead source names (partial matching supported)</div>
@@ -545,7 +545,7 @@ David Brown,Pune,9876543214,19-03-2024,15-03-2024,12,cp,Vikram Patel,Luxury home
               </div>
               <div className="text-xs text-gray-600 space-y-1">
                 <div><strong>Required Columns:</strong> Client name, Centre, Phone Number, Lead Qualified date, Lead Generation Date, Value, Lead Source, Sales Person, Activity Comments, Status, Sub Status</div>
-                <div><strong>File limits:</strong> Max 1000 rows, Max 5MB file size</div>
+                <div><strong>File limits:</strong> Max 2000 rows, Max 5MB file size</div>
                 <div><strong>Phone Number format:</strong> Exactly 10 digits only</div>
                 <div><strong>Date format:</strong> DD-MM-YYYY (e.g., 15-03-2024)</div>
                 <div><strong>Value:</strong> Numeric value (>6 = high value, ≤6 = low value)</div>
