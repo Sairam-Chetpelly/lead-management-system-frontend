@@ -658,7 +658,6 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               <select
                 value={formData.languageId}
                 onChange={(e) => handleInputChange('languageId', e.target.value)}
-                disabled={isSalesAgent}
                 required={(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
