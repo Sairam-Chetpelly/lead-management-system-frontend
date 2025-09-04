@@ -407,7 +407,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead & Add Activity (Admin)" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead & Add Activity" size="xl">
       <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
         {/* Basic Information */}
         <div className="bg-blue-50 p-4 rounded-xl">
