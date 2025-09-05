@@ -199,11 +199,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!formData.email || !formData.contactNumber) {
-      showToast('Email and contact number are required', 'error');
-      return;
-    }
     
     // Validate contact number format
     const contactValidation = validateContactNumber(formData.contactNumber);
