@@ -252,7 +252,7 @@ export default function CentresTable() {
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Centre Name</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Centre Name <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.name}
@@ -263,7 +263,7 @@ export default function CentresTable() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Centre Identifier</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Centre Identifier <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.slug}

@@ -261,7 +261,7 @@ export default function StatusesTable() {
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Type</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Type <span className="text-xs text-red-500">*</span></label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({...formData, type: e.target.value as any})}
@@ -275,7 +275,7 @@ export default function StatusesTable() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Name</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Name <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.name}
@@ -286,7 +286,7 @@ export default function StatusesTable() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Identifier</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Status Identifier <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.slug}
@@ -297,7 +297,7 @@ export default function StatusesTable() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Description</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Description <span className="text-xs text-red-500">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}

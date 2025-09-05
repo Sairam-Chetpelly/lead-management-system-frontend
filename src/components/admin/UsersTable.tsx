@@ -603,7 +603,7 @@ export default function UsersTable() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name <span className="text-xs text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formData.name}
@@ -614,7 +614,7 @@ export default function UsersTable() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address <span className="text-xs text-red-500">*</span></label>
                 <input
                   type="email"
                   value={formData.email}
@@ -625,7 +625,7 @@ export default function UsersTable() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number <span className="text-xs text-red-500">*</span></label>
                 <input
                   type="tel"
                   value={formData.mobileNumber}
@@ -646,7 +646,7 @@ export default function UsersTable() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password {editUser ? <span className="text-gray-500 text-xs">(leave blank to keep current)</span> : '*'}
+                  Password {editUser ? <span className="text-gray-500 text-xs">(leave blank to keep current)</span> : <span className="text-xs text-red-500">*</span>}
                 </label>
                 <input
                   type="password"
@@ -658,7 +658,7 @@ export default function UsersTable() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Designation *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Designation <span className="text-xs text-red-500">*</span></label>
                 <input
                   type="text"
                   value={formData.designation}
@@ -679,7 +679,7 @@ export default function UsersTable() {
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Role *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Role <span className="text-xs text-red-500">*</span></label>
                 <select
                   value={formData.roleId}
                   onChange={(e) => {
@@ -716,7 +716,7 @@ export default function UsersTable() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Status *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Status <span className="text-xs text-red-500">*</span></label>
                 <select
                   value={formData.statusId}
                   onChange={(e) => setFormData({...formData, statusId: e.target.value})}
@@ -730,8 +730,9 @@ export default function UsersTable() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Centre</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Centre <span className="text-xs text-red-500">*</span></label>
                 <select
+                  required
                   value={formData.centreId}
                   onChange={(e) => setFormData({...formData, centreId: e.target.value})}
                   disabled={(() => {
@@ -770,7 +771,7 @@ export default function UsersTable() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Qualification *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Qualification <span className="text-xs text-red-500">*</span></label>
                 <select
                   value={formData.qualification}
                   onChange={(e) => setFormData({...formData, qualification: e.target.value})}
@@ -785,7 +786,7 @@ export default function UsersTable() {
                 const selectedRole = roles.find(r => r._id === formData.roleId);
                 return selectedRole?.slug === 'presales_agent' ? (
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">User Type *</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">User Type <span className="text-xs text-red-500">*</span></label>
                     <select
                       value={formData.userType}
                       onChange={(e) => setFormData({...formData, userType: e.target.value})}

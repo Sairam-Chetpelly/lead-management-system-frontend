@@ -252,6 +252,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
       // Clear salesUserId when centre or language changes for qualified leads (but not for sales agents)
       if ((field === 'centreId' || field === 'languageId') && formData.leadStatusId && !isSalesAgent) {
+        console.log('Centre or Language changed, checking salesUserId for qualified lead');
         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
         if (selectedStatus?.slug === 'qualified') {
           newData.salesUserId = '';
@@ -520,7 +521,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                       onChange={(e) => handleInputChange('salesUserId', e.target.value)}
                       required={(() => {
                         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                        return selectedStatus?.slug === 'qualified';
+                        return selectedStatus?.slug === 'qualified' && !isSalesAgent;
                       })()}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >

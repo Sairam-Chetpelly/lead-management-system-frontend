@@ -268,7 +268,7 @@ export default function LanguagesTable() {
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Name</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Name <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.name}
@@ -279,7 +279,7 @@ export default function LanguagesTable() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Identifier</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Identifier <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.slug}
@@ -290,7 +290,7 @@ export default function LanguagesTable() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Code</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Language Code <span className="text-xs text-red-500">*</span></label>
             <input
               type="text"
               value={formData.code}
