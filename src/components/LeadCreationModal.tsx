@@ -115,12 +115,12 @@ export default function LeadCreationModal({ isOpen, onClose, onSuccess }: LeadCr
   };
 
   const downloadSampleCSV = () => {
-    const csvContent = `name,email,contactNumber,comment,leadSource
-John Doe,john.doe@example.com,9876543210,Interested in premium properties,organic
-Jane Smith,jane.smith@example.com,9876543211,Looking for budget-friendly options,facebook
-Mike Johnson,mike.johnson@example.com,9876543212,Needs consultation for investment,instagram
-Sarah Wilson,sarah.wilson@example.com,9876543213,Enquiry about 2BHK apartments,instagram-dm
-David Brown,david.brown@example.com,9876543214,International client interested in luxury homes,cp`;
+    const csvContent = `name,email,contactNumber,comment,leadSource,presalesUser
+John Doe,john.doe@example.com,9876543210,Interested in premium properties,organic,Rajesh Kumar
+Jane Smith,jane.smith@example.com,9876543211,Looking for budget-friendly options,facebook,
+Mike Johnson,mike.johnson@example.com,9876543212,Needs consultation for investment,instagram,Priya Sharma
+Sarah Wilson,sarah.wilson@example.com,9876543213,Enquiry about 2BHK apartments,instagram-dm,
+David Brown,david.brown@example.com,9876543214,International client interested in luxury homes,cp,Amit Singh`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -359,10 +359,12 @@ David Brown,Pune,9876543214,19-03-2024,15-03-2024,12,cp,Vikram Patel,Luxury home
               </div>
               <div className="text-xs text-gray-600 space-y-1">
                 <div><strong>Required Values:</strong> name, email, contactNumber, comment, leadSource (contactNumber & leadSource are mandatory)</div>
+                <div><strong>Optional Values:</strong> presalesUser (if empty, uses round-robin assignment)</div>
                 <div><strong>File limits:</strong> Max 2000 rows, Max 5MB file size</div>
                 <div><strong>Email format:</strong> Valid email addresses only</div>
                 <div><strong>Contact Number format:</strong> Exactly 10 digits only</div>
                 <div><strong>Lead Source:</strong> Must match existing lead source names (partial matching supported)</div>
+                <div><strong>Presales User:</strong> Must match existing presales agent name (if provided, otherwise round-robin)</div>
                 <div><strong>Assignment:</strong> CP sources assigned to CP presales, others to regular presales</div>
               </div>
             </div>
