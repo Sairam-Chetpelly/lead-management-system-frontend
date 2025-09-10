@@ -19,6 +19,8 @@ export interface PaginationParams {
   sourceId?: string;
   centreId?: string;
   leadValue?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export const authAPI = {

@@ -63,6 +63,21 @@ interface Lead {
   };
   leadValue?: string;
   createdAt: string;
+  updatedAt?: string;
+  qualifiedDate?: string;
+  hotDate?: string;
+  warmDate?: string;
+  cifDate?: string;
+  meetingArrangedDate?: string;
+  interestedDate?: string;
+  leadWonDate?: string;
+  leadLostDate?: string;
+  siteVisit?: boolean;
+  centerVisit?: boolean;
+  virtualMeeting?: boolean;
+  siteVisitDate?: string;
+  centerVisitDate?: string;
+  virtualMeetingDate?: string;
 }
 
 export default function LeadsTable({ user }: LeadsTableProps) {
@@ -100,12 +115,131 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     dateFrom: '',
     dateTo: ''
   });
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  
+  // Set default sort based on user role
+  useEffect(() => {
+    const userRole = getCurrentUserRole();
+    if (['sales_agent', 'sales_manager', 'hod_sales'].includes(userRole)) {
+      setSortBy('qualifiedDate');
+    } else {
+      setSortBy('createdAt');
+    }
+  }, []);
   const debouncedFilters = useDebounce(filters, 300);
+
+  // Helper function to get row color and reason
+  const getRowColorAndReason = (lead: Lead) => {
+    const now = new Date();
+    const createdDate = new Date(lead.createdAt);
+    const daysSinceCreated = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const hasActivity = lead.qualifiedDate || lead.hotDate || lead.warmDate || lead.cifDate || 
+                       lead.meetingArrangedDate || lead.interestedDate || lead.siteVisit || 
+                       lead.centerVisit || lead.virtualMeeting || lead.comment;
+    
+    if (lead.leadStatusId?.slug === 'won') {
+      return { color: 'bg-yellow-200 border-l-4 border-yellow-600', reason: '🟡 WON LEAD - Success case' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'lost') {
+      return { color: 'bg-red-200 border-l-4 border-red-400', reason: '🔴 LOST LEAD - Closed unsuccessful' };
+    }
+    
+    if ((lead.presalesUserId || lead.salesUserId) && !hasActivity && daysSinceCreated > 0) {
+      return { color: 'bg-red-300 border-l-4 border-red-700', reason: `🚨 NO ACTION TAKEN - Assigned ${daysSinceCreated} days ago, no activity` };
+    }
+    
+    if (!lead.presalesUserId && !lead.salesUserId) {
+      return { color: 'bg-red-400 border-l-4 border-red-800', reason: '🔴 UNASSIGNED - No agent assigned' };
+    }
+    
+    if (lead.leadValue === 'high value' && lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'hot') {
+      return { color: 'bg-green-300 border-l-4 border-green-700', reason: '🟢 HIGH VALUE + HOT QUALIFIED - Top priority' };
+    }
+    
+    if (lead.leadValue === 'high value') {
+      return { color: 'bg-green-200 border-l-4 border-green-600', reason: '🟢 HIGH VALUE LEAD - Important opportunity' };
+    }
+    
+    if (lead.leadValue === 'low value') {
+      return { color: 'bg-green-100 border-l-4 border-green-400', reason: '🟢 LOW VALUE LEAD - Standard priority' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'hot') {
+      return { color: 'bg-orange-200 border-l-4 border-orange-600', reason: '🟠 HOT QUALIFIED - High conversion potential' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'warm') {
+      return { color: 'bg-orange-100 border-l-4 border-orange-400', reason: '🟠 WARM QUALIFIED - Medium potential' };
+    }
+    
+    if (lead.leadSubStatusId?.slug === 'cif') {
+      return { color: 'bg-purple-200 border-l-4 border-purple-600', reason: '🟣 CIF STATUS - Ready to convert' };
+    }
+    
+    if (lead.leadSubStatusId?.slug === 'meeting-arranged' || lead.leadSubStatusId?.slug === 'interested') {
+      return { color: 'bg-amber-200 border-l-4 border-amber-700', reason: '🟤 FOLLOW-UP SCHEDULED - Meeting/Interest confirmed' };
+    }
+    
+    if (lead.siteVisit || lead.centerVisit || lead.virtualMeeting) {
+      return { color: 'bg-amber-100 border-l-4 border-amber-500', reason: '🟤 ACTIVE ENGAGEMENT - Has visits/meetings' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'qualified') {
+      return { color: 'bg-blue-200 border-l-4 border-blue-600', reason: '🔵 QUALIFIED LEAD - In sales process' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'lead' && daysSinceCreated <= 1) {
+      return { color: 'bg-blue-100 border-l-4 border-blue-400', reason: '🔵 NEW LEAD - Created recently' };
+    }
+    
+    if (lead.leadStatusId?.slug === 'lead') {
+      return { color: 'bg-blue-50 border-l-4 border-blue-300', reason: `🔵 LEAD IN PROCESS - ${daysSinceCreated} days old` };
+    }
+    
+    return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ DEFAULT - Standard lead' };
+  };
+
+  const getRowColor = (lead: Lead) => getRowColorAndReason(lead).color;
+
+  // Helper function to get short status display
+  const getShortStatus = (lead: Lead) => {
+    if (lead.leadStatusId?.slug === 'won') return { text: 'WON', color: 'bg-green-500 text-white' };
+    if (lead.leadStatusId?.slug === 'lost') return { text: 'LOST', color: 'bg-gray-500 text-white' };
+    if (lead.leadStatusId?.slug === 'qualified') {
+      if (lead.leadSubStatusId?.slug === 'hot') return { text: 'HOT', color: 'bg-red-500 text-white' };
+      if (lead.leadSubStatusId?.slug === 'warm') return { text: 'WARM', color: 'bg-yellow-500 text-white' };
+      if (lead.leadSubStatusId?.slug === 'cif') return { text: 'CIF', color: 'bg-purple-500 text-white' };
+      return { text: 'QUAL', color: 'bg-blue-500 text-white' };
+    }
+    if (lead.leadStatusId?.slug === 'lead') {
+      if (lead.leadSubStatusId?.slug === 'interested') return { text: 'INT', color: 'bg-teal-500 text-white' };
+      if (lead.leadSubStatusId?.slug === 'meeting-arranged') return { text: 'MEET', color: 'bg-indigo-500 text-white' };
+      return { text: 'LEAD', color: 'bg-indigo-400 text-white' };
+    }
+    return { text: 'NEW', color: 'bg-gray-400 text-white' };
+  };
+
+  // Helper function to get assignment status
+  const getAssignmentStatus = (lead: Lead) => {
+    if (!lead.presalesUserId && !lead.salesUserId) {
+      return { text: 'UNASSIGNED', color: 'bg-red-100 text-red-800' };
+    }
+    if (lead.presalesUserId) {
+      return { text: 'PRE', color: 'bg-blue-100 text-blue-800', name: lead.presalesUserId.name };
+    }
+    if (lead.salesUserId) {
+      return { text: 'SALES', color: 'bg-purple-100 text-purple-800', name: lead.salesUserId.name };
+    }
+    return { text: 'N/A', color: 'bg-gray-100 text-gray-800' };
+  };
 
   useEffect(() => {
     fetchLeads();
     fetchDropdownData();
-  }, [pagination.current, pagination.limit, debouncedFilters]);
+  }, [pagination.current, pagination.limit, sortBy, sortOrder, debouncedFilters]);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -113,6 +247,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       const response = await authAPI.getLeads({
         page: pagination.current,
         limit: pagination.limit,
+        sortBy,
+        sortOrder,
         ...debouncedFilters
       });
 
@@ -131,7 +267,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.limit, debouncedFilters, updatePagination]);
+  }, [pagination.current, pagination.limit, sortBy, sortOrder, debouncedFilters, updatePagination]);
   const getCurrentUserRole = () => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -262,7 +398,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const exportLeads = async () => {
     try {
       console.log('Exporting leads with filters:', debouncedFilters);
-      const response = await authAPI.exportLeads(debouncedFilters);
+      const response = await authAPI.exportLeads({ sortBy, sortOrder, ...debouncedFilters });
       console.log('Export response:', response);
       console.log('Export response data:', response.data);
 
@@ -455,7 +591,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={exportLeads}
-            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            style={{ display: isSalesAgent || isPreSalesAgent ? 'none' : 'flex' }}
+            className="items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
           >
             <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
             <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
@@ -468,6 +605,45 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <div className="w-5 h-5">➕</div>
             <span className="font-semibold">Add Lead</span>
           </button>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 bg-white/80 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500"
+          >
+            {(isPreSalesAgent || isPreSalesManager || isPreSalesHod) && (
+              <option value="createdAt">Lead Generated Date</option>
+            )}
+            {(isSalesAgent || isSalesManager || isHodSales) && (
+              <>
+                <option value="qualifiedDate">Lead Qualified Date</option>
+                <option value="updatedAt">Update Time</option>
+                <option value="expectedPossessionDate">Possession Date</option>
+                <option value="projectValue">Project Value</option>
+              </>
+            )}
+            {isAdmin && (
+              <>
+                <option value="createdAt">Lead Generated Date</option>
+                <option value="qualifiedDate">Lead Qualified Date</option>
+                <option value="updatedAt">Update Time</option>
+                <option value="expectedPossessionDate">Possession Date</option>
+                <option value="projectValue">Project Value</option>
+                <option value="name">Name</option>
+                <option value="leadID">Lead ID</option>
+                <option value="leadValue">Lead Value</option>
+              </>
+            )}
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="px-3 py-2 bg-white/80 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
         </div>
       </div>
 
@@ -483,19 +659,77 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         <div className="hidden xl:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{ backgroundColor: '#0f172a' }}>
             <div className="grid grid-cols-10 gap-3 px-4 py-4">
-              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Lead ID</div>
-              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Contact</div>
-              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Source</div>
-              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Assigned</div>
-              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Value</div>
-              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider">Status</div>
+              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'leadID') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('leadID');
+                  setSortOrder('asc');
+                }
+              }}>
+                Lead ID {sortBy === 'leadID' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'name') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('name');
+                  setSortOrder('asc');
+                }
+              }}>
+                Contact {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'sourceId') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('sourceId');
+                  setSortOrder('asc');
+                }
+              }}>
+                Source {sortBy === 'sourceId' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'presalesUserId') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('presalesUserId');
+                  setSortOrder('asc');
+                }
+              }}>
+                Assigned {sortBy === 'presalesUserId' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'leadValue') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('leadValue');
+                  setSortOrder('asc');
+                }
+              }}>
+                Value {sortBy === 'leadValue' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'leadStatusId') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('leadStatusId');
+                  setSortOrder('asc');
+                }
+              }}>
+                Status {sortBy === 'leadStatusId' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
               <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider">Actions</div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
-              {leads.map((lead, index) => (
-                <div key={lead._id} className={`grid grid-cols-10 gap-3 px-4 py-3 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+              {leads.map((lead, index) => {
+                const colorInfo = getRowColorAndReason(lead);
+                const shortStatus = getShortStatus(lead);
+                const assignmentStatus = getAssignmentStatus(lead);
+                return (
+                <div key={lead._id} className={`grid grid-cols-10 gap-3 px-4 py-3 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${colorInfo.color}`} title={colorInfo.reason}>
                   <div className="col-span-2 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {lead.leadID.slice(-3)}
@@ -518,50 +752,41 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   </div>
 
                   <div className="col-span-1 flex items-center">
-                    <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-green-100 text-green-800 truncate">
-                      {lead.sourceId?.name || 'N/A'}
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800 truncate">
+                      {lead.sourceId?.name?.slice(0, 8) || 'N/A'}
                     </span>
                   </div>
 
                   <div className="col-span-1 flex items-center">
-                    {lead.presalesUserId && (
-                      <div className="text-sm">
-                        <div className="font-medium text-blue-600">Presales</div>
-                        <div className="text-gray-600 truncate">{lead.presalesUserId.name}</div>
-                      </div>
-                    )}
-                    {lead.salesUserId && (
-                      <div className="text-sm">
-                        <div className="font-medium text-purple-600">Sales</div>
-                        <div className="text-gray-600 truncate">{lead.salesUserId.name}</div>
-                      </div>
-                    )}
-                    {!lead.presalesUserId && !lead.salesUserId && (
-                      <span className="text-gray-400 text-sm">Unassigned</span>
-                    )}
+                    <div className="text-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${assignmentStatus.color}`}>
+                        {assignmentStatus.text}
+                      </span>
+                      {assignmentStatus.name && (
+                        <div className="text-xs text-gray-600 mt-1 truncate" title={assignmentStatus.name}>
+                          {assignmentStatus.name.split(' ')[0]}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="col-span-1 flex items-center">
                     {lead.leadValue ? (
-                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold capitalize ${lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                          lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-blue-100 text-blue-800'
+                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${lead.leadValue === 'high value' ? 'bg-red-500 text-white' :
+                          lead.leadValue === 'low value' ? 'bg-yellow-500 text-white' :
+                            'bg-blue-500 text-white'
                         }`}>
-                        {lead.leadValue}
+                        {lead.leadValue === 'high value' ? 'HIGH' : lead.leadValue === 'low value' ? 'LOW' : lead.leadValue.toUpperCase()}
                       </span>
                     ) : (
-                      <span className="text-gray-400 text-sm">Not set</span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-gray-400 text-white">N/A</span>
                     )}
                   </div>
 
                   <div className="col-span-1 flex items-center">
-                    {lead.leadStatusId ? (
-                      <span className="inline-flex items-center px-1 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-800 truncate">
-                        {lead.leadStatusId.name}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-xs">No Status</span>
-                    )}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${shortStatus.color}`}>
+                      {shortStatus.text}
+                    </span>
                   </div>
 
                   <div className="col-span-2 flex items-center space-x-1">
@@ -584,7 +809,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -592,8 +818,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         {/* Mobile Cards */}
         <div className="xl:hidden flex-1 overflow-y-auto p-4">
           <div className={`space-y-4 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
-            {leads.map((lead) => (
-              <div key={lead._id} className="bg-white rounded-2xl p-4 shadow-lg border border-slate-100">
+            {leads.map((lead) => {
+              const colorInfo = getRowColorAndReason(lead);
+              const shortStatus = getShortStatus(lead);
+              const assignmentStatus = getAssignmentStatus(lead);
+              return (
+              <div key={lead._id} className={`rounded-2xl p-4 shadow-lg border border-slate-100 ${colorInfo.color}`} title={colorInfo.reason}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
@@ -604,14 +834,22 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       <div className="text-sm text-slate-600">{lead.name || 'N/A'}</div>
                     </div>
                   </div>
-                  {lead.leadValue && (
-                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold capitalize ${lead.leadValue === 'high value' ? 'bg-red-100 text-red-800' :
-                        lead.leadValue === 'low value' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'
-                      }`}>
-                      {lead.leadValue}
+                  <div className="flex gap-2">
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${shortStatus.color}`}>
+                      {shortStatus.text}
                     </span>
-                  )}
+                    {lead.leadValue && (
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold ${lead.leadValue === 'high value' ? 'bg-red-500 text-white' :
+                          lead.leadValue === 'low value' ? 'bg-yellow-500 text-white' :
+                            'bg-blue-500 text-white'
+                        }`}>
+                        {lead.leadValue === 'high value' ? 'HIGH' : 'LOW'}
+                      </span>
+                    )}
+                    <div className="text-xs bg-gray-800 text-white px-2 py-1 rounded-lg" title={colorInfo.reason}>
+                      ℹ️
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -619,7 +857,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <div><span className="font-medium">Phone:</span> {lead.contactNumber || 'N/A'}</div>
                   <div><span className="font-medium">Source:</span> {lead.sourceId?.name || 'N/A'}</div>
                   {lead.centreId && <div><span className="font-medium">Centre:</span> {lead.centreId.name}</div>}
-                  <div><span className="font-medium">Assigned:</span> {lead.presalesUserId ? `Presales: ${lead.presalesUserId.name}` : lead.salesUserId ? `Sales: ${lead.salesUserId.name}` : 'Unassigned'}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Assigned:</span>
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${assignmentStatus.color}`}>
+                      {assignmentStatus.text}
+                    </span>
+                    {assignmentStatus.name && (
+                      <span className="text-sm text-gray-600">{assignmentStatus.name}</span>
+                    )}
+                  </div>
                   <div className="text-gray-500">Created: {new Date(lead.createdAt).toLocaleDateString()}</div>
                 </div>
 
@@ -643,7 +889,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

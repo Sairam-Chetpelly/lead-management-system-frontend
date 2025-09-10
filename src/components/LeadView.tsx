@@ -36,6 +36,10 @@ interface Lead {
     name: string;
     email: string;
   };
+  updatedPerson?: {
+    name: string;
+    email: string;
+  };
   languageId?: {
     _id: string;
     name: string;
@@ -62,19 +66,25 @@ interface Lead {
     name: string;
     slug: string;
   };
-  meetingArrangedDate?: string;
   leadValue?: string;
   projectValue?: string;
   apartmentName?: string;
   expectedPossessionDate?: string;
-
   siteVisit?: boolean;
   siteVisitDate?: string;
   centerVisit?: boolean;
   centerVisitDate?: string;
   virtualMeeting?: boolean;
   virtualMeetingDate?: string;
+  meetingArrangedDate?: string;
   cifDate?: string;
+  leadWonDate?: string;
+  leadLostDate?: string;
+  qualifiedDate?: string;
+  hotDate?: string;
+  warmDate?: string;
+  interestedDate?: string;
+  files?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -491,6 +501,15 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
 
   const userRole = getCurrentUserRole();
   const isPresalesAgent = userRole === 'presales_agent';
+  const isPresalesManager = userRole === 'manager_presales';
+  const isPresalesHod = userRole === 'hod_presales';
+  const isSalesAgent = userRole === 'sales_agent';
+  const isSalesManager = userRole === 'sales_manager';
+  const isHodSales = userRole === 'hod_sales';
+  const isAdmin = userRole === 'admin';
+  
+  const isPresalesRole = isPresalesAgent || isPresalesManager || isPresalesHod;
+  const isSalesRole = isSalesAgent || isSalesManager || isHodSales;
 
   const handleInputChange = (field: string, value: any) => {
     if (field === 'contactNumber' && typeof value === 'string') {
@@ -584,8 +603,10 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           Assignment Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <FieldDisplay label="Presales User" value={lead.presalesUserId?.name} icon={User} editing={false} field="presalesUserId" />
-          {!isPresalesAgent && (
+          {(isPresalesRole || isAdmin) && (
+            <FieldDisplay label="Presales User" value={lead.presalesUserId?.name} icon={User} editing={false} field="presalesUserId" />
+          )}
+          {(isSalesRole || isAdmin) && (
             <FieldDisplay label="Sales User" value={lead.salesUserId?.name} icon={User} editing={false} field="salesUserId" />
           )}
           <FieldDisplay label="Lead Status" value={lead.leadStatusId?.name} icon={CheckCircle} editing={false} field="leadStatusId" />
@@ -603,8 +624,10 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FieldDisplay label="Project Type" value={lead.projectTypeId?.name} icon={Building} editing={false} field="projectTypeId" />
           <FieldDisplay label="House Type" value={lead.houseTypeId?.name} icon={Building} editing={false} field="houseTypeId" />
-          <FieldDisplay label="Apartment Name" value={lead.apartmentName} icon={Building} editing={isPresalesAgent ? editing : false} field="apartmentName" />
-          {!isPresalesAgent && (
+          {(isPresalesRole || isAdmin) && (
+            <FieldDisplay label="Apartment Name" value={lead.apartmentName} icon={Building} editing={isPresalesAgent ? editing : false} field="apartmentName" />
+          )}
+          {(isSalesRole || isAdmin) && (
             <>
               <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
               <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
@@ -613,31 +636,49 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
         </div>
       </div>
 
-      {/* Important Dates */}
+      {/* Status Dates */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <Calendar size={20} className="mr-2" />
-          Important Dates
+          Status Dates
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lead.leadSubStatusId?.slug === 'cif' && (
-            <FieldDisplay label="CIF Date" value={lead.cifDate} icon={Calendar} editing={false} field="cifDate" type="datetime-local" />
-          )}
-          {lead.leadSubStatusId?.slug === 'meeting-arranged' && (
-            <FieldDisplay label="Meeting Arranged Date" value={lead.meetingArrangedDate} icon={Calendar} editing={false} field="meetingArrangedDate" type="datetime-local" />
-          )}
-          {!isPresalesAgent && (
+          {(isPresalesRole || isAdmin) && (
             <>
-              <FieldDisplay label="Site Visit" value={lead.siteVisit} icon={MapPin} editing={editing} field="siteVisit" type="checkbox" />
-              <FieldDisplay label="Site Visit Date" value={lead.siteVisitDate} icon={Calendar} editing={editing} field="siteVisitDate" type="date" />
-              <FieldDisplay label="Center Visit" value={lead.centerVisit} icon={Building} editing={editing} field="centerVisit" type="checkbox" />
-              <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
-              <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
-              <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
+              <FieldDisplay label="CIF Date" value={lead.cifDate} icon={Calendar} editing={false} field="cifDate" type="datetime-local" />
+              <FieldDisplay label="Meeting Arranged Date" value={lead.meetingArrangedDate} icon={Calendar} editing={false} field="meetingArrangedDate" type="datetime-local" />
+              <FieldDisplay label="Interested Date" value={lead.interestedDate} icon={Calendar} editing={false} field="interestedDate" type="datetime-local" />
+            </>
+          )}
+          {(isSalesRole || isAdmin) && (
+            <>
+              <FieldDisplay label="Qualified Date" value={lead.qualifiedDate} icon={Calendar} editing={false} field="qualifiedDate" type="datetime-local" />
+              <FieldDisplay label="Hot Date" value={lead.hotDate} icon={Calendar} editing={false} field="hotDate" type="datetime-local" />
+              <FieldDisplay label="Warm Date" value={lead.warmDate} icon={Calendar} editing={false} field="warmDate" type="datetime-local" />
+              <FieldDisplay label="Won Date" value={lead.leadWonDate} icon={Calendar} editing={false} field="leadWonDate" type="datetime-local" />
+              <FieldDisplay label="Lost Date" value={lead.leadLostDate} icon={Calendar} editing={false} field="leadLostDate" type="datetime-local" />
             </>
           )}
         </div>
       </div>
+
+      {/* Activities & Visits */}
+      {(isSalesRole || isAdmin) && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Activity size={20} className="mr-2" />
+            Activities & Visits
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FieldDisplay label="Site Visit" value={lead.siteVisit} icon={MapPin} editing={editing} field="siteVisit" type="checkbox" />
+            <FieldDisplay label="Site Visit Date" value={lead.siteVisitDate} icon={Calendar} editing={editing} field="siteVisitDate" type="date" />
+            <FieldDisplay label="Center Visit" value={lead.centerVisit} icon={Building} editing={editing} field="centerVisit" type="checkbox" />
+            <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
+            <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
+            <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
+          </div>
+        </div>
+      )}
 
 
       {/* Comments */}
@@ -646,10 +687,41 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           <FileText size={20} className="mr-2" />
           Comments
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <FieldDisplay label="Comment" value={lead.comment} icon={MessageSquare} editing={editing} field="comment" type="textarea" />
         </div>
       </div>
+
+      {/* Files */}
+      {lead.files && lead.files.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Download size={20} className="mr-2" />
+            Attached Files
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {lead.files.map((file: any, index: number) => (
+              <a
+                key={index}
+                href={`/api/leads/document/${file.filename}`}
+                download
+                className="flex items-center space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <FileText size={20} className="text-blue-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-blue-900 truncate">
+                    {file.originalname || file.filename}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                  </p>
+                </div>
+                <Download size={16} className="text-blue-600" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Timestamps */}
       <div>
