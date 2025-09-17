@@ -403,7 +403,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       console.log('Export response data:', response.data);
 
       if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-        showToast('No data to export', 'warning');
+        showToast('No data to export', 'info');
         return;
       }
 

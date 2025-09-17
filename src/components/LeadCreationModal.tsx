@@ -550,7 +550,7 @@ David Brown,Pune,9876543214,19-03-2024,15-03-2024,12,cp,Vikram Patel,Luxury home
                 <div><strong>File limits:</strong> Max 2000 rows, Max 5MB file size</div>
                 <div><strong>Phone Number format:</strong> Exactly 10 digits only</div>
                 <div><strong>Date format:</strong> DD-MM-YYYY (e.g., 15-03-2024)</div>
-                <div><strong>Value:</strong> Numeric value (>6 = high value, ≤6 = low value)</div>
+                <div><strong>Value:</strong> Numeric value (&gt;6 = high value, ≤6 = low value)</div>
                 <div><strong>Assignment:</strong> Sales person must exist in the specified centre</div>
               </div>
             </div>
