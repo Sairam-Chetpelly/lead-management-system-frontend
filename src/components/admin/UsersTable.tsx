@@ -209,7 +209,7 @@ export default function UsersTable() {
       statusId: user.statusId._id || '',
       centreId: isHodSales 
         ? currentUserCenter || user.centreId?._id || ''
-        : selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
+        : selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent','marketing'].includes(selectedRole.slug) && mainBranch
         ? mainBranch._id
         : user.centreId?._id || '',
       languageIds: user.languageIds?.map(lang => lang._id) || [],
@@ -689,7 +689,7 @@ export default function UsersTable() {
                     setFormData({
                       ...formData, 
                       roleId: e.target.value,
-                      centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) && mainBranch
+                      centreId: selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent', 'marketing'].includes(selectedRole.slug) && mainBranch
                         ? mainBranch._id
                         : '',
                       userType: selectedRole?.slug === 'presales_agent' ? formData.userType : ''
@@ -737,12 +737,12 @@ export default function UsersTable() {
                   onChange={(e) => setFormData({...formData, centreId: e.target.value})}
                   disabled={(() => {
                     const selectedRole = roles.find(r => r._id === formData.roleId);
-                    return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) || isHodSales || isSalesManager;
+                    return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent', 'marketing'].includes(selectedRole.slug) || isHodSales || isSalesManager;
                   })()}
                   className={`w-full px-3 py-3 sm:px-5 sm:py-4 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium text-sm sm:text-base ${
                     (() => {
                       const selectedRole = roles.find(r => r._id === formData.roleId);
-                      return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug) || isHodSales || isSalesManager
+                      return selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent','marketing'].includes(selectedRole.slug) || isHodSales || isSalesManager
                         ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                         : 'bg-white'
                     })()
@@ -751,7 +751,7 @@ export default function UsersTable() {
                   <option value="">Select Centre</option>
                   {(() => {
                     const selectedRole = roles.find(r => r._id === formData.roleId);
-                    const isRestrictedRole = selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent'].includes(selectedRole.slug);
+                    const isRestrictedRole = selectedRole && ['admin', 'hod_presales', 'manager_presales', 'presales_agent','marketing'].includes(selectedRole.slug);
                     
                     if (isHodSales || isSalesManager) {
                       // HOD sales and sales manager can only select their own center

@@ -285,7 +285,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                 <p className="text-xs text-gray-600 truncate">{lead.name || 'Lead Details'}</p>
               </div>
             </div>
-            
+            {currentUser?.role !== 'marketing' && (
             <div className="flex items-center space-x-1 flex-shrink-0">
               {!editing ? (
                 <>
@@ -327,7 +327,7 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
                   </button>
                 </>
               )}
-            </div>
+            </div>)}
           </div>
         </div>
       </div>
