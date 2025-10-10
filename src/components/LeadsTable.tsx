@@ -162,16 +162,16 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     
     // If assigned to sales team but no sales activity from the assigned sales agent
     if (isAssignedToSales && !lead.salesActivity) {
-      return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ UNTOUCHED - No action taken by assigned sales agent' };
+      return { color: 'bg-green-500 border-l-4 border-green-700', reason: '🟢 UNTOUCHED - No action taken by assigned sales agent' };
     }
     
     // If not assigned to anyone or only assigned to presales with no activity
     if (!hasActivity) {
-      return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ UNTOUCHED - No activity recorded' };
+      return { color: 'bg-green-500 border-l-4 border-green-700', reason: '🟢 UNTOUCHED - No activity recorded' };
     }
     
     // Lead has activity - light green
-    return { color: 'bg-green-50 border-l-4 border-green-300', reason: '🟢 ACTIVE - Has activity/action taken' };
+    return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ ACTIVE - Has activity/action taken' };
   };
 
   const getRowColor = (lead: Lead) => getRowColorAndReason(lead).color;
