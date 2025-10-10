@@ -108,8 +108,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         houseTypeId: lead.houseTypeId?._id || '',
         apartmentName: lead.apartmentName || '',
         leadValue: lead.leadValue || '',
-        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().slice(0, 16) : '',
-        meetingArrangedDate: lead.meetingArrangedDate ? new Date(lead.meetingArrangedDate).toISOString().slice(0, 16) : '',
+        cifDate: lead.cifDate ? lead.cifDate : '',
+        meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
         comment: ''
       });
     } catch (error) {

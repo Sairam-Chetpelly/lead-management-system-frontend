@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail, MessageSquare } from 'lucide-react';
+import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail, MessageSquare, MapPin, Tag, File, Clock, CheckCircle } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -33,10 +33,13 @@ interface FormData {
   leadValue: string;
   siteVisit: boolean;
   siteVisitDate: string;
+  siteVisitCompletedDate: string;
   centerVisit: boolean;
   centerVisitDate: string;
+  centerVisitCompletedDate: string;
   virtualMeeting: boolean;
   virtualMeetingDate: string;
+  virtualMeetingCompletedDate: string;
   meetingArrangedDate: string;
   cifDate: string;
   comment: string;
@@ -101,10 +104,13 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     leadValue: '',
     siteVisit: false,
     siteVisitDate: '',
+    siteVisitCompletedDate: '',
     centerVisit: false,
     centerVisitDate: '',
+    centerVisitCompletedDate: '',
     virtualMeeting: false,
     virtualMeetingDate: '',
+    virtualMeetingCompletedDate: '',
     meetingArrangedDate: '',
     cifDate: '',
     comment: ''
@@ -156,12 +162,15 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         leadValue: lead.leadValue || '',
         siteVisit: lead.siteVisit || false,
         siteVisitDate: lead.siteVisitDate ? new Date(lead.siteVisitDate).toISOString().split('T')[0] : '',
+        siteVisitCompletedDate: lead.siteVisitCompletedDate ? new Date(lead.siteVisitCompletedDate).toISOString().split('T')[0] : '',
         centerVisit: lead.centerVisit || false,
         centerVisitDate: lead.centerVisitDate ? new Date(lead.centerVisitDate).toISOString().split('T')[0] : '',
+        centerVisitCompletedDate: lead.centerVisitCompletedDate ? new Date(lead.centerVisitCompletedDate).toISOString().split('T')[0] : '',
         virtualMeeting: lead.virtualMeeting || false,
         virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
-        meetingArrangedDate: lead.meetingArrangedDate ? new Date(lead.meetingArrangedDate).toISOString().split('T')[0] : '',
-        cifDate: lead.cifDate ? new Date(lead.cifDate).toISOString().slice(0, 16) : '',
+        virtualMeetingCompletedDate: lead.virtualMeetingCompletedDate ? new Date(lead.virtualMeetingCompletedDate).toISOString().split('T')[0] : '',
+        meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
+        cifDate: lead.cifDate ? lead.cifDate : '',
         comment: lead.comment || ''
       });
     } catch (error) {
@@ -332,22 +341,31 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
       // Convert date strings to Date objects where needed
       if (leadActivityData.expectedPossessionDate) {
-        leadActivityData.expectedPossessionDate = new Date(leadActivityData.expectedPossessionDate).toISOString();
+        leadActivityData.expectedPossessionDate = leadActivityData.expectedPossessionDate;
       }
       if (leadActivityData.siteVisitDate) {
-        leadActivityData.siteVisitDate = new Date(leadActivityData.siteVisitDate).toISOString();
+        leadActivityData.siteVisitDate = leadActivityData.siteVisitDate;
+      }
+      if (leadActivityData.siteVisitCompletedDate) {
+        leadActivityData.siteVisitCompletedDate = leadActivityData.siteVisitCompletedDate;
       }
       if (leadActivityData.centerVisitDate) {
-        leadActivityData.centerVisitDate = new Date(leadActivityData.centerVisitDate).toISOString();
+        leadActivityData.centerVisitDate = leadActivityData.centerVisitDate;
+      }
+      if (leadActivityData.centerVisitCompletedDate) {
+        leadActivityData.centerVisitCompletedDate = leadActivityData.centerVisitCompletedDate;
       }
       if (leadActivityData.virtualMeetingDate) {
-        leadActivityData.virtualMeetingDate = new Date(leadActivityData.virtualMeetingDate).toISOString();
+        leadActivityData.virtualMeetingDate = leadActivityData.virtualMeetingDate;
+      }
+      if (leadActivityData.virtualMeetingCompletedDate) {
+        leadActivityData.virtualMeetingCompletedDate = leadActivityData.virtualMeetingCompletedDate;
       }
       if (leadActivityData.cifDate) {
-        leadActivityData.cifDate = new Date(leadActivityData.cifDate).toISOString();
+        leadActivityData.cifDate =leadActivityData.cifDate ;
       }
       if (leadActivityData.meetingArrangedDate) {
-        leadActivityData.meetingArrangedDate = new Date(leadActivityData.meetingArrangedDate).toISOString();
+        leadActivityData.meetingArrangedDate = leadActivityData.meetingArrangedDate;
       }
 
 
@@ -385,10 +403,13 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       leadValue: '',
       siteVisit: false,
       siteVisitDate: '',
+      siteVisitCompletedDate: '',
       centerVisit: false,
       centerVisitDate: '',
+      centerVisitCompletedDate: '',
       virtualMeeting: false,
       virtualMeetingDate: '',
+      virtualMeetingCompletedDate: '',
       meetingArrangedDate: '',
       cifDate: '',
       comment: ''
@@ -400,8 +421,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   if (loading) {
     return (
       <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead">
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
         </div>
       </Modal>
     );
@@ -409,51 +430,54 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Edit Lead & Add Activity" size="xl">
-      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="space-y-8 max-h-[85vh] overflow-y-auto pb-4">
         {/* Basic Information */}
-        <div className="bg-blue-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <User className="mr-2" size={20} />
+        <section className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <User className="mr-3 h-6 w-6 text-blue-600" />
             Basic Information
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Full Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+                placeholder="Enter full name"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email </label>
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Email Address</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+                placeholder="Enter email address"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number <span className="text-xs text-red-500">*</span></label>
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Contact Number <span className="text-red-500">*</span></label>
               <input
                 type="tel"
                 disabled
                 value={formData.contactNumber}
                 onChange={(e) => handleInputChange('contactNumber', e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 cursor-not-allowed shadow-sm"
+                placeholder="Contact number"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Source <span className="text-xs text-red-500">*</span></label>
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Lead Source <span className="text-red-500">*</span></label>
               <select
                 value={formData.sourceId || ''}
                 onChange={(e) => handleInputChange('sourceId', e.target.value)}
                 required
                 disabled={isSalesAgent}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isSalesAgent ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm ${isSalesAgent ? 'bg-gray-50 cursor-not-allowed' : ''}`}
               >
                 <option value="">Select Source ({dropdownData.leadSources.length} available)</option>
                 {dropdownData.leadSources.map((source: any) => (
@@ -462,21 +486,21 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               </select>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Assignment & Status */}
-        <div className="bg-green-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <User className="mr-2" size={20} />
+        <section className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Tag className="mr-3 h-6 w-6 text-green-600" />
             Assignment & Status
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Lead Status</label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Lead Status</label>
               <select
                 value={formData.leadStatusId}
                 onChange={(e) => handleInputChange('leadStatusId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select Status</option>
                 {dropdownData.leadStatuses
@@ -498,12 +522,12 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
 
               if (selectedStatus?.slug === 'lead') {
                 return (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Presales Agent <span className="text-xs text-red-500">*</span></label>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Assign to Presales Agent <span className="text-red-500">*</span></label>
                     <select
                       value={formData.presalesUserId}
                       onChange={(e) => handleInputChange('presalesUserId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                     >
                       <option value="">Select Presales Agent</option>
                       {presalesUsers.map((user: any) => (
@@ -514,8 +538,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 );
               } else if (selectedStatus?.slug === 'qualified') {
                 return (
-                  <div hidden={isSalesAgent}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Sales Agent <span className="text-xs text-red-500">*</span></label>
+                  <div className={`space-y-1 ${isSalesAgent ? 'hidden' : ''}`}>
+                    <label className="block text-sm font-semibold text-gray-700">Assign to Sales Agent <span className="text-red-500">*</span></label>
                     <select
                       value={formData.salesUserId}
                       onChange={(e) => handleInputChange('salesUserId', e.target.value)}
@@ -523,7 +547,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                         return selectedStatus?.slug === 'qualified' && !isSalesAgent;
                       })()}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                     >
                       <option value="">Select Sales Agent</option>
                       {salesUsers
@@ -565,16 +589,16 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               }
 
               return allowedSubStatuses.length > 0 ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Lead Sub-Status
-                    {selectedStatus?.slug === 'qualified' ? <span className="text-xs text-red-500"> *</span> : null}
+                    {selectedStatus?.slug === 'qualified' ? <span className="text-red-500"> *</span> : null}
                   </label>
                   <select
                     value={formData.leadSubStatusId}
                     onChange={(e) => handleInputChange('leadSubStatusId', e.target.value)}
                     required={selectedStatus?.slug === 'qualified'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                   >
                     <option value="">Select Sub-Status</option>
                     {allowedSubStatuses.map((subStatus: any) => (
@@ -589,25 +613,25 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               const selectedSubStatus = dropdownData.leadSubStatuses.find((s: DropdownItem) => s._id === formData.leadSubStatusId);
               if (selectedSubStatus?.slug === 'cif') {
                 return (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">CIF Date</label>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">CIF Date & Time</label>
                     <input
                       type="datetime-local"
                       value={formData.cifDate}
                       onChange={(e) => handleInputChange('cifDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                     />
                   </div>
                 );
               } else if (selectedSubStatus?.slug === 'meeting-arranged') {
                 return (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Arranged Date</label>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Meeting Arranged Date & Time</label>
                     <input
                       type="datetime-local"
                       value={formData.meetingArrangedDate}
                       onChange={(e) => handleInputChange('meetingArrangedDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                     />
                   </div>
                 );
@@ -615,21 +639,21 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               return null;
             })()}
           </div>
-        </div>
+        </section>
 
         {/* Location */}
-        <div className="bg-indigo-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Building className="mr-2" size={20} />
-            Location
+        <section className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-indigo-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <MapPin className="mr-3 h-6 w-6 text-indigo-600" />
+            Location Details
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Centre
                 {(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                  return selectedStatus?.slug === 'qualified' ? <span className="text-xs text-red-500"> *</span> : null;
+                  return selectedStatus?.slug === 'qualified' ? <span className="text-red-500"> *</span> : null;
                 })()}
               </label>
               <select
@@ -640,7 +664,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
                 })()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select Centre</option>
                 {dropdownData.centres.filter(centre => !centre.name.toLowerCase().includes('main')).map(centre => (
@@ -648,12 +672,12 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Language
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
+                Preferred Language
                 {(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                  return selectedStatus?.slug === 'qualified' ? <span className="text-xs text-red-500"> *</span> : null;
+                  return selectedStatus?.slug === 'qualified' ? <span className="text-red-500"> *</span> : null;
                 })()}
               </label>
               <select
@@ -663,7 +687,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
                 })()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select Language</option>
                 {dropdownData.languages.map((language: any) => (
@@ -672,21 +696,21 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               </select>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Project Information */}
-        <div className="bg-purple-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Building className="mr-2" size={20} />
+        <section className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl shadow-sm border border-purple-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Building className="mr-3 h-6 w-6 text-purple-600" />
             Project Information
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Project Type</label>
               <select
                 value={formData.projectTypeId}
                 onChange={(e) => handleInputChange('projectTypeId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select Project Type</option>
                 {dropdownData.projectTypes.map((type: any) => (
@@ -694,12 +718,12 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">House Type</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">House Type</label>
               <select
                 value={formData.houseTypeId}
                 onChange={(e) => handleInputChange('houseTypeId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select House Type</option>
                 {dropdownData.houseTypes.map((type: any) => (
@@ -707,12 +731,12 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 ))}
               </select>
             </div>
-            <div hidden={isHodPresales || isManagerPresales}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className={`space-y-1 ${isHodPresales || isManagerPresales ? 'hidden' : ''}`}>
+              <label className="block text-sm font-semibold text-gray-700">
                 Project Value
                 {(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                  return selectedStatus?.slug === 'won' ? <span className="text-xs text-red-500"> *</span> : null;
+                  return selectedStatus?.slug === 'won' ? <span className="text-red-500"> *</span> : null;
                 })()}
               </label>
               <input
@@ -723,35 +747,35 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'won';
                 })()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter project value"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
+                placeholder="Enter project value (e.g., $500,000)"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Apartment Name</label>
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">Apartment/Unit Name</label>
               <input
                 type="text"
                 value={formData.apartmentName}
                 onChange={(e) => handleInputChange('apartmentName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter apartment name"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
+                placeholder="Enter apartment/unit name"
               />
             </div>
-            <div hidden={isHodPresales || isManagerPresales}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Expected Possession Date</label>
+            <div className={`space-y-1 ${isHodPresales || isManagerPresales ? 'hidden' : ''}`}>
+              <label className="block text-sm font-semibold text-gray-700">Expected Possession Date</label>
               <input
                 type="date"
                 value={formData.expectedPossessionDate}
                 onChange={(e) => handleInputChange('expectedPossessionDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Lead Value
                 {(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                  return selectedStatus?.slug === 'qualified' ? <span className="text-xs text-red-500"> *</span> : null;
+                  return selectedStatus?.slug === 'qualified' ? <span className="text-red-500"> *</span> : null;
                 })()}
               </label>
               <select
@@ -761,126 +785,172 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
                 })()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">Select Lead Value</option>
                 <option value="high value">High Value</option>
                 <option value="low value">Low Value</option>
               </select>
             </div>
-
           </div>
-        </div>
+        </section>
 
         {/* Activities & Meetings */}
-        <div hidden={isHodPresales || isManagerPresales} className="bg-yellow-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Calendar className="mr-2" size={20} />
+        <section className={`bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-2xl shadow-sm border border-yellow-100 ${isHodPresales || isManagerPresales ? 'hidden' : ''}`}>
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Calendar className="mr-3 h-6 w-6 text-yellow-600" />
             Activities & Meetings
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="siteVisit"
-                checked={formData.siteVisit}
-                onChange={(e) => handleInputChange('siteVisit', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="siteVisit" className="text-sm font-medium text-gray-700">Site Visit</label>
-            </div>
-            {formData.siteVisit && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Site Visit Date</label>
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
                 <input
-                  type="date"
-                  value={formData.siteVisitDate}
-                  onChange={(e) => handleInputChange('siteVisitDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  type="checkbox"
+                  id="siteVisit"
+                  checked={formData.siteVisit}
+                  onChange={(e) => handleInputChange('siteVisit', e.target.checked)}
+                  className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
                 />
+                <label htmlFor="siteVisit" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Site Visit
+                </label>
               </div>
-            )}
-
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="centerVisit"
-                checked={formData.centerVisit}
-                onChange={(e) => handleInputChange('centerVisit', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="centerVisit" className="text-sm font-medium text-gray-700">Center Visit</label>
+              {formData.siteVisit && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Scheduled Date</label>
+                    <input
+                      type="date"
+                      value={formData.siteVisitDate}
+                      onChange={(e) => handleInputChange('siteVisitDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Completed Date</label>
+                    <input
+                      type="date"
+                      value={formData.siteVisitCompletedDate}
+                      onChange={(e) => handleInputChange('siteVisitCompletedDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            {formData.centerVisit && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Center Visit Date</label>
-                <input
-                  type="date"
-                  value={formData.centerVisitDate}
-                  onChange={(e) => handleInputChange('centerVisitDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
 
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="virtualMeeting"
-                checked={formData.virtualMeeting}
-                onChange={(e) => handleInputChange('virtualMeeting', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="virtualMeeting" className="text-sm font-medium text-gray-700">Virtual Meeting</label>
+            <div>
+              <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+                <input
+                  type="checkbox"
+                  id="centerVisit"
+                  checked={formData.centerVisit}
+                  onChange={(e) => handleInputChange('centerVisit', e.target.checked)}
+                  className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="centerVisit" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Building className="mr-2 h-4 w-4" />
+                  Center Visit
+                </label>
+              </div>
+              {formData.centerVisit && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Scheduled Date</label>
+                    <input
+                      type="date"
+                      value={formData.centerVisitDate}
+                      onChange={(e) => handleInputChange('centerVisitDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Completed Date</label>
+                    <input
+                      type="date"
+                      value={formData.centerVisitCompletedDate}
+                      onChange={(e) => handleInputChange('centerVisitCompletedDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            {formData.virtualMeeting && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Virtual Meeting Date</label>
+
+            <div>
+              <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
                 <input
-                  type="date"
-                  value={formData.virtualMeetingDate}
-                  onChange={(e) => handleInputChange('virtualMeetingDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  type="checkbox"
+                  id="virtualMeeting"
+                  checked={formData.virtualMeeting}
+                  onChange={(e) => handleInputChange('virtualMeeting', e.target.checked)}
+                  className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
                 />
+                <label htmlFor="virtualMeeting" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Globe className="mr-2 h-4 w-4" />
+                  Virtual Meeting
+                </label>
               </div>
-            )}
-
-
+              {formData.virtualMeeting && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Scheduled Date</label>
+                    <input
+                      type="date"
+                      value={formData.virtualMeetingDate}
+                      onChange={(e) => handleInputChange('virtualMeetingDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Completed Date</label>
+                    <input
+                      type="date"
+                      value={formData.virtualMeetingCompletedDate}
+                      onChange={(e) => handleInputChange('virtualMeetingCompletedDate', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Activity Comments */}
-        <div className="bg-orange-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <MessageSquare className="mr-2" size={20} />
+        <section className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-2xl shadow-sm border border-orange-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <MessageSquare className="mr-3 h-6 w-6 text-orange-600" />
             Activity Comments
           </h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Activity Comment</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">Add Comment</label>
             <textarea
               value={formData.comment}
               onChange={(e) => handleInputChange('comment', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Enter activity comment (this will create a new lead activity entry)..."
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white shadow-sm resize-none"
+              placeholder="Describe the activity, notes, or updates..."
             />
-            <p className="text-sm text-gray-500 mt-1">
-              This comment will be saved as a new lead activity entry when you update the lead.
+            <p className="text-sm text-gray-600 flex items-center">
+              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+              This will create a new activity entry upon submission.
             </p>
           </div>
-        </div>
+        </section>
 
         {/* File Upload */}
-        <div className="bg-gray-50 p-4 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Upload className="mr-2" size={20} />
+        <section className="bg-gradient-to-r from-gray-50 to-slate-50 p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <Upload className="mr-3 h-6 w-6 text-gray-600" />
             Attach Files (Optional)
           </h3>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-gray-400 transition-colors relative">
-              <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600 mb-2">Click to upload or drag and drop</p>
-              <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB each, 5 files max)</p>
+          <div className="space-y-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-gray-400 transition-all duration-200 relative bg-white shadow-sm hover:shadow-md">
+              <Upload size={32} className="mx-auto text-gray-400 mb-3" />
+              <p className="text-lg font-medium text-gray-700 mb-1">Drop files here or click to browse</p>
+              <p className="text-sm text-gray-500 mb-4">Supports PDF, DOC, DOCX, JPG, PNG (Max 10MB each, up to 5 files)</p>
               <input
                 type="file"
                 onChange={handleFileUpload}
@@ -891,19 +961,24 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
             </div>
 
             {files.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700 flex items-center">
+                  <File className="mr-2 h-4 w-4" />
+                  Selected Files ({files.length}/5)
+                </h4>
                 {files.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <FileText size={20} className="text-blue-600" />
-                      <span className="text-sm font-medium text-gray-900">{file.name}</span>
-                      <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center space-x-4">
+                      <FileText size={20} className="text-indigo-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 truncate max-w-xs">{file.name}</p>
+                        <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
+                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -912,33 +987,34 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 bg-white rounded-b-2xl px-6 py-4">
           <button
             type="button"
             onClick={handleClose}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            className="flex items-center space-x-2 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
             disabled={submitting}
           >
-            <X size={16} />
+            <X size={18} />
             <span>Cancel</span>
           </button>
 
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+            className="flex items-center space-x-2 px-6 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 from-indigo-600 to-blue-600"
             style={{ backgroundColor: '#0f172a' }}
-          >
+>
             {submitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Creating...</span>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Saving...</span>
               </>
             ) : (
               <>
+                <Save size={18} />
                 <span>Update Lead</span>
               </>
             )}

@@ -76,6 +76,9 @@ interface Lead {
   centerVisitDate?: string;
   virtualMeeting?: boolean;
   virtualMeetingDate?: string;
+  siteVisitCompletedDate?: string;
+  centerVisitCompletedDate?: string;
+  virtualMeetingCompletedDate?: string;
   meetingArrangedDate?: string;
   cifDate?: string;
   leadWonDate?: string;
@@ -507,6 +510,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
   const isSalesManager = userRole === 'sales_manager';
   const isHodSales = userRole === 'hod_sales';
   const isAdmin = userRole === 'admin';
+  const isMarketing = userRole === 'marketing';
   
   const isPresalesRole = isPresalesAgent || isPresalesManager || isPresalesHod;
   const isSalesRole = isSalesAgent || isSalesManager || isHodSales;
@@ -663,7 +667,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
       </div>
 
       {/* Activities & Visits */}
-      {(isSalesRole || isAdmin) && (
+      {(isSalesRole || isAdmin || isMarketing) && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <Activity size={20} className="mr-2" />
@@ -672,10 +676,13 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FieldDisplay label="Site Visit" value={lead.siteVisit} icon={MapPin} editing={editing} field="siteVisit" type="checkbox" />
             <FieldDisplay label="Site Visit Date" value={lead.siteVisitDate} icon={Calendar} editing={editing} field="siteVisitDate" type="date" />
+            <FieldDisplay label="Site Visit Completed Date" value={lead.siteVisitCompletedDate} icon={CheckCircle} editing={editing} field="siteVisitCompletedDate" type="date" />
             <FieldDisplay label="Center Visit" value={lead.centerVisit} icon={Building} editing={editing} field="centerVisit" type="checkbox" />
             <FieldDisplay label="Center Visit Date" value={lead.centerVisitDate} icon={Calendar} editing={editing} field="centerVisitDate" type="date" />
+            <FieldDisplay label="Center Visit Completed Date" value={lead.centerVisitCompletedDate} icon={CheckCircle} editing={editing} field="centerVisitCompletedDate" type="date" />
             <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
             <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
+            <FieldDisplay label="Virtual Meeting Completed Date" value={lead.virtualMeetingCompletedDate} icon={CheckCircle} editing={editing} field="virtualMeetingCompletedDate" type="date" />
           </div>
         </div>
       )}

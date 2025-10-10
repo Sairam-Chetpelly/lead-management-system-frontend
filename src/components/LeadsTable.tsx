@@ -78,6 +78,13 @@ interface Lead {
   siteVisitDate?: string;
   centerVisitDate?: string;
   virtualMeetingDate?: string;
+  siteVisitCompletedDate?: string;
+  centerVisitCompletedDate?: string;
+  virtualMeetingCompletedDate?: string;
+  callLogCount?: number;
+  activityLogCount?: number;
+  salesActivity?: boolean;
+  hasActivity?: boolean;
 }
 
 export default function LeadsTable({ user }: LeadsTableProps) {
@@ -131,75 +138,40 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   // Helper function to get row color and reason
   const getRowColorAndReason = (lead: Lead) => {
-    const now = new Date();
-    const createdDate = new Date(lead.createdAt);
-    const daysSinceCreated = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Check if lead has any activity (touched vs untouched)
+    const hasFieldActivity = lead.qualifiedDate || lead.hotDate || lead.warmDate || lead.cifDate || 
+                            lead.meetingArrangedDate || lead.interestedDate || lead.siteVisit || 
+                            lead.centerVisit || lead.virtualMeeting || lead.siteVisitCompletedDate ||
+                            lead.centerVisitCompletedDate || lead.virtualMeetingCompletedDate;
     
-    const hasActivity = lead.qualifiedDate || lead.hotDate || lead.warmDate || lead.cifDate || 
-                       lead.meetingArrangedDate || lead.interestedDate || lead.siteVisit || 
-                       lead.centerVisit || lead.virtualMeeting || lead.comment;
+    // Check for call logs and activity logs from backend
+    const hasCallLogs = (lead.callLogCount || 0) > 0;
+    const hasActivityLogs = (lead.activityLogCount || 0) > 0;
     
-    if (lead.leadStatusId?.slug === 'won') {
-      return { color: 'bg-yellow-200 border-l-4 border-yellow-600', reason: '🟡 WON LEAD - Success case' };
+    // Check for meaningful comment activity (not just auto-generated comments)
+    const hasCommentActivity = lead.comment && lead.comment.trim().length > 0 && 
+                              !lead.comment.includes('Google Ads Lead') && 
+                              !lead.comment.includes('Facebook Ads Lead') && 
+                              !lead.comment.includes('Instagram Ads Lead');
+    
+    // Combined activity check - includes field activity, call logs, activity logs, or meaningful comments
+    const hasActivity = hasFieldActivity || hasCallLogs || hasActivityLogs || hasCommentActivity || lead.hasActivity;
+    
+    // For sales team - check if lead is assigned to sales and has no sales activity
+    const isAssignedToSales = lead.salesUserId;
+    
+    // If assigned to sales team but no sales activity from the assigned sales agent
+    if (isAssignedToSales && !lead.salesActivity) {
+      return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ UNTOUCHED - No action taken by assigned sales agent' };
     }
     
-    if (lead.leadStatusId?.slug === 'lost') {
-      return { color: 'bg-red-200 border-l-4 border-red-400', reason: '🔴 LOST LEAD - Closed unsuccessful' };
+    // If not assigned to anyone or only assigned to presales with no activity
+    if (!hasActivity) {
+      return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ UNTOUCHED - No activity recorded' };
     }
     
-    if ((lead.presalesUserId || lead.salesUserId) && !hasActivity && daysSinceCreated > 0) {
-      return { color: 'bg-red-300 border-l-4 border-red-700', reason: `🚨 NO ACTION TAKEN - Assigned ${daysSinceCreated} days ago, no activity` };
-    }
-    
-    if (!lead.presalesUserId && !lead.salesUserId) {
-      return { color: 'bg-red-400 border-l-4 border-red-800', reason: '🔴 UNASSIGNED - No agent assigned' };
-    }
-    
-    if (lead.leadValue === 'high value' && lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'hot') {
-      return { color: 'bg-green-300 border-l-4 border-green-700', reason: '🟢 HIGH VALUE + HOT QUALIFIED - Top priority' };
-    }
-    
-    if (lead.leadValue === 'high value') {
-      return { color: 'bg-green-200 border-l-4 border-green-600', reason: '🟢 HIGH VALUE LEAD - Important opportunity' };
-    }
-    
-    if (lead.leadValue === 'low value') {
-      return { color: 'bg-green-100 border-l-4 border-green-400', reason: '🟢 LOW VALUE LEAD - Standard priority' };
-    }
-    
-    if (lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'hot') {
-      return { color: 'bg-orange-200 border-l-4 border-orange-600', reason: '🟠 HOT QUALIFIED - High conversion potential' };
-    }
-    
-    if (lead.leadStatusId?.slug === 'qualified' && lead.leadSubStatusId?.slug === 'warm') {
-      return { color: 'bg-orange-100 border-l-4 border-orange-400', reason: '🟠 WARM QUALIFIED - Medium potential' };
-    }
-    
-    if (lead.leadSubStatusId?.slug === 'cif') {
-      return { color: 'bg-purple-200 border-l-4 border-purple-600', reason: '🟣 CIF STATUS - Ready to convert' };
-    }
-    
-    if (lead.leadSubStatusId?.slug === 'meeting-arranged' || lead.leadSubStatusId?.slug === 'interested') {
-      return { color: 'bg-amber-200 border-l-4 border-amber-700', reason: '🟤 FOLLOW-UP SCHEDULED - Meeting/Interest confirmed' };
-    }
-    
-    if (lead.siteVisit || lead.centerVisit || lead.virtualMeeting) {
-      return { color: 'bg-amber-100 border-l-4 border-amber-500', reason: '🟤 ACTIVE ENGAGEMENT - Has visits/meetings' };
-    }
-    
-    if (lead.leadStatusId?.slug === 'qualified') {
-      return { color: 'bg-blue-200 border-l-4 border-blue-600', reason: '🔵 QUALIFIED LEAD - In sales process' };
-    }
-    
-    if (lead.leadStatusId?.slug === 'lead' && daysSinceCreated <= 1) {
-      return { color: 'bg-blue-100 border-l-4 border-blue-400', reason: '🔵 NEW LEAD - Created recently' };
-    }
-    
-    if (lead.leadStatusId?.slug === 'lead') {
-      return { color: 'bg-blue-50 border-l-4 border-blue-300', reason: `🔵 LEAD IN PROCESS - ${daysSinceCreated} days old` };
-    }
-    
-    return { color: 'bg-white border-l-4 border-gray-300', reason: '⚪ DEFAULT - Standard lead' };
+    // Lead has activity - light green
+    return { color: 'bg-green-50 border-l-4 border-green-300', reason: '🟢 ACTIVE - Has activity/action taken' };
   };
 
   const getRowColor = (lead: Lead) => getRowColorAndReason(lead).color;
