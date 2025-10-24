@@ -403,13 +403,61 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       {/* Filters */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
         {/* Mobile Filter Button */}
-        <div className={`md:hidden ${showFilters ? 'mb-4' : ''}`}>
+        <div className={`md:hidden ${showFilters ? 'mb-4' : ''} flex gap-2`}>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl font-medium text-sm hover:bg-blue-200 transition-all"
           >
             <Filter size={16} />
             <span>Filters</span>
+          </button>
+          <button
+            onClick={() => {
+              setFilters({
+                search: '',
+                source: '',
+                assignedTo: '',
+                leadValue: '',
+                centre: '',
+                leadStatus: '',
+                leadSubStatus: '',
+                siteVisit: '',
+                centerVisit: '',
+                virtualMeeting: '',
+                dateFrom: '',
+                dateTo: ''
+              });
+              handlePageChange(1);
+            }}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+          >
+            <span>Clear</span>
+          </button>
+        </div>
+
+        {/* Desktop Clear Button */}
+        <div className="hidden md:flex justify-end mb-4">
+          <button
+            onClick={() => {
+              setFilters({
+                search: '',
+                source: '',
+                assignedTo: '',
+                leadValue: '',
+                centre: '',
+                leadStatus: '',
+                leadSubStatus: '',
+                siteVisit: '',
+                centerVisit: '',
+                virtualMeeting: '',
+                dateFrom: '',
+                dateTo: ''
+              });
+              handlePageChange(1);
+            }}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-200 transition-all"
+          >
+            <span>Clear Filters</span>
           </button>
         </div>
 
@@ -726,7 +774,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
                   <div className="col-span-1 flex items-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800 truncate">
-                      {lead.sourceId?.name?.slice(0, 8) || 'N/A'}
+                      {lead.sourceId?.name?.slice(0, 15) || 'N/A'}
                     </span>
                   </div>
 
