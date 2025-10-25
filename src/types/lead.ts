@@ -62,6 +62,7 @@ export interface Lead {
   comment?: string;
   adname?: string;
   adset?: string;
+  campaign?: string;
   files?: any;
   createdAt: string;
   updatedAt: string;

@@ -71,6 +71,7 @@ interface Lead {
   apartmentName?: string;
   adname?: string;
   adset?: string;
+  campaign?: string;
   expectedPossessionDate?: string;
   siteVisit?: boolean;
   siteVisitDate?: string;
@@ -601,6 +602,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           ]} />
           <FieldDisplay label="Ad Name" value={lead?.adname} icon={Building} editing={false} field="adname" />
           <FieldDisplay label="Adset Name" value={lead?.adset} icon={Building} editing={false} field="adset" />
+          <FieldDisplay label="Ad Campaign" value={lead?.campaign} icon={Building} editing={false} field="campaign" />
         </div>
       </div>
 
