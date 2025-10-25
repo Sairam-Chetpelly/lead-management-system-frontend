@@ -69,6 +69,8 @@ interface Lead {
   leadValue?: string;
   projectValue?: string;
   apartmentName?: string;
+  adname?: string;
+  adset?: string;
   expectedPossessionDate?: string;
   siteVisit?: boolean;
   siteVisitDate?: string;
@@ -597,6 +599,8 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
             { value: 'high value', label: 'High Value' },
             { value: 'low value', label: 'Low Value' }
           ]} />
+          <FieldDisplay label="Ad Name" value={lead?.adname} icon={Building} editing={false} field="adname" />
+          <FieldDisplay label="Adset Name" value={lead?.adset} icon={Building} editing={false} field="adset" />
         </div>
       </div>
 

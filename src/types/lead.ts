@@ -60,6 +60,8 @@ export interface Lead {
   virtualMeetingDate?: string;
   cifDate?: string;
   comment?: string;
+  adname?: string;
+  adset?: string;
   files?: any;
   createdAt: string;
   updatedAt: string;
