@@ -78,6 +78,8 @@ interface Lead {
   centerVisit?: boolean;
   centerVisitDate?: string;
   virtualMeeting?: boolean;
+  outOfStation?: boolean;
+  requirementWithinTwoMonths?: boolean;
   virtualMeetingDate?: string;
   siteVisitCompletedDate?: string;
   centerVisitCompletedDate?: string;
@@ -643,6 +645,8 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
               <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
             </>
           )}
+          <FieldDisplay label="Requirement Within Two Months" value={lead?.requirementWithinTwoMonths} editing={false} field="requirementWithinTwoMonths" type="checkbox" />
+          <FieldDisplay label="Out Of Station" value={lead?.outOfStation} editing={false} field="outOfStation" type="checkbox" />
         </div>
       </div>
 

@@ -120,7 +120,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     centerVisit: '',
     virtualMeeting: '',
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    outOfStation: '',
+    requirementWithinTwoMonths: '',
+    adname: '',
+    adset: '',
+    campaign: ''
   });
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -425,7 +430,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 centerVisit: '',
                 virtualMeeting: '',
                 dateFrom: '',
-                dateTo: ''
+                dateTo: '',
+                outOfStation: '',
+                requirementWithinTwoMonths: '',
+                adname: '',
+                adset: '',
+                campaign: ''
               });
               handlePageChange(1);
             }}
@@ -451,7 +461,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 centerVisit: '',
                 virtualMeeting: '',
                 dateFrom: '',
-                dateTo: ''
+                dateTo: '',
+                outOfStation: '',
+                requirementWithinTwoMonths: '',
+                adname: '',
+                adset: '',
+                campaign: ''
               });
               handlePageChange(1);
             }}
@@ -603,6 +618,51 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
               placeholder="To Date"
             />
+            <select
+              value={filters.outOfStation}
+              onChange={(e) => handleFilterChange('outOfStation', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Out of Station</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            <select
+              value={filters.requirementWithinTwoMonths}
+              onChange={(e) => handleFilterChange('requirementWithinTwoMonths', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Requirement Within 2 Months</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <input
+                type="text"
+                placeholder="Ad Name"
+                value={filters.adname}
+                onChange={(e) => handleFilterChange('adname', e.target.value)}
+                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              />
+            )}
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <input
+                type="text"
+                placeholder="Set Name"
+                value={filters.adset}
+                onChange={(e) => handleFilterChange('adset', e.target.value)}
+                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              />
+            )}
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <input
+                type="text"
+                placeholder="Ad Group Name"
+                value={filters.campaign}
+                onChange={(e) => handleFilterChange('campaign', e.target.value)}
+                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+              />
+            )}
           </div>
         </div>
       </div>

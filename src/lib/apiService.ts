@@ -47,7 +47,8 @@ export const adminServices = {
   centres: createApiService(API_ENDPOINTS.ADMIN_CENTRES),
   languages: createApiService(API_ENDPOINTS.ADMIN_LANGUAGES),
   statuses: createApiService(API_ENDPOINTS.ADMIN_STATUSES),
-  users: createApiService(API_ENDPOINTS.USERS)
+  users: createApiService(API_ENDPOINTS.USERS),
+  usersAll: createApiService(API_ENDPOINTS.USERS_ALL)
 };
 
 export const leadServices = {

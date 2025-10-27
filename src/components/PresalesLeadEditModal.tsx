@@ -52,6 +52,23 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Get current user role
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isPresalesAgent = userRole === 'presales_agent';
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -339,9 +356,17 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Status</option>
-                {dropdownData.leadStatuses.map((status: any) => (
-                  <option key={status._id} value={status._id}>{status.name}</option>
-                ))}
+                {dropdownData.leadStatuses
+                  .filter((status: any) => {
+                    // Filter out 'lost' status only for presales agents
+                    if (isPresalesAgent && status.slug === 'lost') {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((status: any) => (
+                    <option key={status._id} value={status._id}>{status.name}</option>
+                  ))}
               </select>
             </div>
             {(() => {
@@ -411,7 +436,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Centre</option>
-                {dropdownData.centres.map((centre: any) => (
+                {dropdownData.centres.filter(centre => !centre.name.toLowerCase().includes('main')).map(centre => (
                   <option key={centre._id} value={centre._id}>{centre.name}</option>
                 ))}
               </select>

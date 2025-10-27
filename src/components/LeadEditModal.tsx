@@ -43,6 +43,8 @@ interface FormData {
   meetingArrangedDate: string;
   cifDate: string;
   comment: string;
+  outOfStation: boolean;
+  requirementWithinTwoMonths: boolean;
 }
 
 interface DropdownItem {
@@ -113,7 +115,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     virtualMeetingCompletedDate: '',
     meetingArrangedDate: '',
     cifDate: '',
-    comment: ''
+    comment: '',
+    outOfStation: false,
+    requirementWithinTwoMonths: false
   });
 
   // Dropdown data
@@ -171,7 +175,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         virtualMeetingCompletedDate: lead.virtualMeetingCompletedDate ? new Date(lead.virtualMeetingCompletedDate).toISOString().split('T')[0] : '',
         meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
         cifDate: lead.cifDate ? lead.cifDate : '',
-        comment: lead.comment || ''
+        comment: lead.comment || '',
+        outOfStation: lead.outOfStation || false,
+        requirementWithinTwoMonths: lead.requirementWithinTwoMonths || false
       });
     } catch (error) {
       console.error('Error fetching lead:', error);
@@ -184,7 +190,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   const fetchDropdownData = async () => {
     try {
       const [usersRes, sourcesRes, centresRes, languagesRes, statusesRes, formDataRes] = await Promise.all([
-        authAPI.getUsers({ limit: 1000 }),
+        authAPI.getUsersAll({ limit: 1000 }),
         authAPI.admin.getAllLeadSources(),
         authAPI.admin.getAllCentres(),
         authAPI.admin.getAllLanguages(),
@@ -412,7 +418,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       virtualMeetingCompletedDate: '',
       meetingArrangedDate: '',
       cifDate: '',
-      comment: ''
+      comment: '',
+      outOfStation: false,
+      requirementWithinTwoMonths: false
     });
     setFiles([]);
     onClose();
@@ -504,7 +512,17 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
               >
                 <option value="">Select Status</option>
                 {dropdownData.leadStatuses
-                  .filter((status: any) => isSalesAgent ? ['qualified', 'won', 'lost'].includes(status.slug) : true)
+                  .filter((status: any) => {
+                    if (isSalesAgent) {
+                      // Sales agents can see qualified, won, and lost
+                      return ['qualified', 'won',].includes(status.slug);
+                    }
+                    // Filter out 'lost' status only for presales agents
+                    if (userRole === 'presales_agent' && status.slug === 'lost') {
+                      return false;
+                    }
+                    return true;
+                  })
                   .map((status: any) => (
                     <option key={status._id} value={status._id}>{status.name}</option>
                   ))}
@@ -538,14 +556,14 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 );
               } else if (selectedStatus?.slug === 'qualified') {
                 return (
-                  <div className={`space-y-1 ${isSalesAgent ? 'hidden' : ''}`}>
+                  <div className="space-y-1">
                     <label className="block text-sm font-semibold text-gray-700">Assign to Sales Agent <span className="text-red-500">*</span></label>
                     <select
                       value={formData.salesUserId}
                       onChange={(e) => handleInputChange('salesUserId', e.target.value)}
                       required={(() => {
                         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
-                        return selectedStatus?.slug === 'qualified' && !isSalesAgent;
+                        return selectedStatus?.slug === 'qualified';
                       })()}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
                     >
@@ -791,6 +809,36 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 <option value="high value">High Value</option>
                 <option value="low value">Low Value</option>
               </select>
+            </div>
+          </div>
+          
+          {/* Additional Flags */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <input
+                type="checkbox"
+                id="outOfStation"
+                checked={formData.outOfStation}
+                onChange={(e) => handleInputChange('outOfStation', e.target.checked)}
+                className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="outOfStation" className="text-sm font-semibold text-gray-700 flex items-center">
+                <MapPin className="mr-2 h-4 w-4" />
+                Out of Station
+              </label>
+            </div>
+            <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <input
+                type="checkbox"
+                id="requirementWithinTwoMonths"
+                checked={formData.requirementWithinTwoMonths}
+                onChange={(e) => handleInputChange('requirementWithinTwoMonths', e.target.checked)}
+                className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="requirementWithinTwoMonths" className="text-sm font-semibold text-gray-700 flex items-center">
+                <Clock className="mr-2 h-4 w-4" />
+                Requirement Within Two Months
+              </label>
             </div>
           </div>
         </section>

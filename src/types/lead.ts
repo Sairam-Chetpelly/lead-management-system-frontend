@@ -61,6 +61,8 @@ export interface Lead {
   cifDate?: string;
   comment?: string;
   adname?: string;
+  outOfStation?: boolean;
+  requirementWithinTwoMonths?: boolean;
   adset?: string;
   campaign?: string;
   files?: any;

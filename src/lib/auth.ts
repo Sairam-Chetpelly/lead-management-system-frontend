@@ -40,6 +40,7 @@ export const authAPI = {
   
   // User management
   getUsers: (params: PaginationParams = {}) => adminServices.users.getAll(params),
+  getUsersAll: (params: PaginationParams = {}) => adminServices.usersAll.getAll(params),
   createUser: (userData: any) => adminServices.users.create(userData),
   updateUser: (id: string, userData: any) => adminServices.users.update(id, userData),
   deleteUser: (id: string) => adminServices.users.delete(id),
