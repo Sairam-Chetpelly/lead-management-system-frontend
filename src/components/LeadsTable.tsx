@@ -16,6 +16,7 @@ import LeadView from './LeadView';
 import LeadEditModal from './LeadEditModal';
 import PresalesLeadEditModal from './PresalesLeadEditModal';
 import SearchableAgentDropdown from './SearchableAgentDropdown';
+import SearchableAdDropdown from './SearchableAdDropdown';
 
 interface LeadsTableProps {
   user: any;
@@ -577,6 +578,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 ))
               }
             </select>
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
             <select
               value={filters.siteVisit}
               onChange={(e) => handleFilterChange('siteVisit', e.target.value)}
@@ -586,6 +588,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
+            )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
             <select
               value={filters.centerVisit}
               onChange={(e) => handleFilterChange('centerVisit', e.target.value)}
@@ -595,6 +599,8 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
+            )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
             <select
               value={filters.virtualMeeting}
               onChange={(e) => handleFilterChange('virtualMeeting', e.target.value)}
@@ -604,6 +610,53 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
+          )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
+            <select
+              value={filters.outOfStation}
+              onChange={(e) => handleFilterChange('outOfStation', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Out of Station</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
+            <select
+              value={filters.requirementWithinTwoMonths}
+              onChange={(e) => handleFilterChange('requirementWithinTwoMonths', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Requirement Within 2 Months</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            )}
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <SearchableAdDropdown
+                field="adname"
+                value={filters.adname}
+                onChange={(value) => handleFilterChange('adname', value)}
+                placeholder="Ad Names"
+              />
+            )}
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <SearchableAdDropdown
+                field="adset"
+                value={filters.adset}
+                onChange={(value) => handleFilterChange('adset', value)}
+                placeholder="Ad Set Names"
+              />
+            )}
+            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
+              <SearchableAdDropdown
+                field="campaign"
+                value={filters.campaign}
+                onChange={(value) => handleFilterChange('campaign', value)}
+                placeholder="Campaign Names"
+              />
+            )}
             <input
               type="date"
               value={filters.dateFrom}
@@ -618,51 +671,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
               placeholder="To Date"
             />
-            <select
-              value={filters.outOfStation}
-              onChange={(e) => handleFilterChange('outOfStation', e.target.value)}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            >
-              <option value="">Out of Station</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-            <select
-              value={filters.requirementWithinTwoMonths}
-              onChange={(e) => handleFilterChange('requirementWithinTwoMonths', e.target.value)}
-              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-            >
-              <option value="">Requirement Within 2 Months</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
-              <input
-                type="text"
-                placeholder="Ad Name"
-                value={filters.adname}
-                onChange={(e) => handleFilterChange('adname', e.target.value)}
-                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-              />
-            )}
-            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
-              <input
-                type="text"
-                placeholder="Set Name"
-                value={filters.adset}
-                onChange={(e) => handleFilterChange('adset', e.target.value)}
-                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-              />
-            )}
-            {(isAdmin || isPreSalesAgent || isPreSalesManager || isPreSalesHod || isMarketing) && (
-              <input
-                type="text"
-                placeholder="Ad Group Name"
-                value={filters.campaign}
-                onChange={(e) => handleFilterChange('campaign', e.target.value)}
-                className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
-              />
-            )}
           </div>
         </div>
       </div>

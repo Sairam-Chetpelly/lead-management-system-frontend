@@ -213,6 +213,8 @@ export const authAPI = {
   getUnsignedLeads: () => api.get(API_ENDPOINTS.LEADS_UNSIGNED),
   assignLead: (id: string, data: { presalesUserId?: string; salesUserId?: string }) => 
     api.post(API_ENDPOINTS.LEADS_ASSIGN(id), data),
+  getAdValues: (field: 'adname' | 'adset' | 'campaign') => 
+    api.get(API_ENDPOINTS.LEADS_AD_VALUES(field)),
 };
 
 export default api;

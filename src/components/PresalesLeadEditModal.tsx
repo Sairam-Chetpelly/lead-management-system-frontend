@@ -356,17 +356,9 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Status</option>
-                {dropdownData.leadStatuses
-                  .filter((status: any) => {
-                    // Filter out 'lost' status only for presales agents
-                    if (isPresalesAgent && status.slug === 'lost') {
-                      return false;
-                    }
-                    return true;
-                  })
-                  .map((status: any) => (
-                    <option key={status._id} value={status._id}>{status.name}</option>
-                  ))}
+                 {dropdownData.leadStatuses.map((status: any) => (
+                  <option key={status._id} value={status._id}>{status.name}</option>
+                ))}
               </select>
             </div>
             {(() => {
