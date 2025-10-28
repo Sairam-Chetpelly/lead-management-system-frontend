@@ -45,19 +45,44 @@ interface StatusDistributionItem {
 }
 
 interface LeadStats {
+  totalLeadsHistorically: number;
+  leadsMonthToDate: number;
+  todayLeads: number;
+  totalCallsHistorically: number;
+  callsMTD: number;
+  todayCalls: number;
+  totalQualifiedHistorically: number;
+  qualifiedMTD: number;
+  qualifiedToday: number;
+  totalLostHistorically?: number;
+  lostMTD?: number;
+  lostToday?: number;
+  mqlPercentage: number;
+  dailyMqlPercentage: number;
+  dailyLeadTrend: WeeklyTrendItem[];
+  dailyCallTrend: WeeklyTrendItem[];
+  dailyLeadsVsCalls: { date: string; leads: number; calls: number; }[];
+  dailyQualifiedTrend: WeeklyTrendItem[];
+  dailyLostTrend: WeeklyTrendItem[];
+  // Legacy fields
   totalLeads: number;
   weekLeads: number;
-  todayLeads: number;
-  todayCalls: number;
   wonLeads: number;
   lostLeads: number;
   weeklyTrend: WeeklyTrendItem[];
   statusDistribution: StatusDistributionItem[];
   leadValueDistribution?: StatusDistributionItem[];
   sourceDistribution?: StatusDistributionItem[];
+  sourceQualifiedDistribution?: StatusDistributionItem[];
+  sourceWonDistribution?: StatusDistributionItem[];
   centerDistribution?: StatusDistributionItem[];
   languageDistribution?: StatusDistributionItem[];
   leadSubStatusDistribution?: StatusDistributionItem[];
+}
+
+interface PresalesAgent {
+  _id: string;
+  name: string;
 }
 
 
@@ -69,26 +94,53 @@ export default function Dashboard({ user }: DashboardProps) {
     totalCentres: 0
   });
   const [leadStats, setLeadStats] = useState<LeadStats>({
+    totalLeadsHistorically: 0,
+    leadsMonthToDate: 0,
+    todayLeads: 0,
+    totalCallsHistorically: 0,
+    callsMTD: 0,
+    todayCalls: 0,
+    totalQualifiedHistorically: 0,
+    qualifiedMTD: 0,
+    qualifiedToday: 0,
+    totalLostHistorically: 0,
+    lostMTD: 0,
+    lostToday: 0,
+    mqlPercentage: 0,
+    dailyMqlPercentage: 0,
+    dailyLeadTrend: [],
+    dailyCallTrend: [],
+    dailyLeadsVsCalls: [],
+    dailyQualifiedTrend: [],
+    dailyLostTrend: [],
     totalLeads: 0,
     weekLeads: 0,
-    todayLeads: 0,
-    todayCalls: 0,
     wonLeads: 0,
     lostLeads: 0,
     weeklyTrend: [],
     statusDistribution: [],
     leadValueDistribution: [],
     sourceDistribution: [],
+    sourceQualifiedDistribution: [],
+    sourceWonDistribution: [],
     centerDistribution: [],
     languageDistribution: [],
     leadSubStatusDistribution: []
   });
+  const [presalesAgents, setPresalesAgents] = useState<PresalesAgent[]>([]);
+  const [selectedPresalesAgent, setSelectedPresalesAgent] = useState('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchPresalesAgents();
     fetchLeadStats();
   }, []);
+
+  useEffect(() => {
+    fetchLeadStats();
+  }, [selectedPresalesAgent, dateRange]);
 
   const fetchDashboardStats = async () => {
     try {
@@ -130,9 +182,27 @@ export default function Dashboard({ user }: DashboardProps) {
   const isPreSalesHod = userRole === 'hod_presales';
   const isAdmin = userRole === 'admin';
 
+  const fetchPresalesAgents = async () => {
+    try {
+      const response = await authAPI.get(API_ENDPOINTS.DASHBOARD_PRESALES_AGENTS);
+      setPresalesAgents(response.data);
+    } catch (error) {
+      console.error('Error fetching presales agents:', error);
+    }
+  };
+
   const fetchLeadStats = async () => {
     try {
-      const response = await authAPI.get(API_ENDPOINTS.DASHBOARD_STATS);
+      const params = new URLSearchParams();
+      if (selectedPresalesAgent) {
+        params.append('presalesAgent', selectedPresalesAgent);
+      }
+      if (dateRange.start && dateRange.end) {
+        params.append('dateRange', `${dateRange.start},${dateRange.end}`);
+      }
+      
+      const url = `${API_ENDPOINTS.DASHBOARD_STATS}${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await authAPI.get(url);
       const data = response.data;
       console.log('Lead stats data:', data);
       setLeadStats(data);
@@ -165,7 +235,49 @@ export default function Dashboard({ user }: DashboardProps) {
         <p className="text-gray-600 text-sm sm:text-base">Welcome back, {user.name}</p>
       </div>
 
-      {/* Lead Stats Cards */}
+      {/* Filters - Show for Sales Manager and other roles except Presales Agents */}
+      {!isPreSalesAgent && (
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pre Sales Agent</label>
+              <select
+                value={selectedPresalesAgent}
+                onChange={(e) => setSelectedPresalesAgent(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Agents</option>
+                {presalesAgents.map((agent) => (
+                  <option key={agent._id} value={agent._id}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Numbers at Top */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center">
@@ -173,8 +285,10 @@ export default function Dashboard({ user }: DashboardProps) {
               <i className="fas fa-chart-line text-blue-600 text-sm sm:text-base"></i>
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Leads</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.totalLeads}</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {isPreSalesAgent ? 'Total Leads Assigned' : 'Total Leads Historically'}
+              </p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.totalLeadsHistorically}</p>
             </div>
           </div>
         </div>
@@ -182,11 +296,13 @@ export default function Dashboard({ user }: DashboardProps) {
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-              <i className="fas fa-calendar-week text-green-600 text-sm sm:text-base"></i>
+              <i className="fas fa-calendar-alt text-green-600 text-sm sm:text-base"></i>
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">This Week</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.weekLeads}</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {isPreSalesAgent ? 'Leads Assigned MTD' : 'Leads Month to Date'}
+              </p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.leadsMonthToDate}</p>
             </div>
           </div>
         </div>
@@ -197,7 +313,9 @@ export default function Dashboard({ user }: DashboardProps) {
               <i className="fas fa-calendar-day text-indigo-600 text-sm sm:text-base"></i>
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Today's Leads</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {isPreSalesAgent ? 'Leads Assigned Today' : "Today's Leads"}
+              </p>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.todayLeads}</p>
             </div>
           </div>
@@ -205,8 +323,32 @@ export default function Dashboard({ user }: DashboardProps) {
 
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+              <i className="fas fa-phone text-purple-600 text-sm sm:text-base"></i>
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Calls Historically</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.totalCallsHistorically}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg flex-shrink-0">
-              <i className="fas fa-phone text-yellow-600 text-sm sm:text-base"></i>
+              <i className="fas fa-phone-alt text-yellow-600 text-sm sm:text-base"></i>
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Calls MTD</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.callsMTD}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+              <i className="fas fa-phone-volume text-red-600 text-sm sm:text-base"></i>
             </div>
             <div className="ml-3 sm:ml-4 min-w-0">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Today's Calls</p>
@@ -214,31 +356,82 @@ export default function Dashboard({ user }: DashboardProps) {
             </div>
           </div>
         </div>
-        {isAdmin && (
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-trophy text-emerald-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Won Leads</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.wonLeads}</p>
-              </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
+              <i className="fas fa-check-circle text-emerald-600 text-sm sm:text-base"></i>
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Qualified Historically</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.totalQualifiedHistorically}</p>
             </div>
           </div>
-        )}
-        {isAdmin && (
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
-                <i className="fas fa-times-circle text-red-600 text-sm sm:text-base"></i>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Lost Leads</p>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.lostLeads}</p>
-              </div>
+        </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-teal-100 rounded-lg flex-shrink-0">
+              <i className="fas fa-calendar-check text-teal-600 text-sm sm:text-base"></i>
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Qualified MTD</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.qualifiedMTD}</p>
             </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-cyan-100 rounded-lg flex-shrink-0">
+              <i className="fas fa-star text-cyan-600 text-sm sm:text-base"></i>
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Qualified Today</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.qualifiedToday}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Lost Leads Cards - Only for Presales */}
+        {isPreSalesAgent && (
+          <>
+            <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                  <i className="fas fa-times-circle text-red-600 text-sm sm:text-base"></i>
+                </div>
+                <div className="ml-3 sm:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Lost Historically</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.totalLostHistorically || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg flex-shrink-0">
+                  <i className="fas fa-calendar-times text-orange-600 text-sm sm:text-base"></i>
+                </div>
+                <div className="ml-3 sm:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Lost MTD</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.lostMTD || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-pink-100 rounded-lg flex-shrink-0">
+                  <i className="fas fa-exclamation-triangle text-pink-600 text-sm sm:text-base"></i>
+                </div>
+                <div className="ml-3 sm:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Lost Today</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{leadStats.lostToday || 0}</p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
       {/* System Stats Cards */}
@@ -304,19 +497,58 @@ export default function Dashboard({ user }: DashboardProps) {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-        {/* Weekly Trend Chart */}
+        {/* 1. Call Done Chart */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Lead Trend</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">1. Call Done</h3>
           <div className="h-64">
             <Line
               data={{
-                labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) =>
-                  new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
+                labels: (leadStats.dailyCallTrend || []).map((item: WeeklyTrendItem) =>
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 ),
                 datasets: [
                   {
-                    label: 'Leads',
-                    data: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => item.count),
+                    label: 'Calls',
+                    data: (leadStats.dailyCallTrend || []).map((item: WeeklyTrendItem) => item.count),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 2. Leads Generated Each Day */}
+        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {isPreSalesAgent ? 'Leads Assigned Each Day' : '2. Leads Generated Each Day'}
+          </h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: (leadStats.dailyLeadTrend || []).map((item: WeeklyTrendItem) =>
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [
+                  {
+                    label: isPreSalesAgent ? 'Leads Assigned' : 'Leads',
+                    data: (leadStats.dailyLeadTrend || []).map((item: WeeklyTrendItem) => item.count),
                     borderColor: 'rgb(59, 130, 246)',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     tension: 0.4,
@@ -341,22 +573,36 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         </div>
 
-        {/* Calling Chart for Presales and Sales Agents */}
-        {(isPreSalesAgent || isSalesAgent) && (
+        {/* Leads Assigned vs Qualified vs Lost - Only for Presales */}
+        {isPreSalesAgent && (
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Leads Assigned vs Qualified vs Lost</h3>
             <div className="h-64">
               <Line
                 data={{
-                  labels: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) =>
-                    new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
+                  labels: (leadStats.dailyLeadTrend || []).map((item) =>
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   ),
                   datasets: [
                     {
-                      label: 'Calls Made',
-                      data: (leadStats.weeklyTrend || []).map((item: WeeklyTrendItem) => item.count),
-                      borderColor: 'rgb(16, 185, 129)',
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      label: 'Leads Assigned',
+                      data: (leadStats.dailyLeadTrend || []).map((item) => item.count),
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      tension: 0.4,
+                    },
+                    {
+                      label: 'Leads Qualified',
+                      data: (leadStats.dailyQualifiedTrend || []).map((item) => item.count),
+                      borderColor: 'rgb(34, 197, 94)',
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                      tension: 0.4,
+                    },
+                    {
+                      label: 'Leads Lost',
+                      data: (leadStats.dailyLostTrend || []).map((item) => item.count),
+                      borderColor: 'rgb(239, 68, 68)',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       tension: 0.4,
                     },
                   ],
@@ -366,7 +612,8 @@ export default function Dashboard({ user }: DashboardProps) {
                   maintainAspectRatio: false,
                   plugins: {
                     legend: {
-                      display: false,
+                      display: true,
+                      position: 'top',
                     },
                   },
                   scales: {
@@ -380,90 +627,30 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         )}
 
-        {/* Lead Value Distribution for Presales Agents */}
-        {!isPreSalesAgent && (
+        {/* Leads Vs Calls - Only for Presales */}
+        {isPreSalesAgent && (
           <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Value Distribution</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Leads Vs Calls</h3>
             <div className="h-64">
-              {leadStats.leadValueDistribution && leadStats.leadValueDistribution.length > 0 ? (
-                <Doughnut
-                  data={{
-                    labels: leadStats.leadValueDistribution.map((item: StatusDistributionItem) =>
-                      item._id === 'high value' ? 'High Value' :
-                        item._id === 'low value' ? 'Low Value' : 'Not Set'
-                    ),
-                    datasets: [
-                      {
-                        data: leadStats.leadValueDistribution.map((item: StatusDistributionItem) => item.count),
-                        backgroundColor: [
-                          '#EF4444', // Red for High Value
-                          '#F59E0B', // Yellow for Medium Value  
-                          '#10B981', // Green for Low Value
-                          '#6B7280', // Gray for Not Set
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          padding: 20,
-                          usePointStyle: true,
-                        },
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: function (context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            return `${label}: ${value} leads`;
-                          }
-                        }
-                      }
-                    },
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                    <p>No lead value data available</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Source Distribution Chart */}
-        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Sources</h3>
-          <div className="h-64">
-            {leadStats.sourceDistribution && leadStats.sourceDistribution.length > 0 ? (
-              <Doughnut
+              <Line
                 data={{
-                  labels: leadStats.sourceDistribution.map((item: StatusDistributionItem) => item._id || 'Unknown'),
+                  labels: (leadStats.dailyLeadsVsCalls || []).map((item) =>
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
                   datasets: [
                     {
-                      data: leadStats.sourceDistribution.map((item: StatusDistributionItem) => item.count),
-                      backgroundColor: [
-                        '#3B82F6', // Blue
-                        '#10B981', // Green
-                        '#F59E0B', // Yellow
-                        '#EF4444', // Red
-                        '#8B5CF6', // Purple
-                        '#F97316', // Orange
-                        '#06B6D4', // Cyan
-                        '#84CC16', // Lime
-                      ],
-                      borderWidth: 2,
-                      borderColor: '#ffffff',
+                      label: 'Leads Assigned',
+                      data: (leadStats.dailyLeadsVsCalls || []).map((item) => item.leads),
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      tension: 0.4,
+                    },
+                    {
+                      label: 'Calls Made',
+                      data: (leadStats.dailyLeadsVsCalls || []).map((item) => item.calls),
+                      borderColor: 'rgb(16, 185, 129)',
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      tension: 0.4,
                     },
                   ],
                 }}
@@ -472,38 +659,139 @@ export default function Dashboard({ user }: DashboardProps) {
                   maintainAspectRatio: false,
                   plugins: {
                     legend: {
-                      position: 'bottom',
-                      labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                      },
+                      display: true,
+                      position: 'top',
                     },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          const label = context.label || '';
-                          const value = context.parsed || 0;
-                          return `${label}: ${value} leads`;
-                        }
-                      }
-                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                    },
                   },
                 }}
               />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                  <p>No source data available</p>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Lead Status Distribution */}
-        <div hidden={isSalesAgent || isPreSalesAgent} className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Status Distribution</h3>
+        {/* 3. MQL % - Show for Sales Manager and Presales roles */}
+        {(isSalesManager || isAdmin || isPreSalesManager || isPreSalesHod || isPreSalesAgent) && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">3. MQL %</h3>
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-blue-600 mb-2">{leadStats.mqlPercentage}%</div>
+                <p className="text-gray-600 text-sm">Overall MQL Rate</p>
+                <div className="mt-4">
+                  <div className="text-3xl font-bold text-green-600 mb-1">{leadStats.dailyMqlPercentage}%</div>
+                  <p className="text-gray-600 text-sm">Today's MQL Rate</p>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {leadStats.totalQualifiedHistorically} of {leadStats.totalLeadsHistorically} leads qualified
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. Source Vs Won - Show for Sales Manager */}
+        {(isSalesManager || isAdmin) && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">5. Source Vs Won</h3>
+            <div className="h-64">
+              {leadStats.sourceWonDistribution && leadStats.sourceWonDistribution.length > 0 ? (
+                <Line
+                  data={{
+                    labels: leadStats.sourceWonDistribution.map((item: StatusDistributionItem) => item._id || 'Unknown'),
+                    datasets: [
+                      {
+                        label: 'Won Leads',
+                        data: leadStats.sourceWonDistribution.map((item: StatusDistributionItem) => item.count),
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <i className="fas fa-chart-line text-4xl mb-2 opacity-50"></i>
+                    <p>No won leads data available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 4. Source Vs Qualified - Show for Sales Manager */}
+        {(isSalesManager || isAdmin || isPreSalesManager || isPreSalesHod) && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">4. Source Vs Qualified</h3>
+            <div className="h-64">
+              {leadStats.sourceQualifiedDistribution && leadStats.sourceQualifiedDistribution.length > 0 ? (
+                <Line
+                  data={{
+                    labels: leadStats.sourceQualifiedDistribution.map((item: StatusDistributionItem) => item._id || 'Unknown'),
+                    datasets: [
+                      {
+                        label: 'Qualified Leads',
+                        data: leadStats.sourceQualifiedDistribution.map((item: StatusDistributionItem) => item.count),
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <i className="fas fa-chart-line text-4xl mb-2 opacity-50"></i>
+                    <p>No qualified leads data available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 6. Qualified Leads Distribution - Show for Sales Manager */}
+        {(isSalesManager || isAdmin || isPreSalesManager || isPreSalesHod) && (
+          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">6. Qualified</h3>
           <div className="h-64">
             {leadStats.statusDistribution && leadStats.statusDistribution.length > 0 ? (
               <Doughnut
@@ -513,12 +801,7 @@ export default function Dashboard({ user }: DashboardProps) {
                     {
                       data: leadStats.statusDistribution.map((item: StatusDistributionItem) => item.count),
                       backgroundColor: [
-                        '#3B82F6',
-                        '#10B981',
-                        '#F59E0B',
-                        '#EF4444',
-                        '#8B5CF6',
-                        '#F97316',
+                        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'
                       ],
                       borderWidth: 2,
                       borderColor: '#ffffff',
@@ -552,149 +835,12 @@ export default function Dashboard({ user }: DashboardProps) {
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
                   <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                  <p>No lead status data available</p>
+                  <p>No qualified leads data available</p>
                 </div>
               </div>
             )}
           </div>
         </div>
-        {/* Center Distribution Chart */}
-        {!isPreSalesAgent && (
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Distribution</h3>
-            <div className="h-64">
-              {leadStats.centerDistribution && leadStats.centerDistribution.length > 0 ? (
-                <Doughnut
-                  data={{
-                    labels: leadStats.centerDistribution.map((item: StatusDistributionItem) => item._id || 'No Centre'),
-                    datasets: [
-                      {
-                        data: leadStats.centerDistribution.map((item: StatusDistributionItem) => item.count),
-                        backgroundColor: [
-                          '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-                      tooltip: {
-                        callbacks: {
-                          label: function (context) {
-                            return `${context.label}: ${context.parsed} leads`;
-                          }
-                        }
-                      }
-                    },
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                    <p>No center data available</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Language Distribution Chart */}
-        <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Language Distribution</h3>
-          <div className="h-64">
-            {leadStats.languageDistribution && leadStats.languageDistribution.length > 0 ? (
-              <Doughnut
-                data={{
-                  labels: leadStats.languageDistribution.map((item: StatusDistributionItem) => item._id || 'No Language'),
-                  datasets: [
-                    {
-                      data: leadStats.languageDistribution.map((item: StatusDistributionItem) => item.count),
-                      backgroundColor: [
-                        '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#F97316', '#06B6D4', '#EC4899'
-                      ],
-                      borderWidth: 2,
-                      borderColor: '#ffffff',
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          return `${context.label}: ${context.parsed} leads`;
-                        }
-                      }
-                    }
-                  },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                  <p>No language data available</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Lead Sub-Status Distribution for Sales Users and Admin */}
-        {(isSalesAgent || (!isSalesAgent && !isPreSalesAgent)) && (
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Sub-Status Distribution</h3>
-            <div className="h-64">
-              {leadStats.leadSubStatusDistribution && leadStats.leadSubStatusDistribution.length > 0 ? (
-                <Doughnut
-                  data={{
-                    labels: leadStats.leadSubStatusDistribution.map((item: StatusDistributionItem) => item._id || 'No Sub Status'),
-                    datasets: [
-                      {
-                        data: leadStats.leadSubStatusDistribution.map((item: StatusDistributionItem) => item.count),
-                        backgroundColor: [
-                          '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316', '#06B6D4', '#84CC16'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff',
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-                      tooltip: {
-                        callbacks: {
-                          label: function (context) {
-                            return `${context.label}: ${context.parsed} leads`;
-                          }
-                        }
-                      }
-                    },
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <i className="fas fa-chart-pie text-4xl mb-2 opacity-50"></i>
-                    <p>No sub-status data available</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         )}
       </div>
     </div>
