@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import { API_ENDPOINTS } from '@/config/apiEndpoints';
 import AccessControl from './AccessControl';
+import AdminDashboard from './AdminDashboard';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -87,6 +88,27 @@ interface PresalesAgent {
 
 
 export default function Dashboard({ user }: DashboardProps) {
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isAdmin = userRole === 'admin';
+
+  // Show AdminDashboard for admin users
+  if (isAdmin) {
+    return <AdminDashboard user={user} />;
+  }
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -132,6 +154,13 @@ export default function Dashboard({ user }: DashboardProps) {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [loading, setLoading] = useState(true);
 
+  const isSalesAgent = userRole === 'sales_agent';
+  const isPreSalesAgent = userRole === 'presales_agent';
+  const isSalesManager = userRole === 'sales_manager';
+  const isHodSales = userRole === 'hod_sales';
+  const isPreSalesManager = userRole === 'manager_presales';
+  const isPreSalesHod = userRole === 'hod_presales';
+
   useEffect(() => {
     fetchDashboardStats();
     fetchPresalesAgents();
@@ -160,27 +189,6 @@ export default function Dashboard({ user }: DashboardProps) {
       setStats({ totalUsers: 0, activeUsers: 0, totalRoles: 0, totalCentres: 0 });
     }
   };
-  const getCurrentUserRole = () => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        return user.role;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-    return null;
-  };
-
-  const userRole = getCurrentUserRole();
-  const isSalesAgent = userRole === 'sales_agent';
-  const isPreSalesAgent = userRole === 'presales_agent';
-  const isSalesManager = userRole === 'sales_manager';
-  const isHodSales = userRole === 'hod_sales';
-  const isPreSalesManager = userRole === 'manager_presales';
-  const isPreSalesHod = userRole === 'hod_presales';
-  const isAdmin = userRole === 'admin';
 
   const fetchPresalesAgents = async () => {
     try {
@@ -273,6 +281,17 @@ export default function Dashboard({ user }: DashboardProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={() => {
+                setSelectedPresalesAgent('');
+                setDateRange({ start: '', end: '' });
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
       )}

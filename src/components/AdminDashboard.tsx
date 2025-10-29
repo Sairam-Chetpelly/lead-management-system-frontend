@@ -1,0 +1,464 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { authAPI } from '@/lib/auth';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+interface AdminDashboardProps {
+  user: any;
+}
+
+interface DailyTrend {
+  date: string;
+  leads: number;
+  calls: number;
+  qualified: number;
+  lost: number;
+  won: number;
+}
+
+export default function AdminDashboard({ user }: AdminDashboardProps) {
+  const [stats, setStats] = useState({
+    totalLeads: 0, leadsMTD: 0, leadsToday: 0,
+    totalCalls: 0, callsMTD: 0, callsToday: 0,
+    totalQualified: 0, qualifiedMTD: 0, qualifiedToday: 0,
+    totalLost: 0, lostMTD: 0, lostToday: 0,
+    totalWon: 0, wonMTD: 0, wonToday: 0,
+    dailyLeads: [] as any[],
+    dailyCalls: [] as any[],
+    dailyQualified: [] as any[],
+    dailyLost: [] as any[],
+    dailyWon: [] as any[],
+
+    sourceLeads: [] as any[],
+    sourceQualified: [] as any[],
+    sourceWon: [] as any[]
+  });
+  const [filters, setFilters] = useState({
+    userType: '',
+    agentId: '',
+    startDate: '',
+    endDate: '',
+    sourceId: ''
+  });
+  const [users, setUsers] = useState<any[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+    fetchSources();
+  }, [filters]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [filters.userType]);
+
+  useEffect(() => {
+    fetchSources();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const params: any = {};
+      if (filters.userType) params.userType = filters.userType;
+      if (filters.agentId) params.agentId = filters.agentId;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.sourceId) params.sourceId = filters.sourceId;
+      
+      const response = await authAPI.getAdminDashboard(params);
+      console.log('Admin Dashboard Response:', response.data);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching admin dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const userType = filters.userType || 'all';
+      const response = await authAPI.getAdminUsers(userType);
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchSources = async () => {
+    try {
+      const response = await authAPI.getAdminSources();
+      setSources(response.data);
+    } catch (error) {
+      console.error('Error fetching sources:', error);
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '' });
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>;
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-gray-600">Welcome back, {user.name}</p>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <select
+            value={filters.userType}
+            onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All User Types</option>
+            <option value="sales">Sales</option>
+            <option value="presales">Presales</option>
+          </select>
+          
+          <select
+            value={filters.agentId}
+            onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Agents</option>
+            {users.map(user => (
+              <option key={user._id} value={user._id}>{user.name}</option>
+            ))}
+          </select>
+          
+          <select
+            value={filters.sourceId}
+            onChange={(e) => setFilters(prev => ({ ...prev, sourceId: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Sources</option>
+            {sources.map(source => (
+              <option key={source._id} value={source._id}>{source.name}</option>
+            ))}
+          </select>
+          
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Start Date"
+          />
+          
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="End Date"
+          />
+        </div>
+        <div className="mt-4">
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Total Leads All</p>
+            <p className="text-2xl font-bold text-blue-600">{stats.totalLeads}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Leads Month to Date</p>
+            <p className="text-2xl font-bold text-green-600">{stats.leadsMTD}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Leads Today</p>
+            <p className="text-2xl font-bold text-indigo-600">{stats.leadsToday}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Total Calls All</p>
+            <p className="text-2xl font-bold text-purple-600">{stats.totalCalls}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Calls Month to Date</p>
+            <p className="text-2xl font-bold text-orange-600">{stats.callsMTD}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Calls Today</p>
+            <p className="text-2xl font-bold text-yellow-600">{stats.callsToday}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Total Qualified All</p>
+            <p className="text-2xl font-bold text-emerald-600">{stats.totalQualified}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Qualified Month to Date</p>
+            <p className="text-2xl font-bold text-teal-600">{stats.qualifiedMTD}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Qualified Today</p>
+            <p className="text-2xl font-bold text-cyan-600">{stats.qualifiedToday}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Total Lost All</p>
+            <p className="text-2xl font-bold text-red-600">{stats.totalLost}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Lost Month to Date</p>
+            <p className="text-2xl font-bold text-pink-600">{stats.lostMTD}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Lost Today</p>
+            <p className="text-2xl font-bold text-rose-600">{stats.lostToday}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Total Won All</p>
+            <p className="text-2xl font-bold text-green-600">{stats.totalWon}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Won Month to Date</p>
+            <p className="text-2xl font-bold text-lime-600">{stats.wonMTD}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Won Today</p>
+            <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Leads Each Day</h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: stats.dailyLeads.map(item => 
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Leads',
+                  data: stats.dailyLeads.map(item => item.count),
+                  borderColor: 'rgb(59, 130, 246)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  tension: 0.4,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Calls Each Day</h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: stats.dailyCalls.map(item => 
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Calls',
+                  data: stats.dailyCalls.map(item => item.count),
+                  borderColor: 'rgb(16, 185, 129)',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  tension: 0.4,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Qualified Each Day</h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: stats.dailyQualified.map(item => 
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Qualified',
+                  data: stats.dailyQualified.map(item => item.count),
+                  borderColor: 'rgb(34, 197, 94)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  tension: 0.4,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Lost Each Day</h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: stats.dailyLost.map(item => 
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Lost',
+                  data: stats.dailyLost.map(item => item.count),
+                  borderColor: 'rgb(239, 68, 68)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  tension: 0.4,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
+          <div className="h-64">
+            <Line
+              data={{
+                labels: stats.dailyWon.map(item => 
+                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ),
+                datasets: [{
+                  label: 'Won',
+                  data: stats.dailyWon.map(item => item.count),
+                  borderColor: 'rgb(168, 85, 247)',
+                  backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                  tension: 0.4,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Leads</h3>
+          <div className="space-y-2">
+            {stats.sourceLeads.map((item, index) => (
+              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <span className="text-sm font-medium">{item._id}</span>
+                <span className="text-sm font-bold text-blue-600">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Qualified Leads</h3>
+          <div className="space-y-2">
+            {stats.sourceQualified.map((item, index) => (
+              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <span className="text-sm font-medium">{item._id}</span>
+                <span className="text-sm font-bold text-green-600">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
+          <div className="space-y-2">
+            {stats.sourceWon.map((item, index) => (
+              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <span className="text-sm font-medium">{item._id}</span>
+                <span className="text-sm font-bold text-purple-600">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  );
+}

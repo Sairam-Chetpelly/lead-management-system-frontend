@@ -215,6 +215,17 @@ export const authAPI = {
     api.post(API_ENDPOINTS.LEADS_ASSIGN(id), data),
   getAdValues: (field: 'adname' | 'adset' | 'campaign') => 
     api.get(API_ENDPOINTS.LEADS_AD_VALUES(field)),
+  
+  // Role-specific dashboards
+  getAdminDashboard: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.DASHBOARD_ADMIN}${queryString ? `?${queryString}` : ''}`);
+  },
+  getPresalesDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_PRESALES),
+  getSalesDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_SALES),
+  getMarketingDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_MARKETING),
+  getAdminUsers: (type: string) => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_USERS(type)),
+  getAdminSources: () => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_SOURCES),
 };
 
 export default api;
