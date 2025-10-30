@@ -44,11 +44,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     totalQualified: 0, qualifiedMTD: 0, qualifiedToday: 0,
     totalLost: 0, lostMTD: 0, lostToday: 0,
     totalWon: 0, wonMTD: 0, wonToday: 0,
+    siteVisits: 0, centerVisits: 0, virtualMeetings: 0,
     dailyLeads: [] as any[],
     dailyCalls: [] as any[],
     dailyQualified: [] as any[],
     dailyLost: [] as any[],
     dailyWon: [] as any[],
+    dailySiteVisits: [] as any[],
+    dailyCenterVisits: [] as any[],
+    dailyVirtualMeetings: [] as any[],
 
     sourceLeads: [] as any[],
     sourceQualified: [] as any[],
@@ -80,6 +84,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const fetchStats = async () => {
     try {
+      setLoading(true);
       const params: any = {};
       if (filters.userType) params.userType = filters.userType;
       if (filters.agentId) params.agentId = filters.agentId;
@@ -99,7 +104,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const fetchUsers = async () => {
     try {
-      const userType = filters.userType || 'all';
+      const userType = filters.userType || 'all-users';
       const response = await authAPI.getAdminUsers(userType);
       setUsers(response.data);
     } catch (error) {
@@ -118,6 +123,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const clearFilters = () => {
     setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '' });
+    setUsers([]);
   };
 
   if (loading) {
@@ -135,7 +141,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+          {loading && (
+            <div className="flex items-center text-sm text-gray-500">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+              Loading...
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <select
             value={filters.userType}
@@ -147,16 +161,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <option value="presales">Presales</option>
           </select>
           
-          <select
-            value={filters.agentId}
-            onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Agents</option>
-            {users.map(user => (
-              <option key={user._id} value={user._id}>{user.name}</option>
-            ))}
-          </select>
+          {filters.userType && (
+            <select
+              value={filters.agentId}
+              onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Agents</option>
+              {users.map(user => (
+                <option key={user._id} value={user._id}>{user.name}</option>
+              ))}
+            </select>
+          )}
           
           <select
             value={filters.sourceId}
@@ -196,7 +212,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-center">
             <p className="text-xs font-medium text-gray-600">Total Leads All</p>
@@ -287,6 +303,24 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
           </div>
         </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Site Visits</p>
+            <p className="text-2xl font-bold text-cyan-600">{stats.siteVisits}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Center Visits</p>
+            <p className="text-2xl font-bold text-pink-600">{stats.centerVisits}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-center">
+            <p className="text-xs font-medium text-gray-600">Virtual Meetings</p>
+            <p className="text-2xl font-bold text-rose-600">{stats.virtualMeetings}</p>
+          </div>
+        </div>
       </div>
 
       {/* Charts */}
@@ -294,169 +328,311 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Leads Each Day</h3>
           <div className="h-64">
-            <Line
-              data={{
-                labels: stats.dailyLeads.map(item => 
-                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                ),
-                datasets: [{
-                  label: 'Leads',
-                  data: stats.dailyLeads.map(item => item.count),
-                  borderColor: 'rgb(59, 130, 246)',
-                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                  tension: 0.4,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-              }}
-            />
+            {stats.dailyLeads && stats.dailyLeads.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyLeads.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Leads',
+                    data: stats.dailyLeads.map(item => item.count),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Calls Each Day</h3>
           <div className="h-64">
-            <Line
-              data={{
-                labels: stats.dailyCalls.map(item => 
-                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                ),
-                datasets: [{
-                  label: 'Calls',
-                  data: stats.dailyCalls.map(item => item.count),
-                  borderColor: 'rgb(16, 185, 129)',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  tension: 0.4,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-              }}
-            />
+            {stats.dailyCalls && stats.dailyCalls.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyCalls.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Calls',
+                    data: stats.dailyCalls.map(item => item.count),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Qualified Each Day</h3>
           <div className="h-64">
-            <Line
-              data={{
-                labels: stats.dailyQualified.map(item => 
-                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                ),
-                datasets: [{
-                  label: 'Qualified',
-                  data: stats.dailyQualified.map(item => item.count),
-                  borderColor: 'rgb(34, 197, 94)',
-                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  tension: 0.4,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-              }}
-            />
+            {stats.dailyQualified && stats.dailyQualified.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyQualified.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Qualified',
+                    data: stats.dailyQualified.map(item => item.count),
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Lost Each Day</h3>
           <div className="h-64">
-            <Line
-              data={{
-                labels: stats.dailyLost.map(item => 
-                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                ),
-                datasets: [{
-                  label: 'Lost',
-                  data: stats.dailyLost.map(item => item.count),
-                  borderColor: 'rgb(239, 68, 68)',
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  tension: 0.4,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-              }}
-            />
+            {stats.dailyLost && stats.dailyLost.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyLost.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Lost',
+                    data: stats.dailyLost.map(item => item.count),
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
           <div className="h-64">
-            <Line
-              data={{
-                labels: stats.dailyWon.map(item => 
-                  new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                ),
-                datasets: [{
-                  label: 'Won',
-                  data: stats.dailyWon.map(item => item.count),
-                  borderColor: 'rgb(168, 85, 247)',
-                  backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                  tension: 0.4,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-              }}
-            />
+            {stats.dailyWon && stats.dailyWon.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyWon.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Won',
+                    data: stats.dailyWon.map(item => item.count),
+                    borderColor: 'rgb(168, 85, 247)',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Visits Each Day</h3>
+          <div className="h-64">
+            {stats.dailySiteVisits && stats.dailySiteVisits.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailySiteVisits.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Site Visits',
+                    data: stats.dailySiteVisits.map(item => item.count),
+                    borderColor: 'rgb(6, 182, 212)',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Visits Each Day</h3>
+          <div className="h-64">
+            {stats.dailyCenterVisits && stats.dailyCenterVisits.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyCenterVisits.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Center Visits',
+                    data: stats.dailyCenterVisits.map(item => item.count),
+                    borderColor: 'rgb(236, 72, 153)',
+                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Virtual Meetings Each Day</h3>
+          <div className="h-64">
+            {stats.dailyVirtualMeetings && stats.dailyVirtualMeetings.length > 0 ? (
+              <Line
+                data={{
+                  labels: stats.dailyVirtualMeetings.map(item => 
+                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  ),
+                  datasets: [{
+                    label: 'Virtual Meetings',
+                    data: stats.dailyVirtualMeetings.map(item => item.count),
+                    borderColor: 'rgb(244, 63, 94)',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    tension: 0.4,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No data available
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Leads</h3>
           <div className="space-y-2">
-            {stats.sourceLeads.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="text-sm font-medium">{item._id}</span>
-                <span className="text-sm font-bold text-blue-600">{item.count}</span>
+            {stats.sourceLeads && stats.sourceLeads.length > 0 ? (
+              stats.sourceLeads.map((item, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="text-sm font-medium">{item._id}</span>
+                  <span className="text-sm font-bold text-blue-600">{item.count}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No data available
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Qualified Leads</h3>
           <div className="space-y-2">
-            {stats.sourceQualified.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="text-sm font-medium">{item._id}</span>
-                <span className="text-sm font-bold text-green-600">{item.count}</span>
+            {stats.sourceQualified && stats.sourceQualified.length > 0 ? (
+              stats.sourceQualified.map((item, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="text-sm font-medium">{item._id}</span>
+                  <span className="text-sm font-bold text-green-600">{item.count}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No data available
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
           <div className="space-y-2">
-            {stats.sourceWon.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="text-sm font-medium">{item._id}</span>
-                <span className="text-sm font-bold text-purple-600">{item.count}</span>
+            {stats.sourceWon && stats.sourceWon.length > 0 ? (
+              stats.sourceWon.map((item, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="text-sm font-medium">{item._id}</span>
+                  <span className="text-sm font-bold text-purple-600">{item.count}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No data available
               </div>
-            ))}
+            )}
           </div>
         </div>
-
 
       </div>
     </div>
