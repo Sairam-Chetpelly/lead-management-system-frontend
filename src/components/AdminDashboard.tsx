@@ -200,14 +200,14 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="End Date"
           />
-        </div>
-        <div className="mt-4">
           <button
             onClick={clearFilters}
             className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
           >
             Clear Filters
           </button>
+        </div>
+        <div className="mt-4">
         </div>
       </div>
 

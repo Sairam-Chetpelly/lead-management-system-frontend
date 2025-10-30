@@ -14,7 +14,9 @@ import {
   Building,
   ListCollapse,
   BarChart3,
-  UserPlus
+  UserPlus,
+  Phone,
+  FileText
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -48,7 +50,10 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       '/statuses': 'statuses',
       '/lead-sources': 'lead-sources',
       '/project-house-types': 'project-house-types',
-      '/leads': 'leads'
+      '/leads': 'leads',
+      '/call-logs': 'call-logs',
+      '/activity-logs': 'activity-logs',
+      '/lead-activities': 'lead-activities'
     };
     
     const section = pathToSection[currentPath] || activeSection;
@@ -65,7 +70,10 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       'statuses': 'settings',
       'lead-sources': 'settings',
       'project-house-types': 'settings',
-      'leads': 'leads'
+      'leads': 'leads',
+      'call-logs': 'activities',
+      'activity-logs': 'activities',
+      'lead-activities': 'activities'
     };
     
     const parentSection = sectionToParent[section];
@@ -88,7 +96,19 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         id: 'leads',
         name: 'Leads Management',
         icon: UserPlus
-      }
+      },
+      // {
+      //   id: 'activities',
+      //   name: 'Activities',
+      //   icon: Activity,
+      //   children: userRole === 'admin' ? [
+      //     { id: 'call-logs', name: 'Call Logs', icon: Phone },
+      //     { id: 'activity-logs', name: 'Activity Logs', icon: FileText },
+      //     { id: 'lead-activities', name: 'Lead Activities', icon: Activity }
+      //   ] : [
+      //     { id: 'call-logs', name: 'Call Logs', icon: Phone }
+      //   ]
+      // }
     ];
     
 

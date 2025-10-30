@@ -226,6 +226,24 @@ export const authAPI = {
   getMarketingDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_MARKETING),
   getAdminUsers: (type: string) => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_USERS(type)),
   getAdminSources: () => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_SOURCES),
+  
+  // Call Logs
+  getCallLogs: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`/api/call-logs${queryString ? `?${queryString}` : ''}`);
+  },
+  
+  // Activity Logs
+  getActivityLogs: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`/api/activity-logs${queryString ? `?${queryString}` : ''}`);
+  },
+  
+  // Lead Activities
+  getLeadActivities: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`/api/lead-activities${queryString ? `?${queryString}` : ''}`);
+  },
 };
 
 export default api;

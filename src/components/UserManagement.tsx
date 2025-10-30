@@ -11,6 +11,9 @@ import LeadSourcesTable from './admin/LeadSourcesTable';
 import ProjectHouseTypesTable from './admin/ProjectHouseTypesTable';
 import Dashboard from './Dashboard';
 import LeadsManagement from './LeadsManagement';
+import CallLogsTable from './admin/CallLogsTable';
+import ActivityLogsTable from './admin/ActivityLogsTable';
+import LeadActivitiesTable from './admin/LeadActivitiesTable';
 
 interface UserManagementProps {
   user: any;
@@ -39,7 +42,10 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       statuses: 'Statuses',
       'lead-sources': 'Lead Sources',
       'project-house-types': 'Project & House Types',
-      'leads': 'Leads Management'
+      'leads': 'Leads Management',
+      'call-logs': 'Call Logs',
+      'activity-logs': 'Activity Logs',
+      'lead-activities': 'Lead Activities'
     };
     return titles[activeSection as keyof typeof titles] || 'Users';
   };
@@ -69,6 +75,12 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         return <ProjectHouseTypesTable />;
       case 'leads':
         return <LeadsManagement user={user} />;
+      case 'call-logs':
+        return <CallLogsTable />;
+      case 'activity-logs':
+        return <ActivityLogsTable />;
+      case 'lead-activities':
+        return <LeadActivitiesTable />;
       default:
         return <Dashboard user={user} />;
     }
