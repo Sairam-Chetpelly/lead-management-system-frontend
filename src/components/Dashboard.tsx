@@ -103,9 +103,10 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const userRole = getCurrentUserRole();
   const isAdmin = userRole === 'admin';
+  const isMarketing = userRole === 'marketing';
 
-  // Show AdminDashboard for admin users
-  if (isAdmin) {
+  // Show AdminDashboard for admin and marketing users
+  if (isAdmin || isMarketing) {
     return <AdminDashboard user={user} />;
   }
 

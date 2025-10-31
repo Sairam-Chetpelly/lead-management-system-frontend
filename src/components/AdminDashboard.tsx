@@ -37,6 +37,20 @@ interface DailyTrend {
   won: number;
 }
 
+interface QualificationRate {
+  date: string;
+  rate: number;
+  allocated: number;
+  qualified: number;
+}
+
+interface CallsPerLead {
+  date: string;
+  ratio: number;
+  calls: number;
+  allocated: number;
+}
+
 export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [stats, setStats] = useState({
     totalLeads: 0, leadsMTD: 0, leadsToday: 0,
@@ -53,6 +67,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     dailySiteVisits: [] as any[],
     dailyCenterVisits: [] as any[],
     dailyVirtualMeetings: [] as any[],
+    dailyQualificationRate: [] as any[],
+    dailyCallsPerLead: [] as any[],
 
     sourceLeads: [] as any[],
     sourceQualified: [] as any[],
@@ -135,7 +151,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   return (
     <div className="p-6 space-y-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        {/* <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1> */}
         <p className="text-gray-600">Welcome back, {user.name}</p>
       </div>
 
@@ -633,6 +649,105 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
         </div>
+
+        {/* Agent-specific charts - only show when agent filter is applied */}
+        {filters.agentId && filters.userType && (
+          <>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Qualification Rate (%)</h3>
+              <div className="h-64">
+                {stats.dailyQualificationRate && stats.dailyQualificationRate.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyQualificationRate.map(item => 
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Qualification Rate (%)',
+                        data: stats.dailyQualificationRate.map(item => item.rate),
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            afterLabel: function(context: any) {
+                              const dataPoint = stats.dailyQualificationRate[context.dataIndex];
+                              return [`Qualified: ${dataPoint.qualified}`, `Allocated: ${dataPoint.allocated}`];
+                            }
+                          }
+                        }
+                      },
+                      scales: { 
+                        y: { 
+                          beginAtZero: true,
+                          max: 100,
+                          ticks: {
+                            callback: function(value) {
+                              return value + '%';
+                            }
+                          }
+                        } 
+                      },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls Per Lead</h3>
+              <div className="h-64">
+                {stats.dailyCallsPerLead && stats.dailyCallsPerLead.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyCallsPerLead.map(item => 
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Calls Per Lead',
+                        data: stats.dailyCallsPerLead.map(item => item.ratio),
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            afterLabel: function(context: any) {
+                              const dataPoint = stats.dailyCallsPerLead[context.dataIndex];
+                              return [`Calls: ${dataPoint.calls}`, `Allocated: ${dataPoint.allocated}`];
+                            }
+                          }
+                        }
+                      },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
     </div>
