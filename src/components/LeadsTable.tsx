@@ -202,15 +202,29 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   // Helper function to get assignment status
   const getAssignmentStatus = (lead: Lead) => {
+    const leadStatus = lead.leadStatusId?.slug;
+    
+    // For won/lost leads, show unassigned
+    if (leadStatus === 'won' || leadStatus === 'lost') {
+      return { text: 'UNASSIGNED', color: 'bg-gray-100 text-gray-800' };
+    }
+    
+    // For qualified leads, show sales user
+    if (leadStatus === 'qualified' && lead.salesUserId) {
+      return { text: 'SALES', color: 'bg-purple-100 text-purple-800', name: lead.salesUserId.name };
+    }
+    
+    // For lead status, show presales user
+    if (leadStatus === 'lead' && lead.presalesUserId) {
+      return { text: 'PRE', color: 'bg-blue-100 text-blue-800', name: lead.presalesUserId.name };
+    }
+    
+    // Fallback: if no specific assignment found
     if (!lead.presalesUserId && !lead.salesUserId) {
       return { text: 'UNASSIGNED', color: 'bg-red-100 text-red-800' };
     }
-    if (lead.presalesUserId) {
-      return { text: 'PRE', color: 'bg-blue-100 text-blue-800', name: lead.presalesUserId.name };
-    }
-    if (lead.salesUserId) {
-      return { text: 'SALES', color: 'bg-purple-100 text-purple-800', name: lead.salesUserId.name };
-    }
+    
+    // Default fallback
     return { text: 'N/A', color: 'bg-gray-100 text-gray-800' };
   };
 
