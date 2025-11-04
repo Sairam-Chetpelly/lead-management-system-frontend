@@ -240,7 +240,7 @@ export const authAPI = {
   },
   
   // Lead Activities
-  getLeadActivities: (params: any = {}) => {
+  getAllLeadActivities: (params: any = {}) => {
     const queryString = buildQueryString(params);
     return api.get(`/api/lead-activities${queryString ? `?${queryString}` : ''}`);
   },

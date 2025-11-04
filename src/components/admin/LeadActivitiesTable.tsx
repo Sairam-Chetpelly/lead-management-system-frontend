@@ -84,7 +84,7 @@ export default function LeadActivitiesTable() {
       if (debouncedFilters.userId) params.userId = debouncedFilters.userId;
       if (debouncedFilters.search) params.search = debouncedFilters.search;
 
-      const response = await authAPI.getLeadActivities(params);
+      const response = await authAPI.getAllLeadActivities(params);
       if (response.data.leadActivities) {
         setLeadActivities(response.data.leadActivities);
         if (response.data.pagination) {
