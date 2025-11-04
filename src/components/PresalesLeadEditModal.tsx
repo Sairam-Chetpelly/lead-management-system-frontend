@@ -30,6 +30,7 @@ interface FormData {
   cifDate: string;
   meetingArrangedDate: string;
   comment: string;
+  cpUserName: string;
 }
 
 interface DropdownItem {
@@ -84,7 +85,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     leadValue: '',
     cifDate: '',
     meetingArrangedDate: '',
-    comment: ''
+    comment: '',
+    cpUserName: ''
   });
 
   const [dropdownData, setDropdownData] = useState<DropdownData>({
@@ -127,7 +129,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         leadValue: lead.leadValue || '',
         cifDate: lead.cifDate ? lead.cifDate : '',
         meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
-        comment: ''
+        comment: '',
+        cpUserName: lead.cpUserName || ''
       });
     } catch (error) {
       console.error('Error fetching lead:', error);
@@ -270,7 +273,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       leadValue: '',
       cifDate: '',
       meetingArrangedDate: '',
-      comment: ''
+      comment: '',
+      cpUserName: ''
     });
     setFiles([]);
     onClose();
@@ -338,6 +342,25 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 ))}
               </select>
             </div>
+            
+            {/* CP User Name - Show only when CP source is selected */}
+            {(() => {
+              const selectedSource = dropdownData.leadSources.find(source => source._id === formData.sourceId);
+              const isCpSource = selectedSource && (selectedSource.slug === 'cp' || selectedSource.name.toLowerCase().includes('cp'));
+              
+              return isCpSource ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CP User Name</label>
+                  <input
+                    type="text"
+                    value={formData.cpUserName}
+                    onChange={(e) => handleInputChange('cpUserName', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter CP user name"
+                  />
+                </div>
+              ) : null;
+            })()}
           </div>
         </div>
 

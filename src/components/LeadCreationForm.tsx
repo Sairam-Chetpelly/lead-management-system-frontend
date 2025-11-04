@@ -29,12 +29,13 @@ interface FormData {
   projectTypeId: string;
   houseTypeId: string;
   leadValue: string;
+  cpUserName: string;
 }
 
 interface DropdownData {
   centres: Array<{ _id: string; name: string }>;
   languages: Array<{ _id: string; name: string }>;
-  leadSources: Array<{ _id: string; name: string }>;
+  leadSources: Array<{ _id: string; name: string; slug?: string }>;
   projectTypes: Array<{ _id: string; name: string }>;
   houseTypes: Array<{ _id: string; name: string }>;
   leadValues: Array<{ value: string; label: string }>;
@@ -62,6 +63,7 @@ export default function LeadCreationForm({
     projectTypeId: "",
     houseTypeId: "",
     leadValue: "",
+    cpUserName: "",
   });
 
   const [dropdownData, setDropdownData] = useState<DropdownData>({
@@ -136,6 +138,7 @@ export default function LeadCreationForm({
         projectTypeId: "",
         houseTypeId: "",
         leadValue: "",
+        cpUserName: "",
       });
 
       // Call success callback
@@ -243,6 +246,28 @@ export default function LeadCreationForm({
             ))}
           </select>
         </div>
+
+        {/* CP User Name - Show only when CP source is selected */}
+        {(() => {
+          const selectedSource = dropdownData.leadSources.find(source => source._id === formData.leadSourceId);
+          const isCpSource = selectedSource && (selectedSource.slug === 'cp' || selectedSource.name.toLowerCase().includes('cp'));
+          
+          return isCpSource ? (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <User size={16} className="inline mr-2" />
+                CP User Name
+              </label>
+              <input
+                type="text"
+                value={formData.cpUserName}
+                onChange={(e) => handleInputChange("cpUserName", e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Enter CP user name"
+              />
+            </div>
+          ) : null;
+        })()}
 
         {/* Assignment Type */}
         <div>

@@ -72,6 +72,7 @@ interface Lead {
   adname?: string;
   adset?: string;
   campaign?: string;
+  cpUserName?: string;
   expectedPossessionDate?: string;
   siteVisit?: boolean;
   siteVisitDate?: string;
@@ -605,6 +606,12 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           <FieldDisplay label="Ad Name" value={lead?.adname} icon={Building} editing={false} field="adname" />
           <FieldDisplay label="Adset Name" value={lead?.adset} icon={Building} editing={false} field="adset" />
           <FieldDisplay label="Ad Campaign" value={lead?.campaign} icon={Building} editing={false} field="campaign" />
+          {(() => {
+            const isCpSource = lead.sourceId?.name && lead.sourceId.name.toLowerCase().includes('cp');
+            return isCpSource ? (
+              <FieldDisplay label="CP User Name" value={lead?.cpUserName} icon={User} editing={editing} field="cpUserName" />
+            ) : null;
+          })()}
         </div>
       </div>
 

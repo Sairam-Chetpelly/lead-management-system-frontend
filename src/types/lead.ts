@@ -65,6 +65,7 @@ export interface Lead {
   requirementWithinTwoMonths?: boolean;
   adset?: string;
   campaign?: string;
+  cpUserName?: string;
   files?: any;
   createdAt: string;
   updatedAt: string;
