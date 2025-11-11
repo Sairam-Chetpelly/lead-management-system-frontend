@@ -984,9 +984,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                         {lead.leadValue === 'high value' ? 'HIGH' : 'LOW'}
                       </span>
                     )}
-                    <div className="text-xs bg-gray-800 text-white px-2 py-1 rounded-lg" title={colorInfo.reason}>
+                    {/* <div className="text-xs bg-gray-800 text-white px-2 py-1 rounded-lg" title={colorInfo.reason}>
                       ℹ️
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
