@@ -72,7 +72,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
     sourceLeads: [] as any[],
     sourceQualified: [] as any[],
-    sourceWon: [] as any[]
+    sourceWon: [] as any[],
+    showFilters: true,
+    role: 'admin'
   });
   const [filters, setFilters] = useState({
     userType: '',
@@ -84,33 +86,47 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [users, setUsers] = useState<any[]>([]);
   const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-    fetchSources();
+    if (initialLoad) {
+      console.log('Initial load, fetching stats');
+      fetchStats();
+      fetchSources();
+      setInitialLoad(false);
+    } else {
+      console.log('Filters changed, fetching stats:', filters);
+      fetchStats();
+    }
   }, [filters]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [filters.userType]);
-
-  useEffect(() => {
-    fetchSources();
-  }, []);
+    if (!initialLoad && stats.showFilters !== false && filters.userType) {
+      fetchUsers();
+    }
+  }, [filters.userType, stats.showFilters, initialLoad]);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
+      console.log('Fetching stats with filters:', filters);
       const params: any = {};
       if (filters.userType) params.userType = filters.userType;
       if (filters.agentId) params.agentId = filters.agentId;
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
       if (filters.sourceId) params.sourceId = filters.sourceId;
-      
+
+      console.log('API params:', params);
       const response = await authAPI.getAdminDashboard(params);
       console.log('Admin Dashboard Response:', response.data);
       setStats(response.data);
+
+      // If user is presales agent, clear filters to prevent confusion (only if filters are not already empty)
+      if (response.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId)) {
+        console.log('Clearing filters for presales agent');
+        setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '' });
+      }
     } catch (error) {
       console.error('Error fetching admin dashboard:', error);
     } finally {
@@ -130,8 +146,10 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const fetchSources = async () => {
     try {
-      const response = await authAPI.getAdminSources();
-      setSources(response.data);
+      if (stats.showFilters !== false) {
+        const response = await authAPI.getAdminSources();
+        setSources(response.data);
+      }
     } catch (error) {
       console.error('Error fetching sources:', error);
     }
@@ -155,77 +173,79 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         <p className="text-gray-600">Welcome back, {user.name}</p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-          {loading && (
-            <div className="flex items-center text-sm text-gray-500">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-              Loading...
-            </div>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <select
-            value={filters.userType}
-            onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All User Types</option>
-            <option value="sales">Sales</option>
-            <option value="presales">Presales</option>
-          </select>
-          
-          {filters.userType && (
+      {/* Filters - Only show for admin users */}
+      {stats.showFilters !== false && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+            {loading && (
+              <div className="flex items-center text-sm text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                Loading...
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <select
-              value={filters.agentId}
-              onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
+              value={filters.userType}
+              onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Agents</option>
-              {users.map(user => (
-                <option key={user._id} value={user._id}>{user.name}</option>
+              <option value="">All User Types</option>
+              <option value="sales">Sales</option>
+              <option value="presales">Presales</option>
+            </select>
+
+            {filters.userType && (
+              <select
+                value={filters.agentId}
+                onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Agents</option>
+                {users.map(user => (
+                  <option key={user._id} value={user._id}>{user.name}</option>
+                ))}
+              </select>
+            )}
+
+            <select
+              value={filters.sourceId}
+              onChange={(e) => setFilters(prev => ({ ...prev, sourceId: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Sources</option>
+              {sources.map(source => (
+                <option key={source._id} value={source._id}>{source.name}</option>
               ))}
             </select>
-          )}
-          
-          <select
-            value={filters.sourceId}
-            onChange={(e) => setFilters(prev => ({ ...prev, sourceId: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Sources</option>
-            {sources.map(source => (
-              <option key={source._id} value={source._id}>{source.name}</option>
-            ))}
-          </select>
-          
-          <input
-            type="date"
-            value={filters.startDate}
-            onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Start Date"
-          />
-          
-          <input
-            type="date"
-            value={filters.endDate}
-            onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="End Date"
-          />
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          >
-            Clear Filters
-          </button>
+
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Start Date"
+            />
+
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="End Date"
+            />
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Clear Filters
+            </button>
+          </div>
+          <div className="mt-4">
+          </div>
         </div>
-        <div className="mt-4">
-        </div>
-      </div>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -283,12 +303,14 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <p className="text-2xl font-bold text-cyan-600">{stats.qualifiedToday}</p>
           </div>
         </div>
+
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-center">
             <p className="text-xs font-medium text-gray-600">Total Lost All</p>
             <p className="text-2xl font-bold text-red-600">{stats.totalLost}</p>
           </div>
         </div>
+
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-center">
             <p className="text-xs font-medium text-gray-600">Lost Month to Date</p>
@@ -301,42 +323,46 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <p className="text-2xl font-bold text-rose-600">{stats.lostToday}</p>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Total Won All</p>
-            <p className="text-2xl font-bold text-green-600">{stats.totalWon}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Won Month to Date</p>
-            <p className="text-2xl font-bold text-lime-600">{stats.wonMTD}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Won Today</p>
-            <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Site Visits</p>
-            <p className="text-2xl font-bold text-cyan-600">{stats.siteVisits}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Center Visits</p>
-            <p className="text-2xl font-bold text-pink-600">{stats.centerVisits}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-center">
-            <p className="text-xs font-medium text-gray-600">Virtual Meetings</p>
-            <p className="text-2xl font-bold text-rose-600">{stats.virtualMeetings}</p>
-          </div>
-        </div>
+        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
+          <>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Total Won All</p>
+                <p className="text-2xl font-bold text-green-600">{stats.totalWon}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Won Month to Date</p>
+                <p className="text-2xl font-bold text-lime-600">{stats.wonMTD}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Won Today</p>
+                <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Site Visits</p>
+                <p className="text-2xl font-bold text-cyan-600">{stats.siteVisits}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Center Visits</p>
+                <p className="text-2xl font-bold text-pink-600">{stats.centerVisits}</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600">Virtual Meetings</p>
+                <p className="text-2xl font-bold text-rose-600">{stats.virtualMeetings}</p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Charts */}
@@ -347,7 +373,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             {stats.dailyLeads && stats.dailyLeads.length > 0 ? (
               <Line
                 data={{
-                  labels: stats.dailyLeads.map(item => 
+                  labels: stats.dailyLeads.map(item =>
                     new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   ),
                   datasets: [{
@@ -379,7 +405,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             {stats.dailyCalls && stats.dailyCalls.length > 0 ? (
               <Line
                 data={{
-                  labels: stats.dailyCalls.map(item => 
+                  labels: stats.dailyCalls.map(item =>
                     new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   ),
                   datasets: [{
@@ -411,7 +437,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             {stats.dailyQualified && stats.dailyQualified.length > 0 ? (
               <Line
                 data={{
-                  labels: stats.dailyQualified.map(item => 
+                  labels: stats.dailyQualified.map(item =>
                     new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   ),
                   datasets: [{
@@ -443,7 +469,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             {stats.dailyLost && stats.dailyLost.length > 0 ? (
               <Line
                 data={{
-                  labels: stats.dailyLost.map(item => 
+                  labels: stats.dailyLost.map(item =>
                     new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   ),
                   datasets: [{
@@ -468,134 +494,236 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
-          <div className="h-64">
-            {stats.dailyWon && stats.dailyWon.length > 0 ? (
-              <Line
-                data={{
-                  labels: stats.dailyWon.map(item => 
-                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  ),
-                  datasets: [{
-                    label: 'Won',
-                    data: stats.dailyWon.map(item => item.count),
-                    borderColor: 'rgb(168, 85, 247)',
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                    tension: 0.4,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No data available
+        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
+          <>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
+              <div className="h-64">
+                {stats.dailyWon && stats.dailyWon.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyWon.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Won',
+                        data: stats.dailyWon.map(item => item.count),
+                        borderColor: 'rgb(168, 85, 247)',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Visits Each Day</h3>
-          <div className="h-64">
-            {stats.dailySiteVisits && stats.dailySiteVisits.length > 0 ? (
-              <Line
-                data={{
-                  labels: stats.dailySiteVisits.map(item => 
-                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  ),
-                  datasets: [{
-                    label: 'Site Visits',
-                    data: stats.dailySiteVisits.map(item => item.count),
-                    borderColor: 'rgb(6, 182, 212)',
-                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                    tension: 0.4,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No data available
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Visits Each Day</h3>
+              <div className="h-64">
+                {stats.dailySiteVisits && stats.dailySiteVisits.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailySiteVisits.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Site Visits',
+                        data: stats.dailySiteVisits.map(item => item.count),
+                        borderColor: 'rgb(6, 182, 212)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Visits Each Day</h3>
-          <div className="h-64">
-            {stats.dailyCenterVisits && stats.dailyCenterVisits.length > 0 ? (
-              <Line
-                data={{
-                  labels: stats.dailyCenterVisits.map(item => 
-                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  ),
-                  datasets: [{
-                    label: 'Center Visits',
-                    data: stats.dailyCenterVisits.map(item => item.count),
-                    borderColor: 'rgb(236, 72, 153)',
-                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
-                    tension: 0.4,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No data available
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Visits Each Day</h3>
+              <div className="h-64">
+                {stats.dailyCenterVisits && stats.dailyCenterVisits.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyCenterVisits.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Center Visits',
+                        data: stats.dailyCenterVisits.map(item => item.count),
+                        borderColor: 'rgb(236, 72, 153)',
+                        backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Virtual Meetings Each Day</h3>
-          <div className="h-64">
-            {stats.dailyVirtualMeetings && stats.dailyVirtualMeetings.length > 0 ? (
-              <Line
-                data={{
-                  labels: stats.dailyVirtualMeetings.map(item => 
-                    new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  ),
-                  datasets: [{
-                    label: 'Virtual Meetings',
-                    data: stats.dailyVirtualMeetings.map(item => item.count),
-                    borderColor: 'rgb(244, 63, 94)',
-                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                    tension: 0.4,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No data available
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Virtual Meetings Each Day</h3>
+              <div className="h-64">
+                {stats.dailyVirtualMeetings && stats.dailyVirtualMeetings.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyVirtualMeetings.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Virtual Meetings',
+                        data: stats.dailyVirtualMeetings.map(item => item.count),
+                        borderColor: 'rgb(244, 63, 94)',
+                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
+        {/* Agent-specific charts - show for presales agents or when agent filter is applied */}
+        {(stats.role === 'presales_agent' || (filters.agentId && filters.userType)) && (
+          <>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Qualification Rate (%)</h3>
+              <div className="h-64">
+                {stats.dailyQualificationRate && stats.dailyQualificationRate.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyQualificationRate.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Qualification Rate (%)',
+                        data: stats.dailyQualificationRate.map(item => item.rate),
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            afterLabel: function (context: any) {
+                              const dataPoint = stats.dailyQualificationRate[context.dataIndex];
+                              return [`Qualified: ${dataPoint.qualified}`, `Allocated: ${dataPoint.allocated}`];
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          max: 100,
+                          ticks: {
+                            callback: function (value) {
+                              return value + '%';
+                            }
+                          }
+                        }
+                      },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls Per Lead</h3>
+              <div className="h-64">
+                {stats.dailyCallsPerLead && stats.dailyCallsPerLead.length > 0 ? (
+                  <Line
+                    data={{
+                      labels: stats.dailyCallsPerLead.map(item =>
+                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [{
+                        label: 'Calls Per Lead',
+                        data: stats.dailyCallsPerLead.map(item => item.ratio),
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            afterLabel: function (context: any) {
+                              const dataPoint = stats.dailyCallsPerLead[context.dataIndex];
+                              return [`Calls: ${dataPoint.calls}`, `Allocated: ${dataPoint.allocated}`];
+                            }
+                          }
+                        }
+                      },
+                      scales: { y: { beginAtZero: true } },
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No data available
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Leads</h3>
           <div className="space-y-2">
@@ -631,125 +759,30 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
         </div>
+        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
-          <div className="space-y-2">
-            {stats.sourceWon && stats.sourceWon.length > 0 ? (
-              stats.sourceWon.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span className="text-sm font-medium">{item._id}</span>
-                  <span className="text-sm font-bold text-purple-600">{item.count}</span>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
+            <div className="space-y-2">
+              {stats.sourceWon && stats.sourceWon.length > 0 ? (
+                stats.sourceWon.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span className="text-sm font-medium">{item._id}</span>
+                    <span className="text-sm font-bold text-purple-600">{item.count}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  No data available
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No data available
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Agent-specific charts - only show when agent filter is applied */}
-        {filters.agentId && filters.userType && (
-          <>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Qualification Rate (%)</h3>
-              <div className="h-64">
-                {stats.dailyQualificationRate && stats.dailyQualificationRate.length > 0 ? (
-                  <Line
-                    data={{
-                      labels: stats.dailyQualificationRate.map(item => 
-                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      ),
-                      datasets: [{
-                        label: 'Qualification Rate (%)',
-                        data: stats.dailyQualificationRate.map(item => item.rate),
-                        borderColor: 'rgb(99, 102, 241)',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        tension: 0.4,
-                      }],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                          callbacks: {
-                            afterLabel: function(context: any) {
-                              const dataPoint = stats.dailyQualificationRate[context.dataIndex];
-                              return [`Qualified: ${dataPoint.qualified}`, `Allocated: ${dataPoint.allocated}`];
-                            }
-                          }
-                        }
-                      },
-                      scales: { 
-                        y: { 
-                          beginAtZero: true,
-                          max: 100,
-                          ticks: {
-                            callback: function(value) {
-                              return value + '%';
-                            }
-                          }
-                        } 
-                      },
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No data available
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Calls Per Lead</h3>
-              <div className="h-64">
-                {stats.dailyCallsPerLead && stats.dailyCallsPerLead.length > 0 ? (
-                  <Line
-                    data={{
-                      labels: stats.dailyCallsPerLead.map(item => 
-                        new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      ),
-                      datasets: [{
-                        label: 'Calls Per Lead',
-                        data: stats.dailyCallsPerLead.map(item => item.ratio),
-                        borderColor: 'rgb(245, 158, 11)',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        tension: 0.4,
-                      }],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                          callbacks: {
-                            afterLabel: function(context: any) {
-                              const dataPoint = stats.dailyCallsPerLead[context.dataIndex];
-                              return [`Calls: ${dataPoint.calls}`, `Allocated: ${dataPoint.allocated}`];
-                            }
-                          }
-                        }
-                      },
-                      scales: { y: { beginAtZero: true } },
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No data available
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
         )}
 
+
+
       </div>
-    </div>
+    </div >
   );
 }
