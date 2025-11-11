@@ -182,51 +182,31 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
   const getRowColor = (lead: Lead) => getRowColorAndReason(lead).color;
 
-  // Helper function to get short status display
-  const getShortStatus = (lead: Lead) => {
-    if (lead.leadStatusId?.slug === 'won') return { text: 'WON', color: 'bg-green-500 text-white' };
-    if (lead.leadStatusId?.slug === 'lost') return { text: 'LOST', color: 'bg-gray-500 text-white' };
-    if (lead.leadStatusId?.slug === 'qualified') {
-      if (lead.leadSubStatusId?.slug === 'hot') return { text: 'HOT', color: 'bg-red-500 text-white' };
-      if (lead.leadSubStatusId?.slug === 'warm') return { text: 'WARM', color: 'bg-yellow-500 text-white' };
-      if (lead.leadSubStatusId?.slug === 'cif') return { text: 'CIF', color: 'bg-purple-500 text-white' };
-      return { text: 'QUAL', color: 'bg-blue-500 text-white' };
+  // Helper function to get status display with both lead status and sub status
+  const getStatusDisplay = (lead: Lead) => {
+    const leadStatus = lead.leadStatusId?.name || 'New';
+    const leadSubStatus = lead.leadSubStatusId?.name || '';
+    
+    // Get color based on status
+    let color = 'bg-gray-400 text-white';
+    if (lead.leadStatusId?.slug === 'won') color = 'bg-green-500 text-white';
+    else if (lead.leadStatusId?.slug === 'lost') color = 'bg-gray-500 text-white';
+    else if (lead.leadStatusId?.slug === 'qualified') {
+      if (lead.leadSubStatusId?.slug === 'hot') color = 'bg-red-500 text-white';
+      else if (lead.leadSubStatusId?.slug === 'warm') color = 'bg-yellow-500 text-white';
+      else if (lead.leadSubStatusId?.slug === 'cif') color = 'bg-purple-500 text-white';
+      else color = 'bg-blue-500 text-white';
     }
-    if (lead.leadStatusId?.slug === 'lead') {
-      if (lead.leadSubStatusId?.slug === 'interested') return { text: 'INT', color: 'bg-teal-500 text-white' };
-      if (lead.leadSubStatusId?.slug === 'meeting-arranged') return { text: 'MEET', color: 'bg-indigo-500 text-white' };
-      return { text: 'LEAD', color: 'bg-indigo-400 text-white' };
+    else if (lead.leadStatusId?.slug === 'lead') {
+      if (lead.leadSubStatusId?.slug === 'interested') color = 'bg-teal-500 text-white';
+      else if (lead.leadSubStatusId?.slug === 'meeting-arranged') color = 'bg-indigo-500 text-white';
+      else color = 'bg-indigo-400 text-white';
     }
-    return { text: 'NEW', color: 'bg-gray-400 text-white' };
+    
+    return { leadStatus, leadSubStatus, color };
   };
 
-  // Helper function to get assignment status
-  const getAssignmentStatus = (lead: Lead) => {
-    const leadStatus = lead.leadStatusId?.slug;
-    
-    // For won/lost leads, show unassigned
-    if (leadStatus === 'won' || leadStatus === 'lost') {
-      return { text: 'UNASSIGNED', color: 'bg-gray-100 text-gray-800' };
-    }
-    
-    // For qualified leads, show sales user
-    if (leadStatus === 'qualified' && lead.salesUserId) {
-      return { text: 'SALES', color: 'bg-purple-100 text-purple-800', name: lead.salesUserId.name };
-    }
-    
-    // For lead status, show presales user
-    if (leadStatus === 'lead' && lead.presalesUserId) {
-      return { text: 'PRE', color: 'bg-blue-100 text-blue-800', name: lead.presalesUserId.name };
-    }
-    
-    // Fallback: if no specific assignment found
-    if (!lead.presalesUserId && !lead.salesUserId) {
-      return { text: 'UNASSIGNED', color: 'bg-red-100 text-red-800' };
-    }
-    
-    // Default fallback
-    return { text: 'N/A', color: 'bg-gray-100 text-gray-800' };
-  };
+
 
   useEffect(() => {
     fetchLeads();
@@ -761,7 +741,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         {/* Desktop Table */}
         <div className="hidden xl:flex flex-col flex-1 min-h-0">
           <div className="text-white" style={{ backgroundColor: '#0f172a' }}>
-            <div className="grid grid-cols-10 gap-3 px-4 py-4">
+            <div className={`grid ${(isAdmin || isMarketing) ? 'grid-cols-11' : 'grid-cols-10'} gap-3 px-4 py-4`}>
               <div className="col-span-2 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
                 if (sortBy === 'leadID') {
                   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -792,6 +772,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               }}>
                 Source {sortBy === 'sourceId' && (sortOrder === 'asc' ? '↑' : '↓')}
               </div>
+              {(!isSalesAgent && !isSalesManager && !isHodSales) && (
               <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
                 if (sortBy === 'presalesUserId') {
                   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -800,8 +781,21 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   setSortOrder('asc');
                 }
               }}>
-                Assigned {sortBy === 'presalesUserId' && (sortOrder === 'asc' ? '↑' : '↓')}
+                Presales {sortBy === 'presalesUserId' && (sortOrder === 'asc' ? '↑' : '↓')}
               </div>
+              )}
+              {(!isPreSalesAgent && !isPreSalesManager && !isPreSalesHod) && (
+              <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
+                if (sortBy === 'salesUserId') {
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy('salesUserId');
+                  setSortOrder('asc');
+                }
+              }}>
+                Sales {sortBy === 'salesUserId' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </div>
+              )}
               <div className="col-span-1 text-left font-semibold text-xs uppercase tracking-wider cursor-pointer hover:bg-white/10 rounded px-2 py-1" onClick={() => {
                 if (sortBy === 'leadValue') {
                   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -829,10 +823,9 @@ export default function LeadsTable({ user }: LeadsTableProps) {
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
               {leads.map((lead, index) => {
                 const colorInfo = getRowColorAndReason(lead);
-                const shortStatus = getShortStatus(lead);
-                const assignmentStatus = getAssignmentStatus(lead);
+                const statusDisplay = getStatusDisplay(lead);
                 return (
-                <div key={lead._id} className={`grid grid-cols-10 gap-3 px-4 py-3 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${colorInfo.color}`} title={colorInfo.reason}>
+                <div key={lead._id} className={`grid ${(isAdmin || isMarketing) ? 'grid-cols-11' : 'grid-cols-10'} gap-3 px-4 py-3 border-b border-slate-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${colorInfo.color}`} title={colorInfo.reason}>
                   <div className="col-span-2 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {lead.leadID.slice(-3)}
@@ -860,18 +853,47 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     </span>
                   </div>
 
+                  {(!isSalesAgent && !isSalesManager && !isHodSales) && (
                   <div className="col-span-1 flex items-center">
                     <div className="text-center">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${assignmentStatus.color}`}>
-                        {assignmentStatus.text}
-                      </span>
-                      {assignmentStatus.name && (
-                        <div className="text-xs text-gray-600 mt-1 truncate" title={assignmentStatus.name}>
-                          {assignmentStatus.name.split(' ')[0]}
-                        </div>
+                      {lead.presalesUserId ? (
+                        <>
+                          <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-800">
+                            PRE
+                          </span>
+                          <div className="text-xs text-gray-600 mt-1 truncate" title={lead.presalesUserId.name}>
+                            {lead.presalesUserId.name.split(' ')[0]}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-800">
+                          -
+                        </span>
                       )}
                     </div>
                   </div>
+                  )}
+
+                  {(!isPreSalesAgent && !isPreSalesManager && !isPreSalesHod) && (
+                  <div className="col-span-1 flex items-center">
+                    <div className="text-center">
+                      {lead.salesUserId ? (
+                        <>
+                          <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                            SALES
+                          </span>
+                          <div className="text-xs text-gray-600 mt-1 truncate" title={lead.salesUserId.name}>
+                            {lead.salesUserId.name.split(' ')[0]}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-800">
+                          -
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  )}
 
                   <div className="col-span-1 flex items-center">
                     {lead.leadValue ? (
@@ -886,10 +908,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                     )}
                   </div>
 
-                  <div className="col-span-1 flex items-center">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${shortStatus.color}`}>
-                      {shortStatus.text}
+                  <div className="col-span-1 flex flex-col items-start justify-center">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${statusDisplay.color} mb-1`}>
+                      {statusDisplay.leadStatus}
                     </span>
+                    {statusDisplay.leadSubStatus && (
+                      <span className="text-xs text-gray-600 font-medium">
+                        {statusDisplay.leadSubStatus}
+                      </span>
+                    )}
                   </div>
 
                   <div className="col-span-2 flex items-center space-x-1">
@@ -927,8 +954,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
           <div className={`space-y-4 transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
             {leads.map((lead) => {
               const colorInfo = getRowColorAndReason(lead);
-              const shortStatus = getShortStatus(lead);
-              const assignmentStatus = getAssignmentStatus(lead);
+              const statusDisplay = getStatusDisplay(lead);
               return (
               <div key={lead._id} className={`rounded-2xl p-4 shadow-lg border border-slate-100 ${colorInfo.color}`} title={colorInfo.reason}>
                 <div className="flex items-start justify-between mb-3">
@@ -941,10 +967,15 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                       <div className="text-sm text-slate-600">{lead.name || 'N/A'}</div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${shortStatus.color}`}>
-                      {shortStatus.text}
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${statusDisplay.color}`}>
+                      {statusDisplay.leadStatus}
                     </span>
+                    {statusDisplay.leadSubStatus && (
+                      <span className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700">
+                        {statusDisplay.leadSubStatus}
+                      </span>
+                    )}
                     {lead.leadValue && (
                       <span className={`px-2 py-1 rounded-lg text-xs font-bold ${lead.leadValue === 'high value' ? 'bg-red-500 text-white' :
                           lead.leadValue === 'low value' ? 'bg-yellow-500 text-white' :
@@ -964,15 +995,30 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                   <div><span className="font-medium">Phone:</span> {lead.contactNumber || 'N/A'}</div>
                   <div><span className="font-medium">Source:</span> {lead.sourceId?.name || 'N/A'}</div>
                   {lead.centreId && <div><span className="font-medium">Centre:</span> {lead.centreId.name}</div>}
+                  {(!isSalesAgent && !isSalesManager && !isHodSales) && (
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Assigned:</span>
-                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${assignmentStatus.color}`}>
-                      {assignmentStatus.text}
-                    </span>
-                    {assignmentStatus.name && (
-                      <span className="text-sm text-gray-600">{assignmentStatus.name}</span>
+                    <span className="font-medium">Presales:</span>
+                    {lead.presalesUserId ? (
+                      <span className="px-2 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-800">
+                        {lead.presalesUserId.name}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-500">Not assigned</span>
                     )}
                   </div>
+                  )}
+                  {(!isPreSalesAgent && !isPreSalesManager && !isPreSalesHod) && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Sales:</span>
+                    {lead.salesUserId ? (
+                      <span className="px-2 py-1 rounded-lg text-xs font-bold bg-purple-100 text-purple-800">
+                        {lead.salesUserId.name}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-500">Not assigned</span>
+                    )}
+                  </div>
+                  )}
                   <div className="text-gray-500">Created: {new Date(lead.createdAt).toLocaleDateString()}</div>
                 </div>
 
@@ -1056,13 +1102,36 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 <p className="text-sm text-gray-900">{viewLead.centreId.name}</p>
               </div>
             )}
+            {(isAdmin || isMarketing) ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
+                <p className="text-sm text-gray-900">
+                  {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
+                <p className="text-sm text-gray-900">
+                  {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
+                </p>
+              </div>
+            </div>
+            ) : (!isSalesAgent && !isSalesManager && !isHodSales) ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+              <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
               <p className="text-sm text-gray-900">
-                {viewLead.presalesUserId ? `Presales: ${viewLead.presalesUserId.name}` :
-                  viewLead.salesUserId ? `Sales: ${viewLead.salesUserId.name}` : 'Unassigned'}
+                {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
               </p>
             </div>
+            ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
+              <p className="text-sm text-gray-900">
+                {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
+              </p>
+            </div>
+            )}
             {viewLead.comment && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">Comment</label>
