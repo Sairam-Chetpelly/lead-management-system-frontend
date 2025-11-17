@@ -244,6 +244,10 @@ export const authAPI = {
     const queryString = buildQueryString(params);
     return api.get(`/api/lead-activities${queryString ? `?${queryString}` : ''}`);
   },
+  exportLeadActivities: (params: PaginationParams = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.LEAD_ACTIVITIES_EXPORT}${queryString ? `?${queryString}` : ''}`);
+  },
 };
 
 export default api;

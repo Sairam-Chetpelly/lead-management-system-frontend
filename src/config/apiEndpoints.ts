@@ -59,6 +59,7 @@ export const API_ENDPOINTS = {
   PROJECT_HOUSE_TYPES_BY_ID: (id: string) => `/api/project-house-types/${id}`,
   PROJECT_HOUSE_TYPES_ALL: '/api/project-house-types/all',
   PROJECT_HOUSE_TYPES_EXPORT: '/api/project-house-types/export',
+  LEAD_ACTIVITIES_EXPORT: '/api/lead-activities/export',
 } as const;
 
 export const buildQueryString = (params: Record<string, any>): string => {

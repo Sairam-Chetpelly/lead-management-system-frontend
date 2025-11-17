@@ -381,7 +381,10 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm text-gray-600">Assigned To</p>
                 <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                  {lead.presalesUserId?.name || lead.salesUserId?.name || 'Unassigned'}
+                  {lead.leadStatusId?.slug === 'lead' 
+                    ? (lead.presalesUserId?.name || 'Unassigned')
+                    : (lead.salesUserId?.name || 'Unassigned')
+                  }
                 </p>
               </div>
             </div>

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '@/lib/auth';
-import { Activity, Search, Filter, Mail, User } from 'lucide-react';
+import { Activity, Search, Filter, Mail, User, FileSpreadsheet } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import PaginationFooter from '../PaginationFooter';
 import ModernLoader from '../ModernLoader';
 import SearchableAgentDropdown from '../SearchableAgentDropdown';
+import { useToast } from '@/contexts/ToastContext';
 
 interface LeadActivity {
   _id: string;
@@ -54,6 +55,7 @@ interface LeadActivity {
 }
 
 export default function LeadActivitiesTable() {
+  const { showToast } = useToast();
   const [leadActivities, setLeadActivities] = useState<LeadActivity[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -66,6 +68,24 @@ export default function LeadActivitiesTable() {
   });
   const [users, setUsers] = useState<any[]>([]);
   const debouncedFilters = useDebounce(filters, 300);
+
+  // Get current user role
+  const getCurrentUserRole = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        return user.role;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getCurrentUserRole();
+  const isSalesAgent = userRole === 'sales_agent';
+  const isPreSalesAgent = userRole === 'presales_agent';
 
   useEffect(() => {
     fetchLeadActivities();
@@ -130,6 +150,27 @@ export default function LeadActivitiesTable() {
     handlePageChange(1);
   };
 
+  const exportLeadActivities = async () => {
+    try {
+      console.log('Exporting lead activities with filters:', debouncedFilters);
+      const response = await authAPI.exportLeadActivities(debouncedFilters);
+      console.log('Export response:', response);
+      console.log('Export response data:', response.data);
+
+      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+        showToast('No data to export', 'info');
+        return;
+      }
+
+      const { downloadCSV } = await import('@/lib/exportUtils');
+      downloadCSV(response.data, 'lead-activities.csv');
+      showToast('Lead activities exported successfully', 'success');
+    } catch (error: any) {
+      console.error('Export failed:', error);
+      showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
+    }
+  };
+
   const getAssignmentStatus = (activity: LeadActivity) => {
     if (activity.presalesUserId) {
       return { text: 'PRE', color: 'bg-blue-100 text-blue-800', name: activity.presalesUserId.name };
@@ -159,6 +200,20 @@ export default function LeadActivitiesTable() {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 min-h-full">
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={exportLeadActivities}
+            style={{ display: isSalesAgent || isPreSalesAgent ? 'none' : 'flex' }}
+            className="items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+          >
+            <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
+            <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
+          </button>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
         {/* Mobile Filter Button */}
