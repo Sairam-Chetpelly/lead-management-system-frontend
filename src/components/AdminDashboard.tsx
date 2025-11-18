@@ -186,27 +186,31 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <select
-              value={filters.userType}
-              onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All User Types</option>
-              <option value="sales">Sales</option>
-              <option value="presales">Presales</option>
-            </select>
+            {(stats.role !=='sales_agent') && (
+              <>
+                <select
+                  value={filters.userType}
+                  onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All User Types</option>
+                  <option value="sales">Sales</option>
+                  <option value="presales">Presales</option>
+                </select>
 
-            {filters.userType && (
-              <select
-                value={filters.agentId}
-                onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Agents</option>
-                {users.map(user => (
-                  <option key={user._id} value={user._id}>{user.name}</option>
-                ))}
-              </select>
+                {filters.userType && (
+                  <select
+                    value={filters.agentId}
+                    onChange={(e) => setFilters(prev => ({ ...prev, agentId: e.target.value }))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Agents</option>
+                    {users.map(user => (
+                      <option key={user._id} value={user._id}>{user.name}</option>
+                    ))}
+                  </select>
+                )}
+              </>
             )}
 
             <select
@@ -323,7 +327,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <p className="text-2xl font-bold text-rose-600">{stats.lostToday}</p>
           </div>
         </div>
-        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
+        {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
           <>
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-center">
@@ -494,7 +498,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
         </div>
-        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
+        {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
           <>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
@@ -627,7 +631,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </>
         )}
         {/* Agent-specific charts - show for presales agents or when agent filter is applied */}
-        {(stats.role === 'presales_agent' || (filters.agentId && filters.userType)) && (
+        {(['presales_agent', 'manager_presales', 'hod_presales'].includes(stats.role) || (filters.agentId && filters.userType == 'presales')) && (
           <>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Qualification Rate (%)</h3>
@@ -759,7 +763,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             )}
           </div>
         </div>
-        {(stats.role !== 'presales_agent' || (filters.agentId && filters.userType)) && (
+        {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
 
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
