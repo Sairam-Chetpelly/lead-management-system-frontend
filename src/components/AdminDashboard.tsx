@@ -81,24 +81,40 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     agentId: '',
     startDate: '',
     endDate: '',
-    sourceId: ''
+    sourceId: '',
+    centreId: ''
   });
   const [users, setUsers] = useState<any[]>([]);
   const [sources, setSources] = useState<any[]>([]);
+  const [centres, setCentres] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     if (initialLoad) {
       console.log('Initial load, fetching stats');
+
+      // Set default userType based on user role
+      let defaultUserType = '';
+      if (user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales') {
+        defaultUserType = 'sales';
+      } else if (user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales') {
+        defaultUserType = 'presales';
+      }
+
+      if (defaultUserType && !filters.userType) {
+        setFilters(prev => ({ ...prev, userType: defaultUserType }));
+      }
+
       fetchStats();
       fetchSources();
+      fetchCentres();
       setInitialLoad(false);
     } else {
       console.log('Filters changed, fetching stats:', filters);
       fetchStats();
     }
-  }, [filters]);
+  }, [filters, user.role]);
 
   useEffect(() => {
     if (!initialLoad && stats.showFilters !== false && filters.userType) {
@@ -116,6 +132,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
       if (filters.sourceId) params.sourceId = filters.sourceId;
+      if (filters.centreId) params.centreId = filters.centreId;
 
       console.log('API params:', params);
       const response = await authAPI.getAdminDashboard(params);
@@ -123,9 +140,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       setStats(response.data);
 
       // If user is presales agent, clear filters to prevent confusion (only if filters are not already empty)
-      if (response.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId)) {
+      if (response.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId || filters.centreId)) {
         console.log('Clearing filters for presales agent');
-        setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '' });
+        setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '', centreId: '' });
       }
     } catch (error) {
       console.error('Error fetching admin dashboard:', error);
@@ -155,9 +172,34 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     }
   };
 
+  const fetchCentres = async () => {
+    try {
+      if (stats.showFilters !== false) {
+        const response = await authAPI.get('/api/dashboard/admin/centres');
+        setCentres(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching centres:', error);
+    }
+  };
+
   const clearFilters = () => {
-    setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '' });
-    setUsers([]);
+    // Preserve userType for sales and presales users
+    let preservedUserType = '';
+    if (user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales') {
+      preservedUserType = 'sales';
+    } else if (user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales') {
+      preservedUserType = 'presales';
+    }
+    
+    setFilters({ userType: preservedUserType, agentId: '', startDate: '', endDate: '', sourceId: '', centreId: '' });
+    
+    // Refetch users if userType is preserved to maintain agent dropdown
+    if (preservedUserType) {
+      fetchUsers();
+    } else {
+      setUsers([]);
+    }
   };
 
   if (loading) {
@@ -185,13 +227,16 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {(stats.role !=='sales_agent') && (
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            {(stats.role !== 'sales_agent') && (
               <>
                 <select
                   value={filters.userType}
                   onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales' || user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales'}
+                  className={`px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales' || user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales'
+                      ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                 >
                   <option value="">All User Types</option>
                   <option value="sales">Sales</option>
@@ -239,6 +284,19 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="End Date"
             />
+
+            {user.role === 'hod_sales' && (
+              <select
+                value={filters.centreId}
+                onChange={(e) => setFilters(prev => ({ ...prev, centreId: e.target.value }))}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Centres</option>
+                {centres.map(centre => (
+                  <option key={centre._id} value={centre._id}>{centre.name}</option>
+                ))}
+              </select>
+            )}
             <button
               onClick={clearFilters}
               className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
@@ -328,44 +386,46 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </div>
         </div>
         {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
-          <>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Total Won All</p>
-                <p className="text-2xl font-bold text-green-600">{stats.totalWon}</p>
+          ((filters.agentId !=='all' && filters.userType !== 'presales')) && (
+            <>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Total Won All</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.totalWon}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Won Month to Date</p>
-                <p className="text-2xl font-bold text-lime-600">{stats.wonMTD}</p>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Won Month to Date</p>
+                  <p className="text-2xl font-bold text-lime-600">{stats.wonMTD}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Won Today</p>
-                <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Won Today</p>
+                  <p className="text-2xl font-bold text-amber-600">{stats.wonToday}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Site Visits</p>
-                <p className="text-2xl font-bold text-cyan-600">{stats.siteVisits}</p>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Site Visits</p>
+                  <p className="text-2xl font-bold text-cyan-600">{stats.siteVisits}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Center Visits</p>
-                <p className="text-2xl font-bold text-pink-600">{stats.centerVisits}</p>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Center Visits</p>
+                  <p className="text-2xl font-bold text-pink-600">{stats.centerVisits}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600">Virtual Meetings</p>
-                <p className="text-2xl font-bold text-rose-600">{stats.virtualMeetings}</p>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600">Virtual Meetings</p>
+                  <p className="text-2xl font-bold text-rose-600">{stats.virtualMeetings}</p>
+                </div>
               </div>
-            </div>
-          </>
+            </>
+          )
         )}
       </div>
 
@@ -499,6 +559,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </div>
         </div>
         {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
+          ((filters.agentId !=='all' && filters.userType !== 'presales')) && (
+
           <>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Won Each Day</h3>
@@ -629,6 +691,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               </div>
             </div>
           </>
+          )
         )}
         {/* Agent-specific charts - show for presales agents or when agent filter is applied */}
         {(['presales_agent', 'manager_presales', 'hod_presales'].includes(stats.role) || (filters.agentId && filters.userType == 'presales')) && (
@@ -764,6 +827,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </div>
         </div>
         {(['admin', 'sales_manager', 'sales_agent', 'hod_sales', 'marketing'].includes(stats.role)) && (
+            ((filters.agentId !=='all' && filters.userType !== 'presales')) && (
+
 
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Source Wise Won Leads</h3>
@@ -782,6 +847,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               )}
             </div>
           </div>
+            )
         )}
 
 
