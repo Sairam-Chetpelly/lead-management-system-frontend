@@ -232,7 +232,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               <>
                 <select
                   value={filters.userType}
-                  onChange={(e) => setFilters(prev => ({ ...prev, userType: e.target.value, agentId: '' }))}
+                  onChange={(e) => setFilters(prev => ({ 
+                    ...prev, 
+                    userType: e.target.value, 
+                    agentId: '', 
+                    centreId: e.target.value === 'presales' ? '' : prev.centreId 
+                  }))}
                   disabled={user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales' || user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales'}
                   className={`px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${user.role === 'sales_agent' || user.role === 'sales_manager' || user.role === 'hod_sales' || user.role === 'presales_agent' || user.role === 'manager_presales' || user.role === 'hod_presales'
                       ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -268,6 +273,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 <option key={source._id} value={source._id}>{source.name}</option>
               ))}
             </select>
+            {(['hod_sales', 'admin', 'marketing'].includes(user.role)) && filters.userType !== 'presales' && (
+              <select
+                value={filters.centreId}
+                onChange={(e) => setFilters(prev => ({ ...prev, centreId: e.target.value }))}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Centres</option>
+                {centres.map(centre => (
+                  <option key={centre._id} value={centre._id}>{centre.name}</option>
+                ))}
+              </select>
+            )}
 
             <input
               type="date"
@@ -285,18 +302,6 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               placeholder="End Date"
             />
 
-            {user.role === 'hod_sales' && (
-              <select
-                value={filters.centreId}
-                onChange={(e) => setFilters(prev => ({ ...prev, centreId: e.target.value }))}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Centres</option>
-                {centres.map(centre => (
-                  <option key={centre._id} value={centre._id}>{centre.name}</option>
-                ))}
-              </select>
-            )}
             <button
               onClick={clearFilters}
               className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
