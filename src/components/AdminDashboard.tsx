@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import { Line } from 'react-chartjs-2';
+import { FileSpreadsheet } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -220,12 +221,67 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-            {loading && (
-              <div className="flex items-center text-sm text-gray-500">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-                Loading...
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {(user.role === 'admin' || user.role === 'marketing') && (
+                <button
+                  onClick={() => {
+                    const csv = [
+                      ['Metric', 'Value'],
+                      ['Total Leads', stats.totalLeads],
+                      ['Leads MTD', stats.leadsMTD],
+                      ['Leads Today', stats.leadsToday],
+                      ['Total Calls', stats.totalCalls],
+                      ['Calls MTD', stats.callsMTD],
+                      ['Calls Today', stats.callsToday],
+                      ['Total Qualified', stats.totalQualified],
+                      ['Qualified MTD', stats.qualifiedMTD],
+                      ['Qualified Today', stats.qualifiedToday],
+                      ['Total Lost', stats.totalLost],
+                      ['Lost MTD', stats.lostMTD],
+                      ['Lost Today', stats.lostToday],
+                      ['Total Won', stats.totalWon],
+                      ['Won MTD', stats.wonMTD],
+                      ['Won Today', stats.wonToday],
+                      ['Site Visits', stats.siteVisits],
+                      ['Center Visits', stats.centerVisits],
+                      ['Virtual Meetings', stats.virtualMeetings],
+                      [''],
+                      ['Daily Leads'],
+                      ['Date', 'Count'],
+                      ...stats.dailyLeads.map((d: any) => [d.date, d.count]),
+                      [''],
+                      ['Daily Calls'],
+                      ['Date', 'Count'],
+                      ...stats.dailyCalls.map((d: any) => [d.date, d.count]),
+                      [''],
+                      ['Source Wise Leads'],
+                      ['Source', 'Count'],
+                      ...stats.sourceLeads.map((s: any) => [s._id, s.count]),
+                      [''],
+                      ['Source Wise Qualified'],
+                      ['Source', 'Count'],
+                      ...stats.sourceQualified.map((s: any) => [s._id, s.count])
+                    ].map(row => row.join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                  }}
+                  className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                >
+                  <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
+                </button>
+              )}
+              {loading && (
+                <div className="flex items-center text-sm text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                  Loading...
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {(stats.role !== 'sales_agent') && (
