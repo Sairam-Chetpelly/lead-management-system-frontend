@@ -74,6 +74,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     sourceLeads: [] as any[],
     sourceQualified: [] as any[],
     sourceWon: [] as any[],
+    centerWonData: [] as any[],
+    sourceCenterData: [] as any[],
     showFilters: true,
     role: 'admin'
   });
@@ -260,7 +262,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                       [''],
                       ['Source Wise Qualified'],
                       ['Source', 'Count'],
-                      ...stats.sourceQualified.map((s: any) => [s._id, s.count])
+                      ...stats.sourceQualified.map((s: any) => [s._id, s.count]),
+                      [''],
+                      ['Center Won Leads'],
+                      ['Center', 'Won Count', 'Project Value'],
+                      ...stats.centerWonData.map((c: any) => [c._id, c.wonCount, c.totalValue]),
+                      [''],
+                      ['Source/Center Qualified Distribution'],
+                      ['Source', 'Center', 'Count'],
+                      ...stats.sourceCenterData.map((sc: any) => [sc._id.source, sc._id.centre, sc.count])
                     ].map(row => row.join(',')).join('\n');
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = window.URL.createObjectURL(blob);
@@ -489,6 +499,103 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           )
         )}
       </div>
+
+      {/* New Tables for Admin and Marketing */}
+      {(['admin', 'marketing'].includes(user.role)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Center Won Leads Table */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Center Wise Won Leads</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Center</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Won Lead Count</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Value</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {stats.centerWonData && stats.centerWonData.length > 0 ? (
+                    stats.centerWonData.map((item: any, index: number) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item._id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.wonCount}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.totalValue.toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-4 text-center text-gray-500">No data available</td>
+                    </tr>
+                  )}
+                  {stats.centerWonData && stats.centerWonData.length > 0 && (
+                    <tr className="bg-gray-50 font-semibold">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {stats.centerWonData.reduce((sum: number, item: any) => sum + item.wonCount, 0)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {stats.centerWonData.reduce((sum: number, item: any) => sum + item.totalValue, 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Source/Center Matrix Table */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Source/Center Lead Distribution</h3>
+            <div className="overflow-x-auto">
+              {stats.sourceCenterData && stats.sourceCenterData.length > 0 ? (
+                (() => {
+                  // Transform data into matrix format
+                  const sources = [...new Set(stats.sourceCenterData.map((item: any) => item._id.source))];
+                  const centers = [...new Set(stats.sourceCenterData.map((item: any) => item._id.centre))];
+                  
+                  return (
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source/Center</th>
+                          {centers.map((center: string) => (
+                            <th key={center} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              {center} Leads
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {sources.map((source: string) => (
+                          <tr key={source}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{source}</td>
+                            {centers.map((center: string) => {
+                              const dataPoint = stats.sourceCenterData.find(
+                                (item: any) => item._id.source === source && item._id.centre === center
+                              );
+                              return (
+                                <td key={center} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {dataPoint ? dataPoint.count : 0}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                })()
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  No data available
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -221,9 +221,6 @@ export const authAPI = {
     const queryString = buildQueryString(params);
     return api.get(`${API_ENDPOINTS.DASHBOARD_ADMIN}${queryString ? `?${queryString}` : ''}`);
   },
-  getPresalesDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_PRESALES),
-  getSalesDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_SALES),
-  getMarketingDashboard: () => api.get(API_ENDPOINTS.DASHBOARD_MARKETING),
   getAdminUsers: (type: string) => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_USERS(type)),
   getAdminSources: () => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_SOURCES),
   
