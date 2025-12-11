@@ -552,8 +552,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               {stats.sourceCenterData && stats.sourceCenterData.length > 0 ? (
                 (() => {
                   // Transform data into matrix format
-                  const sources = [...new Set(stats.sourceCenterData.map((item: any) => item._id.source))];
-                  const centers = [...new Set(stats.sourceCenterData.map((item: any) => item._id.centre))];
+                  const sources = Array.from(new Set(stats.sourceCenterData.map((item: any) => item._id.source)));
+                  const centers = Array.from(new Set(stats.sourceCenterData.map((item: any) => item._id.centre)));
                   
                   return (
                     <table className="min-w-full divide-y divide-gray-200">
