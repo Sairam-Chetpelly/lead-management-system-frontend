@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File } from 'lucide-react';
+import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X } from 'lucide-react';
 import { folderService } from '@/services/folderService';
 import { documentService } from '@/services/documentService';
 import { keywordService } from '@/services/keywordService';
@@ -24,6 +24,7 @@ export default function FoldersManagement() {
   const [uploadCategory, setUploadCategory] = useState('other');
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadSubtitle, setUploadSubtitle] = useState('');
+  const [viewDocument, setViewDocument] = useState<any>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -151,6 +152,17 @@ export default function FoldersManagement() {
     }
   };
 
+  const getViewUrl = (filePath: string) => {
+    const fileName = filePath.split('/').pop() || filePath.split('\\').pop();
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/uploads/documents/${fileName}`;
+    console.log('View URL:', url);
+    return url;
+  };
+
+  const canPreview = (fileType: string) => {
+    return fileType.startsWith('image/') || fileType === 'application/pdf';
+  };
+
   const handleCreateKeyword = async (name: string) => {
     try {
       // Check if keyword already exists
@@ -254,14 +266,23 @@ export default function FoldersManagement() {
                 <File className="text-gray-600" size={32} />
                 <div className="flex gap-2">
                   <button
+                    onClick={() => setViewDocument(doc)}
+                    className="hover:bg-blue-50 p-1 rounded"
+                    title="View"
+                  >
+                    <Eye size={16} className="text-blue-600" />
+                  </button>
+                  <button
                     onClick={() => handleDownload(doc._id, doc.fileName)}
                     className="hover:bg-green-50 p-1 rounded"
+                    title="Download"
                   >
                     <Download size={16} className="text-green-600" />
                   </button>
                   <button
                     onClick={() => handleDeleteDocument(doc._id)}
                     className="hover:bg-red-50 p-1 rounded"
+                    title="Delete"
                   >
                     <Trash2 size={16} className="text-red-600" />
                   </button>
@@ -368,6 +389,55 @@ export default function FoldersManagement() {
               >
                 Upload
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewDocument && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <div>
+                <h2 className="text-xl font-bold">{viewDocument.title || viewDocument.fileName}</h2>
+                {viewDocument.subtitle && <p className="text-sm text-gray-600">{viewDocument.subtitle}</p>}
+              </div>
+              <button
+                onClick={() => setViewDocument(null)}
+                className="hover:bg-gray-100 p-2 rounded-full"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {canPreview(viewDocument.fileType) ? (
+                viewDocument.fileType.startsWith('image/') ? (
+                  <img
+                    src={getViewUrl(viewDocument.filePath)}
+                    alt={viewDocument.fileName}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={getViewUrl(viewDocument.filePath)}
+                    className="w-full h-full"
+                    title={viewDocument.fileName}
+                  />
+                )
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <File size={64} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 mb-4">Preview not available for this file type</p>
+                    <button
+                      onClick={() => handleDownload(viewDocument._id, viewDocument.fileName)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 mx-auto"
+                    >
+                      <Download size={20} /> Download to view
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
