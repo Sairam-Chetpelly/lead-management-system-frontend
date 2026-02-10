@@ -16,7 +16,9 @@ import {
   BarChart3,
   UserPlus,
   Phone,
-  FileText
+  FileText,
+  FolderOpen,
+  Tags
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -71,6 +73,8 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
       'lead-sources': 'settings',
       'project-house-types': 'settings',
       'leads': 'leads',
+      'folders': 'documents',
+      'keywords': 'documents',
       'call-logs': 'activities',
       'activity-logs': 'activities',
       'lead-activities': 'activities'
@@ -96,6 +100,15 @@ export default function NestedSidebar({ activeSection, onSectionChange, user, on
         id: 'leads',
         name: 'Leads Management',
         icon: UserPlus
+      },
+      {
+        id: 'documents',
+        name: 'Documents',
+        icon: FolderOpen,
+        children: [
+          { id: 'folders', name: 'Folders', icon: FolderOpen },
+          { id: 'keywords', name: 'Keywords', icon: Tags }
+        ]
       },
       // {
       //   id: 'activities',
