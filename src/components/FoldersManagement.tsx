@@ -7,6 +7,9 @@ import { documentService } from '@/services/documentService';
 import { keywordService } from '@/services/keywordService';
 import { useToast } from '@/contexts/ToastContext';
 import SearchableKeywordDropdown from './SearchableKeywordDropdown';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import mammoth from 'mammoth';
 
 export default function FoldersManagement() {
   const [folders, setFolders] = useState<any[]>([]);
@@ -25,6 +28,8 @@ export default function FoldersManagement() {
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadSubtitle, setUploadSubtitle] = useState('');
   const [viewDocument, setViewDocument] = useState<any>(null);
+  const [previewContent, setPreviewContent] = useState<string>('');
+  const [previewType, setPreviewType] = useState<'csv' | 'excel' | 'doc' | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -160,7 +165,81 @@ export default function FoldersManagement() {
   };
 
   const canPreview = (fileType: string) => {
-    return fileType.startsWith('image/') || fileType === 'application/pdf';
+    return fileType.startsWith('image/') || 
+           fileType === 'application/pdf' || 
+           fileType.startsWith('video/') || 
+           fileType.startsWith('audio/');
+  };
+
+  const handleViewDocument = async (doc: any) => {
+    setViewDocument(doc);
+    setPreviewContent('');
+    setPreviewType(null);
+
+    // Handle TXT
+    if (doc.fileType === 'text/plain' || doc.fileName.endsWith('.txt')) {
+      try {
+        const response = await fetch(getViewUrl(doc.filePath));
+        const text = await response.text();
+        setPreviewContent(`<pre class="whitespace-pre-wrap p-4">${text}</pre>`);
+        setPreviewType('csv');
+      } catch (error) {
+        console.error('TXT parse error:', error);
+      }
+    }
+    // Handle CSV
+    else if (doc.fileType === 'text/csv' || doc.fileName.endsWith('.csv')) {
+      try {
+        const response = await fetch(getViewUrl(doc.filePath));
+        const text = await response.text();
+        Papa.parse(text, {
+          complete: (result) => {
+            const html = `<table class="min-w-full border-collapse border border-gray-300">
+              ${result.data.map((row: any, i: number) => `
+                <tr class="${i === 0 ? 'bg-gray-100 font-bold' : ''}">
+                  ${row.map((cell: any) => `<td class="border border-gray-300 px-4 py-2">${cell}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </table>`;
+            setPreviewContent(html);
+            setPreviewType('csv');
+          }
+        });
+      } catch (error) {
+        console.error('CSV parse error:', error);
+      }
+    }
+    // Handle Excel
+    else if (doc.fileType.includes('sheet') || doc.fileType.includes('excel') || doc.fileType.includes('spreadsheet') || doc.fileName.match(/\.(xlsx|xls|xlsm|xlsb|xltx|xltm|xlt|csv)$/)) {
+      try {
+        const response = await fetch(getViewUrl(doc.filePath));
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const html = XLSX.utils.sheet_to_html(firstSheet, { header: '', footer: '' });
+        // Add Tailwind classes to the generated table
+        const styledHtml = html
+          .replace('<table', '<table class="min-w-full border-collapse border border-gray-300"')
+          .replace(/<td/g, '<td class="border border-gray-300 px-3 py-2 text-sm"')
+          .replace(/<th/g, '<th class="border border-gray-300 px-3 py-2 text-sm font-bold bg-gray-100"');
+        setPreviewContent(styledHtml);
+        setPreviewType('excel');
+      } catch (error) {
+        console.error('Excel parse error:', error);
+      }
+    }
+    // Handle Word
+    else if (doc.fileType.includes('word') || doc.fileType.includes('document') || doc.fileType.includes('msword') || doc.fileType.includes('wordprocessingml') || doc.fileName.match(/\.(docx|doc|docm|dotx|dotm|dot|rtf|odt)$/)) {
+      try {
+        const response = await fetch(getViewUrl(doc.filePath));
+        const arrayBuffer = await response.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        setPreviewContent(result.value);
+        setPreviewType('doc');
+      } catch (error) {
+        console.error('Word parse error:', error);
+      }
+    }
   };
 
   const handleCreateKeyword = async (name: string) => {
@@ -266,7 +345,7 @@ export default function FoldersManagement() {
                 <File className="text-gray-600" size={32} />
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setViewDocument(doc)}
+                    onClick={() => handleViewDocument(doc)}
                     className="hover:bg-blue-50 p-1 rounded"
                     title="View"
                   >
@@ -409,21 +488,51 @@ export default function FoldersManagement() {
                 <X size={24} />
               </button>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
               {canPreview(viewDocument.fileType) ? (
                 viewDocument.fileType.startsWith('image/') ? (
                   <img
                     src={getViewUrl(viewDocument.filePath)}
                     alt={viewDocument.fileName}
                     className="w-full h-full object-contain"
+                    onContextMenu={(e) => e.preventDefault()}
+                    draggable={false}
                   />
-                ) : (
-                  <iframe
+                ) : viewDocument.fileType.startsWith('video/') ? (
+                  <video
                     src={getViewUrl(viewDocument.filePath)}
+                    controls
+                    controlsList="nodownload"
                     className="w-full h-full"
-                    title={viewDocument.fileName}
+                    onContextMenu={(e) => e.preventDefault()}
                   />
+                ) : viewDocument.fileType.startsWith('audio/') ? (
+                  <div className="flex items-center justify-center h-full">
+                    <audio
+                      src={getViewUrl(viewDocument.filePath)}
+                      controls
+                      controlsList="nodownload"
+                      className="w-full max-w-2xl"
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full">
+                    <iframe
+                      src={`${getViewUrl(viewDocument.filePath)}#toolbar=0&navpanes=0&scrollbar=0`}
+                      className="w-full h-full"
+                      title={viewDocument.fileName}
+                    />
+                    <div 
+                      className="absolute inset-0 pointer-events-none"
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  </div>
                 )
+              ) : previewType ? (
+                <div className="w-full h-full overflow-auto p-4" onContextMenu={(e) => e.preventDefault()}>
+                  <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
