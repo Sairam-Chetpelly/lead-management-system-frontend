@@ -120,7 +120,7 @@ export default function SearchableKeywordDropdown({
       {searchTerm.length >= 3 && typeof document !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed z-[9999] bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-hidden"
+          className="fixed z-[99999] bg-white border border-slate-200 rounded-lg shadow-xl max-h-64 overflow-hidden"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
