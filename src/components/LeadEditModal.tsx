@@ -40,6 +40,8 @@ interface FormData {
   virtualMeeting: boolean;
   virtualMeetingDate: string;
   virtualMeetingCompletedDate: string;
+  leadClosure: boolean;
+  leadClosureDate: string;
   meetingArrangedDate: string;
   cifDate: string;
   comment: string;
@@ -114,6 +116,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     virtualMeeting: false,
     virtualMeetingDate: '',
     virtualMeetingCompletedDate: '',
+    leadClosure: false,
+    leadClosureDate: '',
     meetingArrangedDate: '',
     cifDate: '',
     comment: '',
@@ -175,6 +179,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         virtualMeeting: lead.virtualMeeting || false,
         virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
         virtualMeetingCompletedDate: lead.virtualMeetingCompletedDate ? new Date(lead.virtualMeetingCompletedDate).toISOString().split('T')[0] : '',
+        leadClosure: lead.leadClosure || false,
+        leadClosureDate: lead.leadClosureDate ? new Date(lead.leadClosureDate).toISOString().split('T')[0] : '',
         meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
         cifDate: lead.cifDate ? lead.cifDate : '',
         comment: lead.comment || '',
@@ -370,6 +376,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       if (leadActivityData.virtualMeetingCompletedDate) {
         leadActivityData.virtualMeetingCompletedDate = leadActivityData.virtualMeetingCompletedDate;
       }
+      if (leadActivityData.leadClosureDate) {
+        leadActivityData.leadClosureDate = leadActivityData.leadClosureDate;
+      }
       if (leadActivityData.cifDate) {
         leadActivityData.cifDate =leadActivityData.cifDate ;
       }
@@ -419,6 +428,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       virtualMeeting: false,
       virtualMeetingDate: '',
       virtualMeetingCompletedDate: '',
+      leadClosure: false,
+      leadClosureDate: '',
       meetingArrangedDate: '',
       cifDate: '',
       comment: '',
@@ -983,6 +994,33 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                     />
                   </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+                <input
+                  type="checkbox"
+                  id="leadClosure"
+                  checked={formData.leadClosure}
+                  onChange={(e) => handleInputChange('leadClosure', e.target.checked)}
+                  className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="leadClosure" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Lead Closure
+                </label>
+              </div>
+              {formData.leadClosure && (
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700">Lead Closure Date</label>
+                  <input
+                    type="date"
+                    value={formData.leadClosureDate}
+                    onChange={(e) => handleInputChange('leadClosureDate', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                  />
                 </div>
               )}
             </div>

@@ -85,6 +85,8 @@ interface Lead {
   siteVisitCompletedDate?: string;
   centerVisitCompletedDate?: string;
   virtualMeetingCompletedDate?: string;
+  leadClosure?: boolean;
+  leadClosureDate?: string;
   meetingArrangedDate?: string;
   cifDate?: string;
   leadWonDate?: string;
@@ -703,6 +705,8 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
             <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
             <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
             <FieldDisplay label="Virtual Meeting Completed Date" value={lead.virtualMeetingCompletedDate} icon={CheckCircle} editing={editing} field="virtualMeetingCompletedDate" type="date" />
+            <FieldDisplay label="Lead Closure" value={lead.leadClosure} icon={CheckCircle} editing={editing} field="leadClosure" type="checkbox" />
+            <FieldDisplay label="Lead Closure Date" value={lead.leadClosureDate} icon={Calendar} editing={editing} field="leadClosureDate" type="date" />
           </div>
         </div>
       )}

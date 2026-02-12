@@ -54,10 +54,15 @@ export interface Lead {
 
   siteVisit?: boolean;
   siteVisitDate?: string;
+  siteVisitCompletedDate?: string;
   centerVisit?: boolean;
   centerVisitDate?: string;
+  centerVisitCompletedDate?: string;
   virtualMeeting?: boolean;
   virtualMeetingDate?: string;
+  virtualMeetingCompletedDate?: string;
+  leadClosure?: boolean;
+  leadClosureDate?: string;
   cifDate?: string;
   comment?: string;
   adname?: string;
