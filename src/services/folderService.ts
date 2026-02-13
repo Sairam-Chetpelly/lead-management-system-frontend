@@ -30,11 +30,5 @@ export const folderService = {
   deleteFolder: async (id: string) => {
     const response = await api.delete(`/api/folders/${id}`);
     return response.data;
-  },
-
-  // Update folder
-  updateFolder: async (id: string, data: { name: string }) => {
-    const response = await api.put(`/api/folders/${id}`, data);
-    return response.data;
   }
 };
