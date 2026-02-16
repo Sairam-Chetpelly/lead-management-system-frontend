@@ -26,7 +26,7 @@ interface FormData {
   sourceId: string;
   centreId: string;
   projectTypeId: string;
-  projectValue: string;
+  projectValue: number | string;
   apartmentName: string;
   houseTypeId: string;
   expectedPossessionDate: string;
@@ -792,7 +792,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 })()}
               </label>
               <input
-                type="text"
+                type="number"
                 value={formData.projectValue}
                 onChange={(e) => handleInputChange('projectValue', e.target.value)}
                 required={(() => {

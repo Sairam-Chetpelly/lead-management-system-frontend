@@ -67,7 +67,7 @@ interface Lead {
     slug: string;
   };
   leadValue?: string;
-  projectValue?: string;
+  projectValue?: number | string;
   apartmentName?: string;
   adname?: string;
   adset?: string;
