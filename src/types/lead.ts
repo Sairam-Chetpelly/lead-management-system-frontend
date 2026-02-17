@@ -46,7 +46,7 @@ export interface Lead {
   sourceId: LeadSource;
   centreId?: Centre;
   projectTypeId?: ProjectAndHouseType;
-  projectValue?: string;
+  projectValue?: number | string;
   apartmentName?: string;
   houseTypeId?: ProjectAndHouseType;
   expectedPossessionDate?: string;
