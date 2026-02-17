@@ -5,7 +5,8 @@ import {
   ArrowLeft, User, Mail, Phone, Building, Globe, Calendar, 
   DollarSign, MapPin, Clock, Edit, Save, X, PhoneCall, 
   MessageSquare, Activity, FileText, CheckCircle, AlertCircle,
-  TrendingUp, Users, Target, Download
+  TrendingUp, Users, Target, Download,
+  IndianRupee
 } from 'lucide-react';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -653,7 +654,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
           )}
           {(isSalesRole || isAdmin) && (
             <>
-              <FieldDisplay label="Project Value" value={lead.projectValue} icon={DollarSign} editing={editing} field="projectValue" />
+              <FieldDisplay label="Project Value" value={lead.projectValue} icon={IndianRupee} editing={editing} field="projectValue" />
               <FieldDisplay label="Expected Possession Date" value={lead.expectedPossessionDate} icon={Calendar} editing={editing} field="expectedPossessionDate" type="date" />
             </>
           )}
