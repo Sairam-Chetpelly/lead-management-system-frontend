@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Activity, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface Status {
   _id: string;
@@ -43,11 +44,17 @@ export default function StatusesTable() {
         limit: pagination.limit,
         search: debouncedSearch
       });
-      setStatuses(response.data.data);
-      updatePagination(response.data.pagination);
+      console.log('Statuses response:', response.data);
+      const data = response.data.data || response.data;
+      console.log('Extracted data:', data);
+      const statusesArray = Array.isArray(data) ? data : (data?.statuses || data?.statuss || []);
+      console.log('Statuses array:', statusesArray);
+      setStatuses(statusesArray);
+      updatePagination(data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching statuses:', error);
       showToast('Failed to fetch statuses', 'error');
+      setStatuses([]);
     } finally {
       setLoading(false);
     }
@@ -69,9 +76,10 @@ export default function StatusesTable() {
       showToast(editStatus ? 'Status updated successfully' : 'Status created successfully', 'success');
       resetForm();
       fetchStatuses();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving status:', error);
-      showToast('Failed to save status', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save status';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -124,8 +132,13 @@ export default function StatusesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.admin.exportStatuses();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'statuses.csv');
+                // downloadCSV imported at top
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'statuses.csv');
               } catch (error) {
                 console.error('Export failed:', error);
                 showToast('Export failed. Please try again.', 'error');

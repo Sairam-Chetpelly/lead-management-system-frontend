@@ -62,13 +62,10 @@ export default function ActivityLogsTable() {
       if (debouncedFilters.search) params.search = debouncedFilters.search;
 
       const response = await authAPI.getActivityLogs(params);
-      if (response.data.activityLogs) {
-        setActivityLogs(response.data.activityLogs);
-        if (response.data.pagination) {
-          updatePagination(response.data.pagination);
-        }
-      } else {
-        setActivityLogs(Array.isArray(response.data) ? response.data : []);
+      const data = response.data.data || response.data;
+      setActivityLogs(Array.isArray(data) ? data : (data?.activityLogs || []));
+      if (data?.pagination || response.data.pagination) {
+        updatePagination(data?.pagination || response.data.pagination);
       }
     } catch (error) {
       console.error('Error fetching activity logs:', error);
@@ -81,9 +78,11 @@ export default function ActivityLogsTable() {
   const fetchUsers = async () => {
     try {
       const response = await authAPI.getUsers({ limit: 1000 });
-      setUsers(response.data.data || response.data || []);
+      const data = response.data.data || response.data;
+      setUsers(Array.isArray(data) ? data : (data?.users || []));
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     }
   };
 

@@ -140,10 +140,10 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       console.log('API params:', params);
       const response = await authAPI.getAdminDashboard(params);
       console.log('Admin Dashboard Response:', response.data);
-      setStats(response.data);
+      setStats(response.data.data);
 
       // If user is presales agent, clear filters to prevent confusion (only if filters are not already empty)
-      if (response.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId || filters.centreId)) {
+      if (response.data.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId || filters.centreId)) {
         console.log('Clearing filters for presales agent');
         setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '', centreId: '' });
       }
@@ -158,7 +158,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     try {
       const userType = filters.userType || 'all-users';
       const response = await authAPI.getAdminUsers(userType);
-      setUsers(response.data);
+      setUsers(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -168,7 +168,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     try {
       if (stats.showFilters !== false) {
         const response = await authAPI.getAdminSources();
-        setSources(response.data);
+        setSources(response.data.data || response.data);
       }
     } catch (error) {
       console.error('Error fetching sources:', error);
@@ -178,8 +178,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const fetchCentres = async () => {
     try {
       if (stats.showFilters !== false) {
-        const response = await authAPI.get('/api/dashboard/admin/centres');
-        setCentres(response.data);
+        const response = await authAPI.get('/api/dashboard/centres');
+        setCentres(response.data.data || response.data);
       }
     } catch (error) {
       console.error('Error fetching centres:', error);

@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface Language {
   _id: string;
@@ -44,8 +45,9 @@ export default function LanguagesTable() {
         limit: pagination.limit,
         search: debouncedSearch
       });
-      setLanguages(response.data.data);
-      updatePagination(response.data.pagination);
+      const data = response.data.data || response.data;
+      setLanguages(Array.isArray(data) ? data : (data?.languages || []));
+      updatePagination(data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching languages:', error);
       showToast('Failed to fetch languages', 'error');
@@ -70,9 +72,10 @@ export default function LanguagesTable() {
       showToast(editLanguage ? 'Language updated successfully' : 'Language created successfully', 'success');
       resetForm();
       fetchLanguages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving language:', error);
-      showToast('Failed to save language', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save language';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -125,8 +128,13 @@ export default function LanguagesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.admin.exportLanguages();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'languages.csv');
+                // downloadCSV imported at top
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'languages.csv');
               } catch (error) {
                 console.error('Export failed:', error);
                 showToast('Export failed. Please try again.', 'error');

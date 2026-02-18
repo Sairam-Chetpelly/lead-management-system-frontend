@@ -10,6 +10,7 @@ import { authAPI } from '@/lib/auth';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface LeadSource {
   _id: string;
@@ -63,14 +64,16 @@ export default function LeadSourcesTable() {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setLeadSources(Array.isArray(response.data) ? response.data : response.data.data || []);
-      if (response.data.pagination) {
-        updatePagination(response.data.pagination);
+      const data = response.data.data || response.data;
+      setLeadSources(Array.isArray(data) ? data : (data?.leadSources || []));
+      if (data?.pagination || response.data.pagination) {
+        updatePagination(data?.pagination || response.data.pagination);
       }
     } catch (error) {
       console.error('Error fetching lead sources:', error);
       showToast('Failed to fetch lead sources', 'error');
-    } finally {
+      setLeadSources([]);
+    }  finally {
       setLoading(false);
     }
   }, [pagination.current, pagination.limit, debouncedFilters]);
@@ -88,9 +91,10 @@ export default function LeadSourcesTable() {
       fetchLeadSources();
       setIsModalOpen(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving lead source:', error);
-      showToast('Failed to save lead source', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save lead source';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -188,8 +192,13 @@ export default function LeadSourcesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.exportLeadSources();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'lead-sources.csv');
+                // downloadCSV imported at top
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'lead-sources.csv');
               } catch (error) {
                 console.error('Export failed:', error);
                 showToast('Export failed. Please try again.', 'error');

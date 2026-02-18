@@ -207,14 +207,11 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         authAPI.getLeadFormData()
       ]);
 
-      console.log('Lead Sources Response:', sourcesRes.data);
-
       const statuses = statusesRes.data.data || statusesRes.data || [];
-      const leadSources = sourcesRes.data || [];
 
       setDropdownData({
-        users: usersRes.data.data || usersRes.data || [],
-        leadSources: leadSources,
+        users: usersRes.data.data?.users || usersRes.data.data || usersRes.data || [],
+        leadSources: sourcesRes.data.data || sourcesRes.data || [],
         centres: centresRes.data.data || centresRes.data || [],
         languages: languagesRes.data.data || languagesRes.data || [],
         projectTypes: formDataRes.data.projectTypes || [],

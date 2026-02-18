@@ -47,8 +47,16 @@ export default function CallLogs() {
       if (filters.userId) params.userId = filters.userId;
 
       const response = await authAPI.getCallLogs(params);
-      setCallLogs(response.data.callLogs);
-      setTotalPages(response.data.totalPages);
+      if (response.data.data?.callLogs) {
+        setCallLogs(response.data.data.callLogs);
+        setTotalPages(response.data.data.totalPages || Math.ceil((response.data.data.pagination?.total || 0) / 20));
+      } else if (response.data.callLogs) {
+        setCallLogs(response.data.callLogs);
+        setTotalPages(response.data.totalPages);
+      } else {
+        setCallLogs([]);
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error('Error fetching call logs:', error);
     } finally {

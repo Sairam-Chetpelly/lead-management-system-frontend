@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface Centre {
   _id: string;
@@ -43,8 +44,8 @@ export default function CentresTable() {
         limit: pagination.limit,
         search: debouncedSearch
       });
-      setCentres(response.data.data);
-      updatePagination(response.data.pagination);
+      setCentres(response.data.data?.centres || response.data.data || []);
+      updatePagination(response.data.data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching centres:', error);
       showToast('Failed to fetch centres', 'error');
@@ -69,9 +70,10 @@ export default function CentresTable() {
       showToast(editCentre ? 'Centre updated successfully' : 'Centre created successfully', 'success');
       resetForm();
       fetchCentres();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving centre:', error);
-      showToast('Failed to save centre', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save centre';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -124,8 +126,12 @@ export default function CentresTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.admin.exportCentres();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'centres.csv');
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'centres.csv');
               } catch (error) {
                 console.error('Export failed:', error);
                 showToast('Export failed. Please try again.', 'error');

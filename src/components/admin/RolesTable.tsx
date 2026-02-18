@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface Role {
   _id: string;
@@ -43,9 +44,9 @@ export default function RolesTable() {
       });
       
       if (response.data.data) {
-        setRoles(response.data.data);
-        if (response.data.pagination) {
-          updatePagination(response.data.pagination);
+        setRoles(response.data.data.roles || response.data.data);
+        if (response.data.data.pagination) {
+          updatePagination(response.data.data.pagination);
         }
       } else {
         setRoles(Array.isArray(response.data) ? response.data : []);
@@ -75,9 +76,10 @@ export default function RolesTable() {
       showToast(editRole ? 'Role updated successfully' : 'Role created successfully', 'success');
       resetForm();
       fetchRoles();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving role:', error);
-      showToast('Failed to save role', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save role';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -129,7 +131,7 @@ export default function RolesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.admin.exportRoles();
-                const { downloadCSV } = await import('@/lib/exportUtils');
+                // downloadCSV imported at top
                 downloadCSV(response.data, 'roles.csv');
               } catch (error) {
                 console.error('Export failed:', error);

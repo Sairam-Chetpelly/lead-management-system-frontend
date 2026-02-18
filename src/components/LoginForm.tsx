@@ -30,7 +30,7 @@ export default function LoginForm({ onLogin, resetToken }: LoginFormProps) {
     
     try {
       const response = await authAPI.login({ email, password });
-      const { token, user, expiresAt } = response.data;
+      const { token, user, expiresAt } = response.data.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -55,8 +55,8 @@ export default function LoginForm({ onLogin, resetToken }: LoginFormProps) {
     setLoading(true);
     
     try {
-      await authAPI.forgotPassword({ email: forgotEmail });
-      showToast('Password reset email sent successfully!', 'success');
+      const response = await authAPI.forgotPassword({ email: forgotEmail });
+      showToast(response.data.message || 'Password reset email sent successfully!', 'success');
       setShowForgotPassword(false);
       setForgotEmail('');
     } catch (error: any) {
@@ -83,8 +83,8 @@ export default function LoginForm({ onLogin, resetToken }: LoginFormProps) {
     setLoading(true);
     
     try {
-      await authAPI.resetPassword({ token: resetToken!, password: newPassword });
-      showToast('Password reset successfully!', 'success');
+      const response = await authAPI.resetPassword({ token: resetToken!, password: newPassword });
+      showToast(response.data.message || 'Password reset successfully!', 'success');
       setTimeout(() => {
         window.location.replace('/');
       }, 1500);

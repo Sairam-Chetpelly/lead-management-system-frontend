@@ -4,7 +4,7 @@ export const keywordService = {
   // Create keyword
   createKeyword: async (data: { name: string }) => {
     const response = await api.post('/api/keywords', data);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Get all keywords with pagination
@@ -17,24 +17,24 @@ export const keywordService = {
     if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
     
     const response = await api.get(`/api/keywords${queryParams.toString() ? '?' + queryParams.toString() : ''}`);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Get single keyword
   getKeyword: async (id: string) => {
     const response = await api.get(`/api/keywords/${id}`);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Update keyword
   updateKeyword: async (id: string, data: { name: string }) => {
     const response = await api.put(`/api/keywords/${id}`, data);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Delete keyword
   deleteKeyword: async (id: string) => {
     const response = await api.delete(`/api/keywords/${id}`);
-    return response.data;
+    return response.data.data || response.data;
   }
 };

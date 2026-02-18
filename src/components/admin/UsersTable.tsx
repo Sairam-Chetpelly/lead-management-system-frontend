@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'luci
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface User {
@@ -119,14 +120,9 @@ export default function UsersTable() {
         ...debouncedFilters
       });
       
-      if (response.data.data) {
-        setUsers(response.data.data);
-        if (response.data.pagination) {
-          updatePagination(response.data.pagination);
-        }
-      } else {
-        setUsers(Array.isArray(response.data) ? response.data : []);
-      }
+      const data = response.data.data || response.data;
+      setUsers(Array.isArray(data) ? data : (data?.users || []));
+      updatePagination(data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching users:', error);
       showToast('Failed to fetch users', 'error');
@@ -145,10 +141,10 @@ export default function UsersTable() {
         authAPI.admin.getAllLanguages()
       ]);
       
-      setRoles(rolesRes.data.data);
-      setStatuses(statusesRes.data.data);
-      setCentres(centresRes.data.data);
-      setLanguages(languagesRes.data.data);
+      setRoles(rolesRes.data.data || rolesRes.data);
+      setStatuses(statusesRes.data.data || statusesRes.data);
+      setCentres(centresRes.data.data || centresRes.data);
+      setLanguages(languagesRes.data.data || languagesRes.data);
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
       showToast('Failed to fetch dropdown data', 'error');
@@ -188,9 +184,10 @@ export default function UsersTable() {
       showToast(editUser ? 'User updated successfully' : 'User created successfully', 'success');
       resetForm();
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user:', error);
-      showToast('Failed to save user', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save user';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -358,8 +355,13 @@ export default function UsersTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.exportUsers();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'users.csv');
+                // downloadCSV imported at top
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'users.csv');
               } catch (error: any) {
                 console.error('Export failed:', error);
                 showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');

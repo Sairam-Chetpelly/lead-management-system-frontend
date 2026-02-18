@@ -162,11 +162,14 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         authAPI.getLeadActivities(leadId)
       ]);
       
-      setLead(leadResponse.data.lead);
-      setCallLogs(leadResponse.data.callLogs || []);
-      setActivityLogs(leadResponse.data.activityLogs || []);
-      setLeadActivities(activitiesResponse.data.leadActivities || []);
-      setEditData(leadResponse.data.lead);
+      const leadData = leadResponse.data?.data || leadResponse.data;
+      const activitiesData = activitiesResponse.data?.data || activitiesResponse.data;
+      
+      setLead(leadData.lead);
+      setCallLogs(leadData.callLogs || []);
+      setActivityLogs(leadData.activityLogs || []);
+      setLeadActivities(activitiesData.leadActivities || []);
+      setEditData(leadData.lead);
     } catch (error) {
       console.error('Error fetching lead:', error);
       showToast('Failed to fetch lead details', 'error');
@@ -192,7 +195,8 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     
     try {
       const response = await authAPI.updateLead(lead._id, editData);
-      setLead(response.data.lead);
+      const updatedLead = response.data?.data?.lead || response.data?.lead;
+      setLead(updatedLead);
       setEditing(false);
       showToast('Lead updated successfully', 'success');
     } catch (error) {

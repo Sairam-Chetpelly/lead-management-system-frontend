@@ -224,7 +224,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         ...debouncedFilters
       });
 
-      if (response.data.leads) {
+      if (response.data.data?.leads) {
+        setLeads(response.data.data.leads);
+        if (response.data.data.pagination) {
+          updatePagination(response.data.data.pagination);
+        }
+      } else if (response.data.leads) {
         setLeads(response.data.leads);
         if (response.data.pagination) {
           updatePagination(response.data.pagination);
@@ -274,7 +279,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
       setLeadSources(sourcesRes.data.data || sourcesRes.data || []);
       setCentres(centresRes.data.data || centresRes.data || []);
-      setUsers(usersRes.data.data || usersRes.data || []);
+      setUsers(usersRes.data.data?.users || usersRes.data.data || usersRes.data || []);
 
       const statuses = statusesRes.data.data || statusesRes.data || [];
       setLeadStatuses(statuses.filter((s: any) => s.type === 'leadStatus'));

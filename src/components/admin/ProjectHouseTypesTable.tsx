@@ -10,6 +10,7 @@ import { authAPI } from '@/lib/auth';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface ProjectHouseType {
   _id: string;
@@ -57,13 +58,19 @@ export default function ProjectHouseTypesTable() {
         limit: pagination.limit,
         ...debouncedFilters
       });
-      setTypes(Array.isArray(response.data) ? response.data : response.data.data || []);
-      if (response.data.pagination) {
-        updatePagination(response.data.pagination);
+      console.log('ProjectHouseTypes response:', response.data);
+      const data = response.data.data || response.data;
+      console.log('Extracted data:', data);
+      const typesArray = Array.isArray(data) ? data : (data?.types || data?.projectHouseTypes || data?.projectandhousetypes || []);
+      console.log('Types array:', typesArray);
+      setTypes(typesArray);
+      if (data?.pagination || response.data.pagination) {
+        updatePagination(data?.pagination || response.data.pagination);
       }
     } catch (error) {
       console.error('Error fetching types:', error);
       showToast('Failed to fetch types', 'error');
+      setTypes([]);
     } finally {
       setLoading(false);
     }
@@ -87,9 +94,10 @@ export default function ProjectHouseTypesTable() {
       fetchTypes();
       setIsModalOpen(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving type:', error);
-      showToast('Failed to save type', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save type';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -178,8 +186,13 @@ export default function ProjectHouseTypesTable() {
             onClick={async () => {
               try {
                 const response = await authAPI.exportProjectHouseTypes();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'project-house-types.csv');
+                // downloadCSV imported at top
+                const exportData = response.data.data || response.data;
+                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
+                  showToast('No data to export', 'error');
+                  return;
+                }
+                downloadCSV(exportData, 'project-house-types.csv');
               } catch (error) {
                 console.error('Export failed:', error);
                 showToast('Export failed. Please try again.', 'error');
