@@ -21,9 +21,21 @@ export default function KeywordsManagement() {
   const [sortBy, setSortBy] = useState<'name' | 'usageCount'>('usageCount');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean, id: string, name: string }>({ isOpen: false, id: '', name: '' });
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { showToast } = useToast();
   const { pagination, handlePageChange, handleLimitChange, updatePagination } = usePagination({ initialLimit: 10 });
   const debouncedSearch = useDebounce(searchTerm, 300);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchKeywords();
@@ -131,18 +143,20 @@ export default function KeywordsManagement() {
 
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setKeywordName('');
-            setShowModal(true);
-          }}
-          className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-          style={{ backgroundColor: '#0f172a' }}
-        >
-          <Plus size={20} />
-          <span className="font-semibold">New Keyword</span>
-        </button>
+        {currentUser?.role === 'admin' && (
+          <button
+            onClick={() => {
+              setEditingId(null);
+              setKeywordName('');
+              setShowModal(true);
+            }}
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 text-white rounded-2xl hover:opacity-80 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{ backgroundColor: '#0f172a' }}
+          >
+            <Plus size={20} />
+            <span className="font-semibold">New Keyword</span>
+          </button>
+        )}
         <div className="flex gap-2">
           <select
             value={sortBy}
@@ -196,20 +210,24 @@ export default function KeywordsManagement() {
                     </span>
                   </div>
                   <div className="col-span-3 flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(keyword)}
-                      className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteDialog({ isOpen: true, id: keyword._id, name: keyword.name })}
-                      className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                      <>
+                        <button
+                          onClick={() => handleEdit(keyword)}
+                          className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
+                          title="Edit"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteDialog({ isOpen: true, id: keyword._id, name: keyword.name })}
+                          className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -233,20 +251,22 @@ export default function KeywordsManagement() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => handleEdit(keyword)}
-                    className="flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-sm"
-                  >
-                    <Edit2 size={14} className="mr-1" /> Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteDialog({ isOpen: true, id: keyword._id, name: keyword.name })}
-                    className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-sm"
-                  >
-                    <Trash2 size={14} className="mr-1" /> Delete
-                  </button>
-                </div>
+                {currentUser?.role === 'admin' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleEdit(keyword)}
+                      className="flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium text-sm"
+                    >
+                      <Edit2 size={14} className="mr-1" /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteDialog({ isOpen: true, id: keyword._id, name: keyword.name })}
+                      className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-sm"
+                    >
+                      <Trash2 size={14} className="mr-1" /> Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

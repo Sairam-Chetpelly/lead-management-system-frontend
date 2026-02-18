@@ -27,10 +27,24 @@ export const documentService = {
 
   // Download document
   downloadDocument: async (id: string) => {
-    const response = await api.get(`/api/documents/${id}/download`, {
-      responseType: 'blob'
-    });
-    return response.data;
+    try {
+      const response = await api.get(`/api/documents/${id}/download`, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: any) {
+      // Handle blob error responses
+      if (error.response?.data instanceof Blob) {
+        const text = await error.response.data.text();
+        try {
+          const jsonError = JSON.parse(text);
+          throw { ...error, response: { ...error.response, data: jsonError } };
+        } catch {
+          throw error;
+        }
+      }
+      throw error;
+    }
   },
 
   // Delete document

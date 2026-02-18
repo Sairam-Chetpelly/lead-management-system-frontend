@@ -40,7 +40,19 @@ export default function FoldersManagement() {
   const [previewContent, setPreviewContent] = useState<string>('');
   const [previewType, setPreviewType] = useState<'csv' | 'excel' | 'doc' | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean, type: 'folder' | 'document', id: string, name: string }>({ isOpen: false, type: 'folder', id: '', name: '' });
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -222,8 +234,24 @@ export default function FoldersManagement() {
       a.download = fileName;
       a.click();
       window.URL.revokeObjectURL(url);
+      showToast('Document downloaded successfully', 'success');
     } catch (error: any) {
-      showToast('Failed to download document', 'error');
+      console.log('Download error:', error);
+      let errorMessage = 'Failed to download document';
+      
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const json = JSON.parse(text);
+          errorMessage = json.message || json.error || errorMessage;
+        } catch (e) {
+          // If parsing fails, use default message
+        }
+      } else {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
+      }
+      
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -363,19 +391,23 @@ export default function FoldersManagement() {
                 <ArrowLeft size={18} /> <span>Back</span>
               </button>
             )}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-4 py-2.5 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
-              style={{ backgroundColor: '#0f172a' }}
-            >
-              <Plus size={18} /> <span>New Folder</span>
-            </button>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
-            >
-              <Upload size={18} /> <span>Upload</span>
-            </button>
+            {currentUser?.role === 'admin' && (
+              <>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2.5 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
+                  style={{ backgroundColor: '#0f172a' }}
+                >
+                  <Plus size={18} /> <span>New Folder</span>
+                </button>
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
+                >
+                  <Upload size={18} /> <span>Upload</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -443,22 +475,24 @@ export default function FoldersManagement() {
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                     <FolderOpen className="text-white" size={24} />
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                    <button
-                      onClick={(e) => handleEditFolder(folder, e)}
-                      className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteFolder(folder._id, folder.name, e)}
-                      className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  {currentUser?.role === 'admin' && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={(e) => handleEditFolder(folder, e)}
+                        className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
+                        title="Edit"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteFolder(folder._id, folder.name, e)}
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="font-bold text-slate-900 truncate">{folder.name}</div>
                 <div className="text-xs text-slate-600 mt-1">Folder</div>
@@ -476,13 +510,15 @@ export default function FoldersManagement() {
                     <File className="text-white" size={24} />
                   </div>
                   <div className="flex gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
-                      className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
+                        className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
+                        title="Edit"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
                       className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
@@ -497,13 +533,15 @@ export default function FoldersManagement() {
                     >
                       <Download size={16} />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
-                      className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="text-xs text-black-300" title={doc.fileName}>{doc.fileName}</div>
