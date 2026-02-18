@@ -92,7 +92,8 @@ export default function KeywordsManagement() {
       showToast('Keyword deleted successfully', 'success');
       fetchKeywords();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to delete keyword', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete keyword';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({ isOpen: false, id: '', name: '' });
     }

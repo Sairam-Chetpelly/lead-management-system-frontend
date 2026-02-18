@@ -206,7 +206,8 @@ export default function FoldersManagement() {
       }
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || `Failed to delete ${deleteDialog.type}`, 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || `Failed to delete ${deleteDialog.type}`;
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({ isOpen: false, type: 'folder', id: '', name: '' });
     }

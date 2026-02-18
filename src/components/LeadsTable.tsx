@@ -336,7 +336,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       fetchLeads();
     } catch (error: any) {
       console.error('Error deleting lead:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete lead';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete lead';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({ isOpen: false, id: '', name: '' });

@@ -267,7 +267,7 @@ export default function UsersTable() {
       fetchUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete user';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete user';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
@@ -364,7 +364,8 @@ export default function UsersTable() {
                 downloadCSV(exportData, 'users.csv');
               } catch (error: any) {
                 console.error('Export failed:', error);
-                showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"

@@ -173,7 +173,8 @@ export default function LeadActivitiesTable() {
       showToast('Lead activities exported successfully', 'success');
     } catch (error: any) {
       console.error('Export failed:', error);
-      showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+      showToast(errorMessage, 'error');
     }
   };
 

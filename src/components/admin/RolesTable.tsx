@@ -88,9 +88,10 @@ export default function RolesTable() {
       await authAPI.admin.deleteRole(deleteDialog.id);
       showToast('Role deleted successfully', 'success');
       fetchRoles();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting role:', error);
-      showToast('Failed to delete role', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete role';
+      showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
     }

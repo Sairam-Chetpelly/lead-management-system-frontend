@@ -86,7 +86,7 @@ export default function LanguagesTable() {
       fetchLanguages();
     } catch (error: any) {
       console.error('Error deleting language:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete language';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete language';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});

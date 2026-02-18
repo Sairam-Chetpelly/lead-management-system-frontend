@@ -108,7 +108,7 @@ export default function ProjectHouseTypesTable() {
       fetchTypes();
     } catch (error: any) {
       console.error('Error deleting type:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete type';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete type';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});

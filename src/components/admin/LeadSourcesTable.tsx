@@ -105,7 +105,7 @@ export default function LeadSourcesTable() {
       fetchLeadSources();
     } catch (error: any) {
       console.error('Error deleting lead source:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete lead source';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete lead source';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});

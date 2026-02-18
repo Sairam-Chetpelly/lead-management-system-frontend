@@ -90,7 +90,7 @@ export default function StatusesTable() {
       fetchStatuses();
     } catch (error: any) {
       console.error('Error deleting status:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete status';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete status';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});

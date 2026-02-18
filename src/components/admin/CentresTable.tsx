@@ -84,7 +84,7 @@ export default function CentresTable() {
       fetchCentres();
     } catch (error: any) {
       console.error('Error deleting centre:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete centre';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete centre';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
