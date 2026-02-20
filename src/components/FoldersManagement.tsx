@@ -361,11 +361,10 @@ export default function FoldersManagement() {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 min-h-full">
-      {/* Breadcrumb & Actions */}
+      {/* Breadcrumb Navigation */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">📁 Document Management</h2>
             <div className="flex items-center gap-2 text-sm text-slate-600 flex-wrap">
               <button onClick={() => { setCurrentFolder(null); setFolderPath([]); }} className="hover:text-blue-600 font-medium transition-colors">🏠 Root</button>
               {folderPath.map((folder, idx) => (
@@ -382,39 +381,18 @@ export default function FoldersManagement() {
               ))}
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {folderPath.length > 0 && (
-              <button
-                onClick={goBack}
-                className="flex items-center space-x-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-2xl font-medium hover:bg-slate-200 transition-all shadow-sm"
-              >
-                <ArrowLeft size={18} /> <span>Back</span>
-              </button>
-            )}
-            {currentUser?.role === 'admin' && (
-              <>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2.5 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
-                  style={{ backgroundColor: '#0f172a' }}
-                >
-                  <Plus size={18} /> <span>New Folder</span>
-                </button>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-medium hover:opacity-80 transition-all shadow-lg"
-                >
-                  <Upload size={18} /> <span>Upload</span>
-                </button>
-              </>
-            )}
-          </div>
+          {folderPath.length > 0 && (
+            <button
+              onClick={goBack}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-2xl font-medium hover:bg-slate-200 transition-all shadow-sm"
+            >
+              <ArrowLeft size={18} /> <span>Back</span>
+            </button>
+          )}
         </div>
-      </div>
-
-      {/* Search & Filters */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        {/* Search & Filters */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <div className="relative">
             <Search size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
             <input
@@ -465,11 +443,37 @@ export default function FoldersManagement() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {currentUser?.role === 'admin' && (
+              <>
+                <div
+                  onClick={() => setShowCreateModal(true)}
+                  className="group p-6 bg-white rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 min-h-[140px]"
+                >
+                  <div className="flex flex-col items-center justify-center h-full space-y-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <Plus className="text-blue-600" size={24} />
+                    </div>
+                    <div className="font-semibold text-slate-700 text-center">Create Folder</div>
+                  </div>
+                </div>
+                <div
+                  onClick={() => setShowUploadModal(true)}
+                  className="group p-6 bg-white rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-dashed border-green-300 hover:border-green-500 hover:bg-green-50 min-h-[140px]"
+                >
+                  <div className="flex flex-col items-center justify-center h-full space-y-3">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                      <Upload className="text-green-600" size={24} />
+                    </div>
+                    <div className="font-semibold text-slate-700 text-center">Upload Document</div>
+                  </div>
+                </div>
+              </>
+            )}
             {!searchKeyword && filterKeywords.length === 0 && folders.map((folder) => (
               <div
                 key={folder._id}
                 onClick={() => openFolder(folder)}
-                className="group p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-100 hover:scale-105 transform"
+                className="group p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-100 hover:border-blue-300"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -496,6 +500,11 @@ export default function FoldersManagement() {
                 </div>
                 <div className="font-bold text-slate-900 truncate">{folder.name}</div>
                 <div className="text-xs text-slate-600 mt-1">Folder</div>
+                {folder.path && (
+                  <div className="text-xs text-slate-500 mt-1 truncate" title={folder.path}>
+                    📂 {folder.path}
+                  </div>
+                )}
               </div>
             ))}
 
