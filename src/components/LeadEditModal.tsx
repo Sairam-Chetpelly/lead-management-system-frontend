@@ -343,6 +343,12 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         showToast('Project Value is required for won leads', 'error');
         return;
       }
+      const projectValueNum = Number(formData.projectValue);
+      console.log('Project Value:', formData.projectValue, 'Converted:', projectValueNum);
+      if (isNaN(projectValueNum) || projectValueNum < 100000) {
+        showToast('Project Value must be at least 100000', 'error');
+        return;
+      }
     }
     
     setSubmitting(true);
@@ -792,12 +798,17 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                 type="number"
                 value={formData.projectValue}
                 onChange={(e) => handleInputChange('projectValue', e.target.value)}
+                onInvalid={(e) => {
+                  e.preventDefault();
+                  showToast('Project Value must be at least 100000', 'error');
+                }}
+                min="100000"
                 required={(() => {
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'won';
                 })()}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm"
-                placeholder="Enter project value (500,000) Number only"
+                placeholder="Enter project value (min 100000)"
               />
             </div>
             <div className="space-y-1">
