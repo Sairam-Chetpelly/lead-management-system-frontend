@@ -10,7 +10,7 @@ import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'luci
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
-import { downloadCSV } from '@/lib/exportUtils';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface User {
@@ -262,7 +262,7 @@ export default function UsersTable() {
 
   const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteUser(deleteDialog.id);
+      await authAPI.deleteUser(deleteDialog.id);
       showToast('User deleted successfully', 'success');
       fetchUsers();
     } catch (error: any) {
@@ -354,14 +354,9 @@ export default function UsersTable() {
           <button 
             onClick={async () => {
               try {
-                const response = await authAPI.exportUsers();
-                // downloadCSV imported at top
-                const exportData = response.data.data || response.data;
-                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
-                  showToast('No data to export', 'error');
-                  return;
-                }
-                downloadCSV(exportData, 'users.csv');
+                const response = await authAPI.exportUsers(debouncedFilters);
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'users.csv');
+                showToast('Users exported successfully', 'success');
               } catch (error: any) {
                 console.error('Export failed:', error);
                 const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';

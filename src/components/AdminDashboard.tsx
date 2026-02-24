@@ -226,58 +226,26 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <div className="flex items-center gap-2">
               {(user.role === 'admin' || user.role === 'marketing') && (
                 <button
-                  onClick={() => {
-                    const csv = [
-                      ['Metric', 'Value'],
-                      ['Total Leads', stats.totalLeads],
-                      ['Leads MTD', stats.leadsMTD],
-                      ['Leads Today', stats.leadsToday],
-                      ['Total Calls', stats.totalCalls],
-                      ['Calls MTD', stats.callsMTD],
-                      ['Calls Today', stats.callsToday],
-                      ['Total Qualified', stats.totalQualified],
-                      ['Qualified MTD', stats.qualifiedMTD],
-                      ['Qualified Today', stats.qualifiedToday],
-                      ['Total Lost', stats.totalLost],
-                      ['Lost MTD', stats.lostMTD],
-                      ['Lost Today', stats.lostToday],
-                      ['Total Won', stats.totalWon],
-                      ['Won MTD', stats.wonMTD],
-                      ['Won Today', stats.wonToday],
-                      ['Site Visits', stats.siteVisits],
-                      ['Center Visits', stats.centerVisits],
-                      ['Virtual Meetings', stats.virtualMeetings],
-                      [''],
-                      ['Daily Leads'],
-                      ['Date', 'Count'],
-                      ...stats.dailyLeads.map((d: any) => [d.date, d.count]),
-                      [''],
-                      ['Daily Calls'],
-                      ['Date', 'Count'],
-                      ...stats.dailyCalls.map((d: any) => [d.date, d.count]),
-                      [''],
-                      ['Source Wise Leads'],
-                      ['Source', 'Count'],
-                      ...stats.sourceLeads.map((s: any) => [s._id, s.count]),
-                      [''],
-                      ['Source Wise Qualified'],
-                      ['Source', 'Count'],
-                      ...stats.sourceQualified.map((s: any) => [s._id, s.count]),
-                      [''],
-                      ['Center Won Leads'],
-                      ['Center', 'Won Count', 'Project Value'],
-                      ...stats.centerWonData.map((c: any) => [c._id, c.wonCount, c.totalValue]),
-                      [''],
-                      ['Source/Center Qualified Distribution'],
-                      ['Source', 'Center', 'Count'],
-                      ...stats.sourceCenterData.map((sc: any) => [sc._id.source, sc._id.centre, sc.count])
-                    ].map(row => row.join(',')).join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
-                    link.click();
+                  onClick={async () => {
+                    try {
+                      const response = await authAPI.exportAdminDashboard({
+                        userType: filters.userType,
+                        agentId: filters.agentId,
+                        startDate: filters.startDate,
+                        endDate: filters.endDate,
+                        sourceId: filters.sourceId,
+                        centreId: filters.centreId
+                      });
+                      const blob = new Blob([response.data], { type: 'text/csv' });
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
+                      link.click();
+                      window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                      console.error('Export failed:', error);
+                    }
                   }}
                   className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
                 >

@@ -10,7 +10,7 @@ import { authAPI } from '@/lib/auth';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
-import { downloadCSV } from '@/lib/exportUtils';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 
 interface ProjectHouseType {
   _id: string;
@@ -185,17 +185,13 @@ export default function ProjectHouseTypesTable() {
           <button 
             onClick={async () => {
               try {
-                const response = await authAPI.exportProjectHouseTypes();
-                // downloadCSV imported at top
-                const exportData = response.data.data || response.data;
-                if (!exportData || (Array.isArray(exportData) && exportData.length === 0)) {
-                  showToast('No data to export', 'error');
-                  return;
-                }
-                downloadCSV(exportData, 'project-house-types.csv');
-              } catch (error) {
+                const response = await authAPI.exportProjectHouseTypes(debouncedFilters);
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'project-house-types.csv');
+                showToast('Project house types exported successfully', 'success');
+              } catch (error: any) {
                 console.error('Export failed:', error);
-                showToast('Export failed. Please try again.', 'error');
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"

@@ -199,7 +199,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   const fetchDropdownData = async () => {
     try {
       const [usersRes, sourcesRes, centresRes, languagesRes, statusesRes, formDataRes] = await Promise.all([
-        authAPI.getUsersAll({ limit: 1000 }),
+        authAPI.getUsers({ limit: 1000 }),
         authAPI.admin.getAllLeadSources(),
         authAPI.admin.getAllCentres(),
         authAPI.admin.getAllLanguages(),

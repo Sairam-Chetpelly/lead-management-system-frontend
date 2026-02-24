@@ -17,6 +17,8 @@ import LeadEditModal from './LeadEditModal';
 import PresalesLeadEditModal from './PresalesLeadEditModal';
 import SearchableAgentDropdown from './SearchableAgentDropdown';
 import SearchableAdDropdown from './SearchableAdDropdown';
+import { downloadCSVBlob } from '@/lib/exportUtils';
+
 
 interface LeadsTableProps {
   user: any;
@@ -678,10 +680,19 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={exportLeads}
-            style={{ display: isSalesAgent || isPreSalesAgent ? 'none' : 'flex' }}
-            className="items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
-          >
+            onClick={async () => {
+              try {
+                const response = await authAPI.exportLeads(debouncedFilters);
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'leads.csv');
+                showToast('Leads exported successfully', 'success');
+              } catch (error: any) {
+                console.error('Export failed:', error);
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
+              }
+            }}
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+         >
             <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
             <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
           </button>
