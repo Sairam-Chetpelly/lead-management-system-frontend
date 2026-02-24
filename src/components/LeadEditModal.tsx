@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail, MessageSquare, MapPin, Tag, File, Clock, CheckCircle } from 'lucide-react';
+import { X, Save, Calendar, Upload, FileText, User, Building, Globe, MessageSquare, MapPin, Tag, File, Clock, CheckCircle } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -151,7 +151,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     setLoading(true);
     try {
       const response = await authAPI.getLead(leadId);
-      const lead = response.data.lead;
+      console.log('Lead API response:', response.data);
+      const lead = response.data.data?.lead || response.data.lead || response.data.data || response.data;
 
       setFormData({
         name: lead.name || '',
@@ -188,8 +189,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         requirementWithinTwoMonths: lead.requirementWithinTwoMonths || false,
         cpUserName: lead.cpUserName || ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching lead:', error);
+      console.error('Error response:', error.response?.data);
       showToast('Failed to fetch lead data', 'error');
     } finally {
       setLoading(false);

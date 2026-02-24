@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Mail, Phone, User, Building, Globe, Eye, Search, Filter, FileSpreadsheet, Edit, Trash2, PhoneCall, FileText } from 'lucide-react';
+import { Mail, Phone, Eye, Search, Filter, FileSpreadsheet, Edit, Trash2, PhoneCall, FileText } from 'lucide-react';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
 import { usePagination } from '@/hooks/usePagination';
@@ -95,7 +95,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [showLeadView, setShowLeadView] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<{ isOpen: boolean, leadId: string }>({ isOpen: false, leadId: '' });
@@ -323,10 +322,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     handlePageChange(1);
   };
 
-  const handleView = (lead: Lead) => {
-    setViewLead(lead);
-  };
-
   const handleViewDetails = (leadId: string) => {
     setShowLeadView(leadId);
   };
@@ -375,26 +370,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     }
   };
 
-  const exportLeads = async () => {
-    try {
-      console.log('Exporting leads with filters:', debouncedFilters);
-      const response = await authAPI.exportLeads({ sortBy, sortOrder, ...debouncedFilters });
-      console.log('Export response:', response);
-      console.log('Export response data:', response.data);
 
-      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-        showToast('No data to export', 'info');
-        return;
-      }
-
-      const { downloadCSV } = await import('@/lib/exportUtils');
-      downloadCSV(response.data, 'leads.csv');
-      showToast('Leads exported successfully', 'success');
-    } catch (error: any) {
-      console.error('Export failed:', error);
-      showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
-    }
-  };
 
   if (showLeadView) {
     return (
@@ -1074,109 +1050,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         />
       </div>
 
-      {/* View Lead Modal */}
-      <Modal
-        isOpen={!!viewLead}
-        onClose={() => setViewLead(null)}
-        title="Lead Details"
-      >
-        {viewLead && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Lead ID</label>
-                <p className="text-sm text-gray-900">{viewLead.leadID}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="text-sm text-gray-900">{viewLead.name || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="text-sm text-gray-900">{viewLead.email || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <p className="text-sm text-gray-900">{viewLead.contactNumber || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Source</label>
-                <p className="text-sm text-gray-900">{viewLead.sourceId?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Lead Value</label>
-                <p className="text-sm text-gray-900">{viewLead.leadValue || 'Not set'}</p>
-              </div>
-            </div>
-            {viewLead.centreId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Centre</label>
-                <p className="text-sm text-gray-900">{viewLead.centreId.name}</p>
-              </div>
-            )}
-            {(isAdmin || isMarketing) ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
-                <p className="text-sm text-gray-900">
-                  {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
-                <p className="text-sm text-gray-900">
-                  {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
-                </p>
-              </div>
-            </div>
-            ) : (!isSalesAgent && !isSalesManager && !isHodSales) ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
-              <p className="text-sm text-gray-900">
-                {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
-              </p>
-            </div>
-            ) : (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
-              <p className="text-sm text-gray-900">
-                {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
-              </p>
-            </div>
-            )}
-            {viewLead.comment && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Comment</label>
-                <p className="text-sm text-gray-900">{viewLead.comment}</p>
-              </div>
-            )}
-            {(viewLead.leadStatusId || viewLead.leadSubStatusId) && (
-              <div className="grid grid-cols-2 gap-4">
-                {viewLead.leadStatusId && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Lead Status</label>
-                    <p className="text-sm text-gray-900">{viewLead.leadStatusId.name}</p>
-                  </div>
-                )}
-                {viewLead.leadSubStatusId && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Sub Status</label>
-                    <p className="text-sm text-gray-900">{viewLead.leadSubStatusId.name}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Created At</label>
-              <p className="text-sm text-gray-900">{new Date(viewLead.createdAt).toLocaleString()}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* View Lead Modal - Removed as unused */}
 
       {/* Create Lead Modal */}
       <LeadCreationModal
