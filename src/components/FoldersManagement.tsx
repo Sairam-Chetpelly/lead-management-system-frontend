@@ -41,6 +41,7 @@ export default function FoldersManagement() {
   const [previewType, setPreviewType] = useState<'csv' | 'excel' | 'doc' | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean, type: 'folder' | 'document', id: string, name: string }>({ isOpen: false, type: 'folder', id: '', name: '' });
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -226,6 +227,7 @@ export default function FoldersManagement() {
   };
 
   const handleDownload = async (id: string, fileName: string) => {
+    setDownloadingId(id);
     try {
       const blob = await documentService.downloadDocument(id);
       const url = window.URL.createObjectURL(blob);
@@ -252,6 +254,8 @@ export default function FoldersManagement() {
       }
       
       showToast(errorMessage, 'error');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -537,10 +541,18 @@ export default function FoldersManagement() {
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDownload(doc._id, doc.fileName); }}
-                      className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all"
+                      disabled={downloadingId === doc._id}
+                      className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Download"
                     >
-                      <Download size={16} />
+                      {downloadingId === doc._id ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Download size={16} />
+                      )}
                     </button>
                     {currentUser?.role === 'admin' && (
                       <button
