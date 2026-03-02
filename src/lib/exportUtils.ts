@@ -1,3 +1,11 @@
+const getTimestampedFilename = (filename: string): string => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const nameParts = filename.split('.');
+  const ext = nameParts.pop();
+  const name = nameParts.join('.');
+  return `${name}_${timestamp}.${ext}`;
+};
+
 export const downloadCSV = (data: any[], filename: string) => {
   try {
     console.log('downloadCSV called with:', { data, filename });
@@ -32,7 +40,7 @@ export const downloadCSV = (data: any[], filename: string) => {
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', filename);
+      link.setAttribute('download', getTimestampedFilename(filename));
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -51,7 +59,7 @@ export const downloadCSVBlob = (blob: Blob, filename: string) => {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename;
+  link.download = getTimestampedFilename(filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

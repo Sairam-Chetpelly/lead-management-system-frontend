@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import { Line } from 'react-chartjs-2';
 import { FileSpreadsheet } from 'lucide-react';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -236,13 +237,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         sourceId: filters.sourceId,
                         centreId: filters.centreId
                       });
-                      const blob = new Blob([response.data], { type: 'text/csv' });
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
-                      link.click();
-                      window.URL.revokeObjectURL(url);
+                      downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'dashboard-export.csv');
                     } catch (error) {
                       console.error('Export failed:', error);
                     }
