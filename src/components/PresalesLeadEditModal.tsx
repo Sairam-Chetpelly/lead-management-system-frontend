@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Upload, FileText, User, Building, MessageSquare } from 'lucide-react';
+import { X, Save, Upload, FileText, User, Building, MessageSquare, MapPin } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -31,6 +31,7 @@ interface FormData {
   meetingArrangedDate: string;
   comment: string;
   cpUserName: string;
+  outOfStation: boolean;
 }
 
 interface DropdownItem {
@@ -69,7 +70,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     cifDate: '',
     meetingArrangedDate: '',
     comment: '',
-    cpUserName: ''
+    cpUserName: '',
+    outOfStation: false
   });
 
   const [dropdownData, setDropdownData] = useState<DropdownData>({
@@ -114,7 +116,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         cifDate: lead.cifDate ? lead.cifDate : '',
         meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
         comment: '',
-        cpUserName: lead.cpUserName || ''
+        cpUserName: lead.cpUserName || '',
+        outOfStation: lead.outOfStation || false
       });
     } catch (error: any) {
       console.error('Error fetching lead:', error);
@@ -259,7 +262,8 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       cifDate: '',
       meetingArrangedDate: '',
       comment: '',
-      cpUserName: ''
+      cpUserName: '',
+      outOfStation: false
     });
     setFiles([]);
     onClose();
@@ -465,6 +469,19 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 <option value="high value">High Value</option>
                 <option value="low value">Low Value</option>
               </select>
+            </div>
+            <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <input
+                type="checkbox"
+                id="outOfStation"
+                checked={formData.outOfStation}
+                onChange={(e) => handleInputChange('outOfStation', e.target.checked)}
+                className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="outOfStation" className="text-sm font-semibold text-gray-700 flex items-center">
+                <MapPin className="mr-2 h-4 w-4" />
+                Out of Station
+              </label>
             </div>
           </div>
         </div>
