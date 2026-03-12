@@ -14,6 +14,12 @@ export const folderService = {
     return response.data.data?.folders || response.data.folders || response.data;
   },
 
+  // Get all folders (for tree view)
+  getAllFolders: async () => {
+    const response = await api.get('/api/folders/all');
+    return response.data.data?.folders || response.data.folders || response.data;
+  },
+
   // Get folder contents
   getFolderContents: async (id: string) => {
     const response = await api.get(`/api/folders/${id}`);

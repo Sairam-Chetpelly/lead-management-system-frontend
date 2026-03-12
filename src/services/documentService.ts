@@ -10,11 +10,14 @@ export const documentService = {
   },
 
   // Get documents
-  getDocuments: async (folderId?: string, keyword?: string, keywords?: string[]) => {
+  getDocuments: async (folderId?: string, keyword?: string, keywords?: string[], categories?: string[], startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
     if (folderId) params.append('folderId', folderId);
     if (keyword) params.append('keyword', keyword);
     if (keywords && keywords.length > 0) params.append('keywords', keywords.join(','));
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
     const response = await api.get(`/api/documents?${params.toString()}`);
     return response.data.data?.documents || response.data.documents || response.data;
   },
