@@ -604,7 +604,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                         return selectedStatus?.slug === 'qualified';
                       })()}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
+                      disabled={isSalesAgent}
+                      className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm ${isSalesAgent ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
                     >
                       <option value="">Select Sales Agent</option>
                       {salesUsers
@@ -744,7 +745,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
                 })()}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm"
+                disabled={isSalesAgent}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm ${isSalesAgent ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
               >
                 <option value="">Select Language</option>
                 {dropdownData.languages.map((language: any) => (

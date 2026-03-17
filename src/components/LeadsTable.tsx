@@ -121,6 +121,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     siteVisit: '',
     centerVisit: '',
     virtualMeeting: '',
+    leadClosure: '',
     dateFrom: '',
     dateTo: '',
     outOfStation: '',
@@ -407,6 +408,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 siteVisit: '',
                 centerVisit: '',
                 virtualMeeting: '',
+                leadClosure: '',
                 dateFrom: '',
                 dateTo: '',
                 outOfStation: '',
@@ -438,6 +440,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 siteVisit: '',
                 centerVisit: '',
                 virtualMeeting: '',
+                leadClosure: '',
                 dateFrom: '',
                 dateTo: '',
                 outOfStation: '',
@@ -588,6 +591,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
               <option value="false">No</option>
             </select>
           )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
+            <select
+              value={filters.leadClosure}
+              onChange={(e) => handleFilterChange('leadClosure', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Lead Closure</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            )}
             {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
             <select
               value={filters.outOfStation}
