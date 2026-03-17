@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X, Grid3x3, List } from 'lucide-react';
+import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X, Grid3x3, List, CheckSquare, Square, Package } from 'lucide-react';
 import { folderService } from '@/services/folderService';
 import { documentService } from '@/services/documentService';
 import { keywordService } from '@/services/keywordService';
@@ -14,6 +14,7 @@ import DeleteDialog from './DeleteDialog';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
+import PizZip from 'pizzip';
 
 export default function FoldersManagement() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -31,6 +32,7 @@ export default function FoldersManagement() {
   const [editingDocument, setEditingDocument] = useState<any>(null);
   const [editingFolder, setEditingFolder] = useState<any>(null);
   const [folderName, setFolderName] = useState('');
+  const [folderRestricted, setFolderRestricted] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterKeywords, setFilterKeywords] = useState<string[]>([]);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
@@ -44,13 +46,17 @@ export default function FoldersManagement() {
   const [uploading, setUploading] = useState(false);
   const [viewDocument, setViewDocument] = useState<any>(null);
   const [previewContent, setPreviewContent] = useState<string>('');
-  const [previewType, setPreviewType] = useState<'csv' | 'excel' | 'doc' | null>(null);
+  const [previewType, setPreviewType] = useState<'csv' | 'excel' | 'doc' | 'ppt' | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean, type: 'folder' | 'document', id: string, name: string }>({ isOpen: false, type: 'folder', id: '', name: '' });
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categoryName, setCategoryName] = useState('');
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [downloadingFolderId, setDownloadingFolderId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -68,6 +74,8 @@ export default function FoldersManagement() {
     loadData();
     loadKeywords();
     loadCategories();
+    // Clear selection when folder or filters change
+    setSelectedDocuments(new Set());
   }, [currentFolder, searchKeyword, filterKeywords, filterCategories, startDate, endDate]);
 
   const loadKeywords = async () => {
@@ -198,11 +206,30 @@ export default function FoldersManagement() {
               onClick={() => openFolder(folder)}
               className="flex items-center gap-2 flex-1 min-w-0"
             >
-              <FolderOpen size={16} className="flex-shrink-0" />
-              <span className="flex-1 truncate text-sm">{folder.name}</span>
+              <FolderOpen size={16} className={`flex-shrink-0 ${folder.restricted ? 'text-red-500' : ''}`} />
+              <span className={`flex-1 truncate text-sm ${folder.restricted ? 'text-red-600 font-medium' : ''}`}>
+                {folder.name} {folder.restricted && '🔒'}
+              </span>
             </div>
             {currentUser?.role === 'admin' && (
               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 flex-shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleFolderDownload(folder._id, folder.name); }}
+                  disabled={downloadingFolderId === folder._id || folder.restricted}
+                  className={`p-1 rounded hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    folder.restricted ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'
+                  }`}
+                  title={folder.restricted ? 'Folder is restricted' : 'Download Folder'}
+                >
+                  {downloadingFolderId === folder._id ? (
+                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <Download size={12} />
+                  )}
+                </button>
                 <button
                   onClick={(e) => handleEditFolder(folder, e)}
                   className="p-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition-all"
@@ -241,11 +268,13 @@ export default function FoldersManagement() {
     try {
       await folderService.createFolder({
         name: folderName,
-        parentFolderId: currentFolder || undefined
+        parentFolderId: currentFolder || undefined,
+        restricted: folderRestricted
       });
       showToast('Folder created successfully', 'success');
       setShowCreateModal(false);
       setFolderName('');
+      setFolderRestricted(false);
       loadData();
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Failed to create folder', 'error');
@@ -256,16 +285,21 @@ export default function FoldersManagement() {
     e.stopPropagation();
     setEditingFolder(folder);
     setFolderName(folder.name);
+    setFolderRestricted(folder.restricted || false);
     setShowEditFolderModal(true);
   };
 
   const handleUpdateFolder = async () => {
     try {
-      await folderService.updateFolder(editingFolder._id, { name: folderName });
+      await folderService.updateFolder(editingFolder._id, { 
+        name: folderName,
+        restricted: folderRestricted
+      });
       showToast('Folder updated successfully', 'success');
       setShowEditFolderModal(false);
       setEditingFolder(null);
       setFolderName('');
+      setFolderRestricted(false);
       loadData();
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Failed to update folder', 'error');
@@ -401,11 +435,19 @@ export default function FoldersManagement() {
     return url;
   };
 
-  const canPreview = (fileType: string) => {
+  const isImageFile = (fileType: string, fileName: string) => {
+    return fileType.startsWith('image/') || 
+           /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+  };
+
+  const canPreview = (fileType: string, fileName: string) => {
     return fileType.startsWith('image/') || 
            fileType === 'application/pdf' || 
            fileType.startsWith('video/') || 
-           fileType.startsWith('audio/');
+           fileType.startsWith('audio/') ||
+           fileType.includes('presentation') ||
+           fileType.includes('powerpoint') ||
+           /\.(ppt|pptx|pps|ppsx|potx|potm|pptm)$/i.test(fileName);
   };
 
   const handleViewDocument = async (doc: any) => {
@@ -507,6 +549,97 @@ export default function FoldersManagement() {
       await loadCategories();
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Failed to create category', 'error');
+    }
+  };
+
+  const toggleDocumentSelection = (docId: string) => {
+    setSelectedDocuments(prev => {
+      const next = new Set(prev);
+      if (next.has(docId)) {
+        next.delete(docId);
+      } else {
+        next.add(docId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllDocuments = () => {
+    setSelectedDocuments(new Set(documents.map(doc => doc._id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedDocuments(new Set());
+    setIsMultiSelectMode(false);
+  };
+
+  const handleBulkDownload = async () => {
+    if (selectedDocuments.size === 0) {
+      showToast('Please select documents to download', 'error');
+      return;
+    }
+
+    setBulkDownloading(true);
+    try {
+      const blob = await folderService.multiDownload(Array.from(selectedDocuments));
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `documents_${Date.now()}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast(`${selectedDocuments.size} documents downloaded successfully`, 'success');
+      clearSelection();
+    } catch (error: any) {
+      let errorMessage = 'Failed to download documents';
+      
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const json = JSON.parse(text);
+          errorMessage = json.message || json.error || errorMessage;
+        } catch (e) {
+          // If parsing fails, use default message
+        }
+      } else {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
+      }
+      
+      showToast(errorMessage, 'error');
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
+
+  const handleFolderDownload = async (folderId: string, folderName: string) => {
+    setDownloadingFolderId(folderId);
+    try {
+      const blob = await folderService.downloadFolder(folderId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${folderName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast(`Folder "${folderName}" downloaded successfully`, 'success');
+    } catch (error: any) {
+      let errorMessage = 'Failed to download folder';
+      
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const json = JSON.parse(text);
+          errorMessage = json.message || json.error || errorMessage;
+        } catch (e) {
+          // If parsing fails, use default message
+        }
+      } else {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
+      }
+      
+      showToast(errorMessage, 'error');
+    } finally {
+      setDownloadingFolderId(null);
     }
   };
 
@@ -661,6 +794,43 @@ export default function FoldersManagement() {
                       <ArrowLeft size={16} /> <span>Back</span>
                     </button>
                   )}
+                  {currentFolder && (
+                    <button
+                      onClick={() => {
+                        const currentFolderData = folderPath[folderPath.length - 1];
+                        if (currentFolderData?.restricted) {
+                          showToast('This folder is restricted and cannot be downloaded', 'error');
+                          return;
+                        }
+                        handleFolderDownload(currentFolder, currentFolderData?.name || 'Current Folder');
+                      }}
+                      disabled={downloadingFolderId === currentFolder || folderPath[folderPath.length - 1]?.restricted}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                        folderPath[folderPath.length - 1]?.restricted 
+                          ? 'bg-gray-400 text-gray-700' 
+                          : 'bg-purple-600 text-white hover:bg-purple-700'
+                      }`}
+                      title={folderPath[folderPath.length - 1]?.restricted ? 'Folder is restricted' : 'Download Current Folder'}
+                    >
+                      {downloadingFolderId === currentFolder ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Downloading...
+                        </>
+                      ) : folderPath[folderPath.length - 1]?.restricted ? (
+                        <>
+                          🔒 Restricted
+                        </>
+                      ) : (
+                        <>
+                          <Package size={16} /> Download Folder
+                        </>
+                      )}
+                    </button>
+                  )}
                   <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
                     <button
                       onClick={() => setViewMode('grid')}
@@ -677,6 +847,19 @@ export default function FoldersManagement() {
                       <List size={16} />
                     </button>
                   </div>
+                  {documents.length > 0 && (
+                    <button
+                      onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all shadow-sm ${
+                        isMultiSelectMode 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                      title="Multi-select Mode"
+                    >
+                      <CheckSquare size={16} /> Select
+                    </button>
+                  )}
                   {currentUser?.role === 'admin' && (
                     <button
                       onClick={() => setShowUploadModal(true)}
@@ -688,6 +871,62 @@ export default function FoldersManagement() {
                 </div>
               </div>
             </div>
+
+            {/* Multi-select Controls */}
+            {isMultiSelectMode && documents.length > 0 && (
+              <div className="p-4 bg-blue-50 border-b border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-blue-700">
+                      {selectedDocuments.size} of {documents.length} selected
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={selectAllDocuments}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={clearSelection}
+                        className="text-sm text-slate-600 hover:text-slate-800 font-medium"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {selectedDocuments.size > 0 && (
+                      <button
+                        onClick={handleBulkDownload}
+                        disabled={bulkDownloading}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkDownloading ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <Package size={16} /> Download Selected ({selectedDocuments.size})
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setIsMultiSelectMode(false)}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition-all shadow-sm"
+                    >
+                      <X size={16} /> Exit Select Mode
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Documents Grid/List */}
             <div className="flex-1 overflow-y-auto p-6 relative">
@@ -706,14 +945,178 @@ export default function FoldersManagement() {
                   {documents.map((doc) => (
                     <div 
                       key={doc._id} 
-                      className="group p-5 bg-white rounded-2xl hover:shadow-xl transition-all duration-300 border border-slate-200 hover:border-blue-300 cursor-pointer"
-                      onClick={() => handleViewDocument(doc)}
+                      className={`group relative p-5 bg-white rounded-2xl hover:shadow-xl transition-all duration-300 border cursor-pointer ${
+                        isMultiSelectMode && selectedDocuments.has(doc._id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-blue-300'
+                      }`}
+                      onClick={() => isMultiSelectMode ? toggleDocumentSelection(doc._id) : handleViewDocument(doc)}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-600 rounded-xl flex items-center justify-center">
-                          <File className="text-white" size={24} />
+                      {isMultiSelectMode && (
+                        <div className="absolute top-3 left-3 z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDocumentSelection(doc._id);
+                            }}
+                            className="p-1 bg-white rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50"
+                          >
+                            {selectedDocuments.has(doc._id) ? (
+                              <CheckSquare size={16} className="text-blue-600" />
+                            ) : (
+                              <Square size={16} className="text-slate-400" />
+                            )}
+                          </button>
                         </div>
-                        <div className="flex gap-1">
+                      )}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-20 h-20 bg-gradient-to-br from-slate-400 to-slate-600 rounded-xl flex items-center justify-center overflow-hidden">
+                          {isImageFile(doc.fileType, doc.fileName) ? (
+                            <img
+                              src={getViewUrl(doc.filePath)}
+                              alt={doc.fileName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={28} />
+                        </div>
+                        {!isMultiSelectMode && (
+                          <div className="flex gap-1">
+                            {currentUser?.role === 'admin' && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
+                                className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
+                                title="Edit"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
+                              className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
+                              title="View"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDownload(doc._id, doc.fileName); }}
+                              disabled={downloadingId === doc._id}
+                              className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Download"
+                            >
+                              {downloadingId === doc._id ? (
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <Download size={16} />
+                              )}
+                            </button>
+                            {currentUser?.role === 'admin' && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
+                                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {/* <div className="text-xs text-slate-400 mb-1 truncate" title={doc.fileName}>{doc.fileName}</div> */}
+                      <div className="font-bold text-slate-900 truncate" title={doc.title}>{doc.title}</div>
+                      {doc.subtitle && <div className="text-xs text-slate-600 mt-1 truncate">{doc.subtitle}</div>}
+                      <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div>
+                      {(searchKeyword || filterKeywords.length > 0) && doc.folderId && (
+                        <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                          <FolderOpen size={12} />
+                          <span className="truncate">{doc.folderId?.name || 'Unknown Folder'}</span>
+                        </div>
+                      )}
+                      {doc.keywords && doc.keywords.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {doc.keywords.slice(0, 3).map((k: any) => (
+                            <span key={k._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">{k.name}</span>
+                          ))}
+                          {doc.keywords.length > 3 && <span className="text-xs text-slate-500">+{doc.keywords.length - 3}</span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {documents.map((doc) => (
+                    <div 
+                      key={doc._id} 
+                      className={`group flex items-center gap-4 p-4 bg-white rounded-xl hover:shadow-lg transition-all duration-300 border cursor-pointer ${
+                        isMultiSelectMode && selectedDocuments.has(doc._id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-blue-300'
+                      }`}
+                      onClick={() => isMultiSelectMode ? toggleDocumentSelection(doc._id) : handleViewDocument(doc)}
+                    >
+                      {isMultiSelectMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDocumentSelection(doc._id);
+                          }}
+                          className="p-1 bg-white rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 flex-shrink-0"
+                        >
+                          {selectedDocuments.has(doc._id) ? (
+                            <CheckSquare size={16} className="text-blue-600" />
+                          ) : (
+                            <Square size={16} className="text-slate-400" />
+                          )}
+                        </button>
+                      )}
+                      <div className="w-20 h-20 bg-gradient-to-br from-slate-400 to-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {isImageFile(doc.fileType, doc.fileName) ? (
+                          <img
+                            src={getViewUrl(doc.filePath)}
+                            alt={doc.fileName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-900 truncate">{doc.title}</div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-slate-500 truncate">{doc.fileName}</span>
+                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs text-slate-500 capitalize">{doc.category}</span>
+                          {doc.subtitle && (
+                            <>
+                              <span className="text-xs text-slate-400">•</span>
+                              <span className="text-xs text-slate-500 truncate">{doc.subtitle}</span>
+                            </>
+                          )}
+                        </div>
+                        {doc.keywords && doc.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {doc.keywords.slice(0, 5).map((k: any) => (
+                              <span key={k._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">{k.name}</span>
+                            ))}
+                            {doc.keywords.length > 5 && <span className="text-xs text-slate-500">+{doc.keywords.length - 5}</span>}
+                          </div>
+                        )}
+                      </div>
+                      {!isMultiSelectMode && (
+                        <div className="flex gap-1 flex-shrink-0">
                           {currentUser?.role === 'admin' && (
                             <button
                               onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
@@ -755,103 +1158,7 @@ export default function FoldersManagement() {
                             </button>
                           )}
                         </div>
-                      </div>
-                      {/* <div className="text-xs text-slate-400 mb-1 truncate" title={doc.fileName}>{doc.fileName}</div> */}
-                      <div className="font-bold text-slate-900 truncate" title={doc.title}>{doc.title}</div>
-                      {doc.subtitle && <div className="text-xs text-slate-600 mt-1 truncate">{doc.subtitle}</div>}
-                      <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div>
-                      {(searchKeyword || filterKeywords.length > 0) && doc.folderId && (
-                        <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                          <FolderOpen size={12} />
-                          <span className="truncate">{doc.folderId?.name || 'Unknown Folder'}</span>
-                        </div>
                       )}
-                      {doc.keywords && doc.keywords.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {doc.keywords.slice(0, 3).map((k: any) => (
-                            <span key={k._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">{k.name}</span>
-                          ))}
-                          {doc.keywords.length > 3 && <span className="text-xs text-slate-500">+{doc.keywords.length - 3}</span>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {documents.map((doc) => (
-                    <div 
-                      key={doc._id} 
-                      className="group flex items-center gap-4 p-4 bg-white rounded-xl hover:shadow-lg transition-all duration-300 border border-slate-200 hover:border-blue-300 cursor-pointer"
-                      onClick={() => handleViewDocument(doc)}
-                    >
-                      <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-slate-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <File className="text-white" size={20} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{doc.title}</div>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-slate-500 truncate">{doc.fileName}</span>
-                          <span className="text-xs text-slate-400">•</span>
-                          <span className="text-xs text-slate-500 capitalize">{doc.category}</span>
-                          {doc.subtitle && (
-                            <>
-                              <span className="text-xs text-slate-400">•</span>
-                              <span className="text-xs text-slate-500 truncate">{doc.subtitle}</span>
-                            </>
-                          )}
-                        </div>
-                        {doc.keywords && doc.keywords.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {doc.keywords.slice(0, 5).map((k: any) => (
-                              <span key={k._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">{k.name}</span>
-                            ))}
-                            {doc.keywords.length > 5 && <span className="text-xs text-slate-500">+{doc.keywords.length - 5}</span>}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        {currentUser?.role === 'admin' && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
-                            className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                            title="Edit"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
-                          className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
-                          title="View"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(doc._id, doc.fileName); }}
-                          disabled={downloadingId === doc._id}
-                          className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Download"
-                        >
-                          {downloadingId === doc._id ? (
-                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : (
-                            <Download size={16} />
-                          )}
-                        </button>
-                        {currentUser?.role === 'admin' && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
-                            className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -863,7 +1170,7 @@ export default function FoldersManagement() {
 
       <Modal
         isOpen={showCreateModal}
-        onClose={() => { setShowCreateModal(false); setFolderName(''); }}
+        onClose={() => { setShowCreateModal(false); setFolderName(''); setFolderRestricted(false); }}
         title="📁 Create New Folder"
         size="sm"
       >
@@ -880,6 +1187,20 @@ export default function FoldersManagement() {
               autoFocus
             />
           </div>
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={folderRestricted}
+                onChange={(e) => setFolderRestricted(e.target.checked)}
+                className="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2"
+              />
+              <div>
+                <span className="text-sm font-semibold text-slate-700">🔒 Restrict Download</span>
+                <p className="text-xs text-slate-500 mt-1">Prevent this folder from being downloaded directly</p>
+              </div>
+            </label>
+          </div>
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
@@ -890,7 +1211,7 @@ export default function FoldersManagement() {
             </button>
             <button
               type="button"
-              onClick={() => { setShowCreateModal(false); setFolderName(''); }}
+              onClick={() => { setShowCreateModal(false); setFolderName(''); setFolderRestricted(false); }}
               className="flex-1 bg-slate-200 text-slate-700 py-4 rounded-2xl hover:bg-slate-300 transition-all duration-200 font-semibold text-lg"
             >
               Cancel
@@ -901,7 +1222,7 @@ export default function FoldersManagement() {
 
       <Modal
         isOpen={showEditFolderModal}
-        onClose={() => { setShowEditFolderModal(false); setEditingFolder(null); setFolderName(''); }}
+        onClose={() => { setShowEditFolderModal(false); setEditingFolder(null); setFolderName(''); setFolderRestricted(false); }}
         title="✏️ Edit Folder"
         size="sm"
       >
@@ -918,6 +1239,20 @@ export default function FoldersManagement() {
               autoFocus
             />
           </div>
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={folderRestricted}
+                onChange={(e) => setFolderRestricted(e.target.checked)}
+                className="w-5 h-5 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2"
+              />
+              <div>
+                <span className="text-sm font-semibold text-slate-700">🔒 Restrict Download</span>
+                <p className="text-xs text-slate-500 mt-1">Prevent this folder from being downloaded directly</p>
+              </div>
+            </label>
+          </div>
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
@@ -927,7 +1262,7 @@ export default function FoldersManagement() {
             </button>
             <button
               type="button"
-              onClick={() => { setShowEditFolderModal(false); setEditingFolder(null); setFolderName(''); }}
+              onClick={() => { setShowEditFolderModal(false); setEditingFolder(null); setFolderName(''); setFolderRestricted(false); }}
               className="flex-1 bg-slate-200 text-slate-700 py-4 rounded-2xl hover:bg-slate-300 transition-all duration-200 font-semibold text-lg"
             >
               Cancel
@@ -1190,6 +1525,25 @@ export default function FoldersManagement() {
                       style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}
                     />
                   </div>
+                ) : viewDocument.fileType.includes('presentation') || viewDocument.fileName.toLowerCase().match(/\.(ppt|pptx)$/) ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-red-600 rounded-full flex items-center justify-center shadow-2xl mb-6">
+                        <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">{viewDocument.title || viewDocument.fileName}</h3>
+                      <p className="text-sm text-slate-600 mb-6">PowerPoint Presentation</p>
+                      <p className="text-gray-600 mb-4">PowerPoint files cannot be previewed directly in the browser</p>
+                      <button
+                        onClick={() => handleDownload(viewDocument._id, viewDocument.fileName)}
+                        className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-2xl flex items-center gap-2 mx-auto font-semibold hover:opacity-80 transition-all shadow-lg"
+                      >
+                        <Download size={20} /> Download to view
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="relative w-full h-full">
                     <iframe
@@ -1206,7 +1560,7 @@ export default function FoldersManagement() {
               ) : previewType ? (
                 <div className="w-full h-full overflow-auto p-4" onContextMenu={(e) => e.preventDefault()}>
                   <div dangerouslySetInnerHTML={{ __html: previewContent }} />
-                </div>
+                  </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
