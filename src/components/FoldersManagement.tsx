@@ -1488,7 +1488,7 @@ export default function FoldersManagement() {
           <div className="h-full" onContextMenu={(e) => e.preventDefault()}>
             {viewDocument.subtitle && <p className="text-sm text-slate-600 mb-4">{viewDocument.subtitle}</p>}
             <div className="bg-slate-50 rounded-2xl overflow-hidden" style={{ height: 'calc(90vh - 200px)' }}>
-              {canPreview(viewDocument.fileType) ? (
+              {canPreview(viewDocument.fileType, viewDocument.fileName) ? (
                 viewDocument.fileType.startsWith('image/') ? (
                   <img
                     src={getViewUrl(viewDocument.filePath)}
