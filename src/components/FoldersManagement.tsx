@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X, Grid3x3, List, CheckSquare, Square, Package } from 'lucide-react';
+import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X, Grid3x3, List, CheckSquare, Square, Package, MoreVertical } from 'lucide-react';
 import { folderService } from '@/services/folderService';
 import { documentService } from '@/services/documentService';
 import { keywordService } from '@/services/keywordService';
@@ -11,6 +11,7 @@ import SearchableKeywordDropdown from './SearchableKeywordDropdown';
 import Modal from './Modal';
 import ModernLoader from './ModernLoader';
 import DeleteDialog from './DeleteDialog';
+import PowerPointViewer from './PowerPointViewer';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
@@ -57,6 +58,9 @@ export default function FoldersManagement() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [downloadingFolderId, setDownloadingFolderId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showPowerPointViewer, setShowPowerPointViewer] = useState(false);
+  const [powerPointDocument, setPowerPointDocument] = useState<any>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -69,6 +73,20 @@ export default function FoldersManagement() {
       }
     }
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openMenuId]);
 
   useEffect(() => {
     loadData();
@@ -440,17 +458,28 @@ export default function FoldersManagement() {
            /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
   };
 
+  const isPowerPointFile = (fileType: string, fileName: string) => {
+    return fileType.includes('presentation') || 
+           fileType.includes('powerpoint') ||
+           /\.(ppt|pptx|pps|ppsx|potx|potm|pptm)$/i.test(fileName);
+  };
+
   const canPreview = (fileType: string, fileName: string) => {
     return fileType.startsWith('image/') || 
            fileType === 'application/pdf' || 
            fileType.startsWith('video/') || 
            fileType.startsWith('audio/') ||
-           fileType.includes('presentation') ||
-           fileType.includes('powerpoint') ||
-           /\.(ppt|pptx|pps|ppsx|potx|potm|pptm)$/i.test(fileName);
+           isPowerPointFile(fileType, fileName);
   };
 
   const handleViewDocument = async (doc: any) => {
+    // Check if it's a PowerPoint file first
+    if (isPowerPointFile(doc.fileType, doc.fileName)) {
+      setPowerPointDocument(doc);
+      setShowPowerPointViewer(true);
+      return;
+    }
+
     setViewDocument(doc);
     setPreviewContent('');
     setPreviewType(null);
@@ -983,71 +1012,102 @@ export default function FoldersManagement() {
                               }}
                             />
                           ) : null}
-                          <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={28} />
+                          <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={20} />
                         </div>
                         {!isMultiSelectMode && (
-                          <div className="flex gap-1">
-                            {currentUser?.role === 'admin' && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
-                                className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                                title="Edit"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                            )}
+                          <div className="relative">
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
-                              className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
-                              title="View"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === doc._id ? null : doc._id);
+                              }}
+                              className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all"
+                              title="More actions"
                             >
-                              <Eye size={16} />
+                              <MoreVertical size={16} />
                             </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDownload(doc._id, doc.fileName); }}
-                              disabled={downloadingId === doc._id}
-                              className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Download"
-                            >
-                              {downloadingId === doc._id ? (
-                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <Download size={16} />
-                              )}
-                            </button>
-                            {currentUser?.role === 'admin' && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
-                                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                                title="Delete"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                            {openMenuId === doc._id && (
+                              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 min-w-[120px]">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewDocument(doc);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+                                >
+                                  <Eye size={14} /> View
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownload(doc._id, doc.fileName);
+                                    setOpenMenuId(null);
+                                  }}
+                                  disabled={downloadingId === doc._id}
+                                  className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {downloadingId === doc._id ? (
+                                    <>
+                                      <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                      Downloading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download size={14} /> Download
+                                    </>
+                                  )}
+                                </button>
+                                {currentUser?.role === 'admin' && (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditDocument(doc);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-2"
+                                    >
+                                      <Edit2 size={14} /> Edit
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteDocument(doc._id, doc.title || doc.fileName);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
+                                    >
+                                      <Trash2 size={14} /> Delete
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
                       </div>
                       {/* <div className="text-xs text-slate-400 mb-1 truncate" title={doc.fileName}>{doc.fileName}</div> */}
                       <div className="font-bold text-slate-900 truncate" title={doc.title}>{doc.title}</div>
-                      {doc.subtitle && <div className="text-xs text-slate-600 mt-1 truncate">{doc.subtitle}</div>}
-                      <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div>
-                      {(searchKeyword || filterKeywords.length > 0) && doc.folderId && (
+                      {/* {doc.subtitle && <div className="text-xs text-slate-600 mt-1 truncate">{doc.subtitle}</div>} */}
+                      {/* <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div> */}
+                      {/* {(searchKeyword || filterKeywords.length > 0) && doc.folderId && (
                         <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                           <FolderOpen size={12} />
                           <span className="truncate">{doc.folderId?.name || 'Unknown Folder'}</span>
                         </div>
-                      )}
-                      {doc.keywords && doc.keywords.length > 0 && (
+                      )} */}
+                      {/* {doc.keywords && doc.keywords.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {doc.keywords.slice(0, 3).map((k: any) => (
                             <span key={k._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">{k.name}</span>
                           ))}
                           {doc.keywords.length > 3 && <span className="text-xs text-slate-500">+{doc.keywords.length - 3}</span>}
                         </div>
-                      )}
+                      )} */}
                     </div>
                   ))}
                 </div>
@@ -1116,46 +1176,77 @@ export default function FoldersManagement() {
                         )}
                       </div>
                       {!isMultiSelectMode && (
-                        <div className="flex gap-1 flex-shrink-0">
-                          {currentUser?.role === 'admin' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
-                              className="p-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all"
-                              title="Edit"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          )}
+                        <div className="relative flex-shrink-0">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
-                            className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all"
-                            title="View"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === doc._id ? null : doc._id);
+                            }}
+                            className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all"
+                            title="More actions"
                           >
-                            <Eye size={16} />
+                            <MoreVertical size={16} />
                           </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDownload(doc._id, doc.fileName); }}
-                            disabled={downloadingId === doc._id}
-                            className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Download"
-                          >
-                            {downloadingId === doc._id ? (
-                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : (
-                              <Download size={16} />
-                            )}
-                          </button>
-                          {currentUser?.role === 'admin' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc._id, doc.title || doc.fileName); }}
-                              className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                          {openMenuId === doc._id && (
+                            <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 min-w-[120px]">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewDocument(doc);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+                              >
+                                <Eye size={14} /> View
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownload(doc._id, doc.fileName);
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={downloadingId === doc._id}
+                                className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {downloadingId === doc._id ? (
+                                  <>
+                                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Downloading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download size={14} /> Download
+                                  </>
+                                )}
+                              </button>
+                              {currentUser?.role === 'admin' && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditDocument(doc);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-2"
+                                  >
+                                    <Edit2 size={14} /> Edit
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteDocument(doc._id, doc.title || doc.fileName);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
+                                  >
+                                    <Trash2 size={14} /> Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
@@ -1420,6 +1511,16 @@ export default function FoldersManagement() {
             />
           </div>
           <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">Subtitle <span className="text-xs text-slate-500">(optional)</span></label>
+            <input
+              type="text"
+              placeholder="Enter document subtitle"
+              value={uploadSubtitle}
+              onChange={(e) => setUploadSubtitle(e.target.value)}
+              className="w-full px-5 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-semibold text-slate-700 mb-3">Category <span className="text-xs text-red-500">*</span></label>
             <select
               value={uploadCategory}
@@ -1525,25 +1626,6 @@ export default function FoldersManagement() {
                       style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}
                     />
                   </div>
-                ) : viewDocument.fileType.includes('presentation') || viewDocument.fileName.toLowerCase().match(/\.(ppt|pptx)$/) ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-red-600 rounded-full flex items-center justify-center shadow-2xl mb-6">
-                        <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{viewDocument.title || viewDocument.fileName}</h3>
-                      <p className="text-sm text-slate-600 mb-6">PowerPoint Presentation</p>
-                      <p className="text-gray-600 mb-4">PowerPoint files cannot be previewed directly in the browser</p>
-                      <button
-                        onClick={() => handleDownload(viewDocument._id, viewDocument.fileName)}
-                        className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-2xl flex items-center gap-2 mx-auto font-semibold hover:opacity-80 transition-all shadow-lg"
-                      >
-                        <Download size={20} /> Download to view
-                      </button>
-                    </div>
-                  </div>
                 ) : (
                   <div className="relative w-full h-full">
                     <iframe
@@ -1616,6 +1698,17 @@ export default function FoldersManagement() {
           </div>
         </form>
       </Modal>
+
+      {/* PowerPoint Viewer */}
+      <PowerPointViewer
+        isOpen={showPowerPointViewer}
+        onClose={() => {
+          setShowPowerPointViewer(false);
+          setPowerPointDocument(null);
+        }}
+        document={powerPointDocument}
+        onDownload={handleDownload}
+      />
     </div>
   );
 }
