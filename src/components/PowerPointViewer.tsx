@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
-import { X, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { Download, AlertCircle, RefreshCw } from 'lucide-react';
+import Modal from './Modal';
 
 interface PowerPointViewerProps {
   isOpen: boolean;
@@ -66,122 +67,51 @@ export default function PowerPointViewer({ isOpen, onClose, document, onDownload
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-slate-900 truncate">
-              📊 {document.title || document.fileName}
-            </h2>
-            {document.subtitle && (
-              <p className="text-sm text-slate-600 mt-1 truncate">{document.subtitle}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-3 ml-4">
-            <button
-              onClick={handleRetry}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-sm"
-              title="Retry Loading"
-            >
-              <RefreshCw size={16} />
-              Retry
-            </button>
-            <button
-              onClick={() => onDownload(document._id, document.fileName)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all shadow-sm"
-              title="Download PowerPoint"
-            >
-              <Download size={16} />
-              Download
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all"
-              title="Close"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={document.title || document.fileName} size="2xl">
+      <div className="flex flex-col h-full">
 
+        
         {/* Content */}
-        <div className="flex-1 overflow-hidden bg-slate-50 relative">
+        <div className="flex-1 overflow-hidden rounded-lg border border-gray-200 relative">
           {error ? (
-            <div className="flex items-center justify-center h-full p-8">
-              <div className="text-center max-w-2xl">
-                <div className="w-32 h-32 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center shadow-2xl mb-6 mx-auto">
-                  <AlertCircle className="w-16 h-16 text-white" />
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="text-red-500 mb-4">
+                  <AlertCircle size={48} className="mx-auto" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">Unable to Load Presentation</h3>
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-red-800 leading-relaxed">
-                    {error}
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={handleRetry}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all shadow-lg"
-                  >
-                    <RefreshCw size={20} />
-                    Try Again
-                  </button>
-                  <button
-                    onClick={() => onDownload(document._id, document.fileName)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg"
-                  >
-                    <Download size={20} />
-                    Download File
-                  </button>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Presentation</h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+
               </div>
             </div>
           ) : (
             <>
               {isLoading && (
-                <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10">
+                <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-10">
                   <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-700 font-medium text-lg">Loading PowerPoint Presentation...</p>
-                    <p className="text-sm text-slate-500 mt-2">Please wait while we prepare your presentation</p>
+                    <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-gray-700">Loading PowerPoint Presentation...</p>
                     {retryCount > 0 && (
-                      <p className="text-xs text-blue-600 mt-2">Retry attempt: {retryCount}</p>
+                      <p className="text-xs text-blue-600 mt-1">Retry attempt: {retryCount}</p>
                     )}
                   </div>
                 </div>
               )}
               
-              <div className="h-full w-full">
-                {/* Option A: Google Docs Viewer (Recommended) */}
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
-                  className="w-full h-full border-0"
-                  title={document.fileName}
-                  onLoad={() => setIsLoading(false)}
-                  onError={() => {
-                    setError('Failed to load presentation. Try downloading instead.');
-                    setIsLoading(false);
-                  }}
-                />
-                
-                {/* Option B: Microsoft Office Online Viewer (Alternative) */}
-                {/* <iframe
-                  src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`}
-                  className="w-full h-full border-0"
-                  title={document.fileName}
-                  onLoad={() => setIsLoading(false)}
-                  onError={() => {
-                    setError('Failed to load presentation. Try downloading instead.');
-                    setIsLoading(false);
-                  }}
-                /> */}
-              </div>
+              <iframe
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                className="w-full h-full"
+                title={document.fileName}
+                onLoad={() => setIsLoading(false)}
+                onError={() => {
+                  setError('Failed to load presentation. Try downloading instead.');
+                  setIsLoading(false);
+                }}
+              />
             </>
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
