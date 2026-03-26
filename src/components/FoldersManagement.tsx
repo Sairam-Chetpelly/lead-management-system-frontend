@@ -587,6 +587,11 @@ export default function FoldersManagement() {
       if (next.has(docId)) {
         next.delete(docId);
       } else {
+        // Check if we've reached the limit of 50 selections
+        if (next.size >= 50) {
+          showToast('Maximum 50 documents can be selected at once', 'error');
+          return prev;
+        }
         next.add(docId);
       }
       return next;
@@ -594,7 +599,12 @@ export default function FoldersManagement() {
   };
 
   const selectAllDocuments = () => {
-    setSelectedDocuments(new Set(documents.map(doc => doc._id)));
+    const documentsToSelect = documents.slice(0, 50); // Limit to first 50 documents
+    setSelectedDocuments(new Set(documentsToSelect.map(doc => doc._id)));
+    
+    if (documents.length > 50) {
+      showToast(`Selected first 50 documents out of ${documents.length} total`, 'info');
+    }
   };
 
   const clearSelection = () => {
@@ -673,7 +683,7 @@ export default function FoldersManagement() {
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 min-h-full">
+    <div className="p-4 lg:p-8 space-y-6 min-h-full" onContextMenu={(e) => e.preventDefault()}>
       {/* Top Bar - Search & Filters */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -760,10 +770,10 @@ export default function FoldersManagement() {
       </div>
 
       {/* Split Layout - Folders Left, Documents Right */}
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden" style={{ height: 'calc(100vh - 250px)' }}>
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden" style={{ height: 'calc(100vh - 250px)' }} onContextMenu={(e) => e.preventDefault()}>
         <div className="flex h-full">
           {/* Left Sidebar - Folders */}
-          <div className="w-80 border-r border-slate-200 bg-slate-50/50 flex flex-col">
+          <div className="w-80 border-r border-slate-200 bg-slate-50/50 flex flex-col" onContextMenu={(e) => e.preventDefault()}>
             <div className="p-4 border-b border-slate-200 bg-white/50">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
                 <FolderOpen size={18} className="text-blue-600" />
@@ -795,7 +805,7 @@ export default function FoldersManagement() {
           </div>
 
           {/* Right Panel - Documents */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col" onContextMenu={(e) => e.preventDefault()}>
             {/* Breadcrumb */}
             <div className="p-4 border-b border-slate-200 bg-white/50">
               <div className="flex items-center justify-between">
@@ -878,7 +888,13 @@ export default function FoldersManagement() {
                   </div>
                   {documents.length > 0 && (
                     <button
-                      onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                      onClick={() => {
+                        if (isMultiSelectMode) {
+                          // Clear selection when exiting multi-select mode
+                          setSelectedDocuments(new Set());
+                        }
+                        setIsMultiSelectMode(!isMultiSelectMode);
+                      }}
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all shadow-sm ${
                         isMultiSelectMode 
                           ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -889,7 +905,8 @@ export default function FoldersManagement() {
                       <CheckSquare size={16} /> Select
                     </button>
                   )}
-                  {currentUser?.role === 'admin' && (
+                  {currentUser?.role === 'admin' && !(currentFolder === null) && (
+                    console.log('Current Folder:', currentFolder, 'All Folders:', allFoldersData),
                     <button
                       onClick={() => setShowUploadModal(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-sm"
@@ -947,7 +964,10 @@ export default function FoldersManagement() {
                       </button>
                     )}
                     <button
-                      onClick={() => setIsMultiSelectMode(false)}
+                      onClick={() => {
+                        setSelectedDocuments(new Set());
+                        setIsMultiSelectMode(false);
+                      }}
                       className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 transition-all shadow-sm"
                     >
                       <X size={16} /> Exit Select Mode
@@ -958,7 +978,7 @@ export default function FoldersManagement() {
             )}
 
             {/* Documents Grid/List */}
-            <div className="flex-1 overflow-y-auto p-6 relative">
+            <div className="flex-1 overflow-y-auto p-6 relative" onContextMenu={(e) => e.preventDefault()}>
               {loading ? (
                 <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
                   <ModernLoader size="lg" variant="primary" />
