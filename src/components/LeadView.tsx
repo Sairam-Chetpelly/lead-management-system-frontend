@@ -96,6 +96,7 @@ interface Lead {
   hotDate?: string;
   warmDate?: string;
   interestedDate?: string;
+  what_is_your_estimated_budget_for_the_interiors?: string;
   files?: any[];
   createdAt: string;
   updatedAt: string;
@@ -622,6 +623,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
               <FieldDisplay label="CP User Name" value={lead?.cpUserName} icon={User} editing={editing} field="cpUserName" />
             ) : null;
           })()}
+          <FieldDisplay label="Estimated Budget for Interiors" value={lead?.what_is_your_estimated_budget_for_the_interiors} icon={IndianRupee} editing={false} field="what_is_your_estimated_budget_for_the_interiors" />
         </div>
       </div>
 
