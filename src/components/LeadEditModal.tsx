@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Upload, FileText, User, Building, Globe, Phone, Mail, MessageSquare, MapPin, Tag, File, Clock, CheckCircle } from 'lucide-react';
+import { X, Save, Calendar, Upload, FileText, User, Building, Globe, MessageSquare, MapPin, Tag, File, Clock, CheckCircle } from 'lucide-react';
 import Modal from './Modal';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
@@ -40,6 +40,8 @@ interface FormData {
   virtualMeeting: boolean;
   virtualMeetingDate: string;
   virtualMeetingCompletedDate: string;
+  leadClosure: boolean;
+  leadClosureDate: string;
   meetingArrangedDate: string;
   cifDate: string;
   comment: string;
@@ -114,6 +116,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     virtualMeeting: false,
     virtualMeetingDate: '',
     virtualMeetingCompletedDate: '',
+    leadClosure: false,
+    leadClosureDate: '',
     meetingArrangedDate: '',
     cifDate: '',
     comment: '',
@@ -147,7 +151,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
     setLoading(true);
     try {
       const response = await authAPI.getLead(leadId);
-      const lead = response.data.lead;
+      console.log('Lead API response:', response.data);
+      const lead = response.data.data?.lead || response.data.lead || response.data.data || response.data;
 
       setFormData({
         name: lead.name || '',
@@ -175,6 +180,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         virtualMeeting: lead.virtualMeeting || false,
         virtualMeetingDate: lead.virtualMeetingDate ? new Date(lead.virtualMeetingDate).toISOString().split('T')[0] : '',
         virtualMeetingCompletedDate: lead.virtualMeetingCompletedDate ? new Date(lead.virtualMeetingCompletedDate).toISOString().split('T')[0] : '',
+        leadClosure: lead.leadClosure || false,
+        leadClosureDate: lead.leadClosureDate ? new Date(lead.leadClosureDate).toISOString().split('T')[0] : '',
         meetingArrangedDate: lead.meetingArrangedDate ? lead.meetingArrangedDate : '',
         cifDate: lead.cifDate ? lead.cifDate : '',
         comment: lead.comment || '',
@@ -182,8 +189,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         requirementWithinTwoMonths: lead.requirementWithinTwoMonths || false,
         cpUserName: lead.cpUserName || ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching lead:', error);
+      console.error('Error response:', error.response?.data);
       showToast('Failed to fetch lead data', 'error');
     } finally {
       setLoading(false);
@@ -193,7 +201,7 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
   const fetchDropdownData = async () => {
     try {
       const [usersRes, sourcesRes, centresRes, languagesRes, statusesRes, formDataRes] = await Promise.all([
-        authAPI.getUsersAll({ limit: 1000 }),
+        authAPI.getUsers({ limit: 1000 }),
         authAPI.admin.getAllLeadSources(),
         authAPI.admin.getAllCentres(),
         authAPI.admin.getAllLanguages(),
@@ -201,14 +209,11 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
         authAPI.getLeadFormData()
       ]);
 
-      console.log('Lead Sources Response:', sourcesRes.data);
-
       const statuses = statusesRes.data.data || statusesRes.data || [];
-      const leadSources = sourcesRes.data || [];
 
       setDropdownData({
-        users: usersRes.data.data || usersRes.data || [],
-        leadSources: leadSources,
+        users: usersRes.data.data?.users || usersRes.data.data || usersRes.data || [],
+        leadSources: sourcesRes.data.data || sourcesRes.data || [],
         centres: centresRes.data.data || centresRes.data || [],
         languages: languagesRes.data.data || languagesRes.data || [],
         projectTypes: formDataRes.data.projectTypes || [],
@@ -376,6 +381,9 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       if (leadActivityData.virtualMeetingCompletedDate) {
         leadActivityData.virtualMeetingCompletedDate = leadActivityData.virtualMeetingCompletedDate;
       }
+      if (leadActivityData.leadClosureDate) {
+        leadActivityData.leadClosureDate = leadActivityData.leadClosureDate;
+      }
       if (leadActivityData.cifDate) {
         leadActivityData.cifDate =leadActivityData.cifDate ;
       }
@@ -425,6 +433,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
       virtualMeeting: false,
       virtualMeetingDate: '',
       virtualMeetingCompletedDate: '',
+      leadClosure: false,
+      leadClosureDate: '',
       meetingArrangedDate: '',
       cifDate: '',
       comment: '',
@@ -594,7 +604,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                         const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                         return selectedStatus?.slug === 'qualified';
                       })()}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm"
+                      disabled={isSalesAgent}
+                      className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm ${isSalesAgent ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
                     >
                       <option value="">Select Sales Agent</option>
                       {salesUsers
@@ -734,7 +745,8 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                   const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
                   return selectedStatus?.slug === 'qualified';
                 })()}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white shadow-sm"
+                disabled={isSalesAgent}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-sm ${isSalesAgent ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
               >
                 <option value="">Select Language</option>
                 {dropdownData.languages.map((language: any) => (
@@ -994,6 +1006,33 @@ export default function LeadEditModal({ isOpen, onClose, leadId, onSuccess }: Le
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                     />
                   </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+                <input
+                  type="checkbox"
+                  id="leadClosure"
+                  checked={formData.leadClosure}
+                  onChange={(e) => handleInputChange('leadClosure', e.target.checked)}
+                  className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="leadClosure" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Lead Closure
+                </label>
+              </div>
+              {formData.leadClosure && (
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700">Lead Closure Date</label>
+                  <input
+                    type="date"
+                    value={formData.leadClosureDate}
+                    onChange={(e) => handleInputChange('leadClosureDate', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
+                  />
                 </div>
               )}
             </div>

@@ -34,7 +34,7 @@ export default function SearchableAdDropdown({
     const fetchAdValues = async () => {
       try {
         const response = await authAPI.getAdValues(field);
-        setAdValues(response.data || []);
+        setAdValues(response.data.data || response.data || []);
       } catch (error) {
         console.error('Error fetching ad values:', error);
         setAdValues([]);

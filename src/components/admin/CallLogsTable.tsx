@@ -58,13 +58,10 @@ export default function CallLogsTable() {
       if (debouncedFilters.search) params.search = debouncedFilters.search;
 
       const response = await authAPI.getCallLogs(params);
-      if (response.data.callLogs) {
-        setCallLogs(response.data.callLogs);
-        if (response.data.pagination) {
-          updatePagination(response.data.pagination);
-        }
-      } else {
-        setCallLogs(Array.isArray(response.data) ? response.data : []);
+      const data = response.data.data || response.data;
+      setCallLogs(Array.isArray(data) ? data : (data?.callLogs || []));
+      if (data?.pagination || response.data.pagination) {
+        updatePagination(data?.pagination || response.data.pagination);
       }
     } catch (error) {
       console.error('Error fetching call logs:', error);
@@ -77,9 +74,11 @@ export default function CallLogsTable() {
   const fetchUsers = async () => {
     try {
       const response = await authAPI.getUsers({ limit: 1000 });
-      setUsers(response.data.data || response.data || []);
+      const data = response.data.data || response.data;
+      setUsers(Array.isArray(data) ? data : (data?.users || []));
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     }
   };
 

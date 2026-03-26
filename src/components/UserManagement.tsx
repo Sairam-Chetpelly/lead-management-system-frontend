@@ -14,6 +14,8 @@ import LeadsManagement from './LeadsManagement';
 import CallLogsTable from './admin/CallLogsTable';
 import ActivityLogsTable from './admin/ActivityLogsTable';
 import LeadActivitiesTable from './admin/LeadActivitiesTable';
+import FoldersManagement from './FoldersManagement';
+import KeywordsManagement from './KeywordsManagement';
 
 interface UserManagementProps {
   user: any;
@@ -43,6 +45,8 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
       'lead-sources': 'Lead Sources',
       'project-house-types': 'Project & House Types',
       'leads': 'Leads Management',
+      'folders': 'Document Management',
+      'keywords': 'Keywords Management',
       'call-logs': 'Call Logs',
       'activity-logs': 'Activity Logs',
       'lead-activities': 'Lead Activities'
@@ -75,6 +79,10 @@ export default function UserManagement({ user, onLogout }: UserManagementProps) 
         return <ProjectHouseTypesTable />;
       case 'leads':
         return <LeadsManagement user={user} />;
+      case 'folders':
+        return <FoldersManagement />;
+      case 'keywords':
+        return <KeywordsManagement />;
       case 'call-logs':
         return <CallLogsTable />;
       case 'activity-logs':

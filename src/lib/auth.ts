@@ -1,5 +1,5 @@
 import api from './api';
-import { adminServices, leadServices } from './apiService';
+import { adminServices, leadServices, exportCSV } from './apiService';
 import { API_ENDPOINTS, buildQueryString } from '@/config/apiEndpoints';
 import { Lead, LeadResponse } from '@/types/lead';
 import { timelineService } from '@/services/timelineService';
@@ -40,11 +40,10 @@ export const authAPI = {
   
   // User management
   getUsers: (params: PaginationParams = {}) => adminServices.users.getAll(params),
-  getUsersAll: (params: PaginationParams = {}) => adminServices.usersAll.getAll(params),
   createUser: (userData: any) => adminServices.users.create(userData),
   updateUser: (id: string, userData: any) => adminServices.users.update(id, userData),
   deleteUser: (id: string) => adminServices.users.delete(id),
-  exportUsers: () => adminServices.users.export(),
+  exportUsers: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.USERS_EXPORT, params),
   
   uploadProfileImage: (id: string, file: File) => {
     const formData = new FormData();
@@ -69,7 +68,7 @@ export const authAPI = {
     createRole: adminServices.roles.create,
     updateRole: adminServices.roles.update,
     deleteRole: adminServices.roles.delete,
-    exportRoles: adminServices.roles.export,
+    exportRoles: () => exportCSV(API_ENDPOINTS.ADMIN_ROLES_EXPORT),
     
     // Centres
     getCentres: adminServices.centres.getAll,
@@ -77,15 +76,15 @@ export const authAPI = {
     createCentre: adminServices.centres.create,
     updateCentre: adminServices.centres.update,
     deleteCentre: adminServices.centres.delete,
-    exportCentres: adminServices.centres.export,
-    
+    exportCentres: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.ADMIN_CENTRES_EXPORT, params),
+
     // Languages
     getLanguages: adminServices.languages.getAll,
     getAllLanguages: adminServices.languages.getAllSimple,
     createLanguage: adminServices.languages.create,
     updateLanguage: adminServices.languages.update,
     deleteLanguage: adminServices.languages.delete,
-    exportLanguages: adminServices.languages.export,
+    exportLanguages: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.ADMIN_LANGUAGES_EXPORT, params),
     
     // Statuses
     getStatuses: adminServices.statuses.getAll,
@@ -93,12 +92,10 @@ export const authAPI = {
     createStatus: adminServices.statuses.create,
     updateStatus: adminServices.statuses.update,
     deleteStatus: adminServices.statuses.delete,
-    exportStatuses: adminServices.statuses.export,
+    exportStatuses: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.ADMIN_STATUSES_EXPORT, params),
     
     // Users
-    getUsers: adminServices.users.getAll,
-    deleteUser: (id: string) => api.delete(API_ENDPOINTS.ADMIN_USERS_DELETE(id)),
-    
+    getUsers: adminServices.users.getAll,    
     // Leads
     deleteLead: (id: string) => api.delete(API_ENDPOINTS.ADMIN_LEADS_DELETE(id)),
     
@@ -111,14 +108,14 @@ export const authAPI = {
   createLeadSource: leadServices.sources.create,
   updateLeadSource: leadServices.sources.update,
   deleteLeadSource: leadServices.sources.delete,
-  exportLeadSources: leadServices.sources.export,
+  exportLeadSources: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.LEAD_SOURCES_EXPORT, params),
   
   // Project House Types CRUD
   getProjectHouseTypes: leadServices.projectHouseTypes.getAll,
   createProjectHouseType: leadServices.projectHouseTypes.create,
   updateProjectHouseType: leadServices.projectHouseTypes.update,
   deleteProjectHouseType: leadServices.projectHouseTypes.delete,
-  exportProjectHouseTypes: leadServices.projectHouseTypes.export,
+  exportProjectHouseTypes: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.PROJECT_HOUSE_TYPES_EXPORT, params),
   
   // Leads CRUD
   getLeads: (params: PaginationParams = {}) => {
@@ -185,16 +182,8 @@ export const authAPI = {
       },
     });
   },
-  exportLeads: (params: PaginationParams = {}) => {
-    const queryString = buildQueryString(params);
-    return api.get(`${API_ENDPOINTS.LEADS_EXPORT}${queryString ? `?${queryString}` : ''}`);
-  },
-  exportLeadsExcel: (params: PaginationParams = {}) => {
-    const queryString = buildQueryString(params);
-    return api.get(`${API_ENDPOINTS.LEADS_EXPORT_EXCEL}${queryString ? `?${queryString}` : ''}`, {
-      responseType: 'blob'
-    });
-  },
+  exportLeads: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.LEADS_EXPORT, params),
+  exportLeadsExcel: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.LEADS_EXPORT_EXCEL, params),
   getLeadFormData: () => api.get(API_ENDPOINTS.LEADS_FORM_DATA),
   bulkUploadLeads: (formData: FormData) => 
     api.post(API_ENDPOINTS.LEADS_BULK_UPLOAD, formData, {
@@ -221,6 +210,10 @@ export const authAPI = {
     const queryString = buildQueryString(params);
     return api.get(`${API_ENDPOINTS.DASHBOARD_ADMIN}${queryString ? `?${queryString}` : ''}`);
   },
+  exportAdminDashboard: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`${API_ENDPOINTS.DASHBOARD_ADMIN}/export${queryString ? `?${queryString}` : ''}`, { responseType: 'blob' });
+  },
   getAdminUsers: (type: string) => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_USERS(type)),
   getAdminSources: () => api.get(API_ENDPOINTS.DASHBOARD_ADMIN_SOURCES),
   
@@ -229,11 +222,19 @@ export const authAPI = {
     const queryString = buildQueryString(params);
     return api.get(`/api/call-logs${queryString ? `?${queryString}` : ''}`);
   },
+  exportCallLogs: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`/api/call-logs/export${queryString ? `?${queryString}` : ''}`, { responseType: 'blob' });
+  },
   
   // Activity Logs
   getActivityLogs: (params: any = {}) => {
     const queryString = buildQueryString(params);
     return api.get(`/api/activity-logs${queryString ? `?${queryString}` : ''}`);
+  },
+  exportActivityLogs: (params: any = {}) => {
+    const queryString = buildQueryString(params);
+    return api.get(`/api/activity-logs/export${queryString ? `?${queryString}` : ''}`, { responseType: 'blob' });
   },
   
   // Lead Activities
@@ -241,10 +242,7 @@ export const authAPI = {
     const queryString = buildQueryString(params);
     return api.get(`/api/lead-activities${queryString ? `?${queryString}` : ''}`);
   },
-  exportLeadActivities: (params: PaginationParams = {}) => {
-    const queryString = buildQueryString(params);
-    return api.get(`${API_ENDPOINTS.LEAD_ACTIVITIES_EXPORT}${queryString ? `?${queryString}` : ''}`);
-  },
+  exportLeadActivities: (params: PaginationParams = {}) => exportCSV(API_ENDPOINTS.LEAD_ACTIVITIES_EXPORT, params),
 };
 
 export default api;

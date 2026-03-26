@@ -35,10 +35,18 @@ export const createApiService = (baseEndpoint: string) => {
 
     // Delete item
     delete: (id: string) => api.delete(`${baseEndpoint}/${id}`),
-
-    // Export items
-    export: () => api.get(`${baseEndpoint}/export`)
   };
+};
+
+/**
+ * Generic export function for CSV downloads
+ * @param endpoint - Export endpoint URL
+ * @param params - Optional filter parameters
+ * @returns Promise with blob response
+ */
+export const exportCSV = (endpoint: string, params: PaginationParams = {}) => {
+  const queryString = buildQueryString(params);
+  return api.get(`${endpoint}${queryString ? `?${queryString}` : ''}`, { responseType: 'blob' });
 };
 
 // Pre-configured services
@@ -47,8 +55,7 @@ export const adminServices = {
   centres: createApiService(API_ENDPOINTS.ADMIN_CENTRES),
   languages: createApiService(API_ENDPOINTS.ADMIN_LANGUAGES),
   statuses: createApiService(API_ENDPOINTS.ADMIN_STATUSES),
-  users: createApiService(API_ENDPOINTS.USERS),
-  usersAll: createApiService(API_ENDPOINTS.USERS_ALL)
+  users: createApiService(API_ENDPOINTS.USERS)
 };
 
 export const leadServices = {

@@ -9,6 +9,7 @@ import PaginationFooter from '../PaginationFooter';
 import ModernLoader from '../ModernLoader';
 import SearchableAgentDropdown from '../SearchableAgentDropdown';
 import { useToast } from '@/contexts/ToastContext';
+import { downloadCSV } from '@/lib/exportUtils';
 
 interface LeadActivity {
   _id: string;
@@ -105,13 +106,18 @@ export default function LeadActivitiesTable() {
       if (debouncedFilters.search) params.search = debouncedFilters.search;
 
       const response = await authAPI.getAllLeadActivities(params);
-      if (response.data.leadActivities) {
+      if (response.data.data?.leadActivities) {
+        setLeadActivities(response.data.data.leadActivities);
+        if (response.data.data.pagination) {
+          updatePagination(response.data.data.pagination);
+        }
+      } else if (response.data.leadActivities) {
         setLeadActivities(response.data.leadActivities);
         if (response.data.pagination) {
           updatePagination(response.data.pagination);
         }
       } else {
-        setLeadActivities(Array.isArray(response.data) ? response.data : []);
+        setLeadActivities(Array.isArray(response.data.data) ? response.data.data : Array.isArray(response.data) ? response.data : []);
       }
     } catch (error) {
       console.error('Error fetching lead activities:', error);
@@ -124,7 +130,7 @@ export default function LeadActivitiesTable() {
   const fetchUsers = async () => {
     try {
       const response = await authAPI.getUsers({ limit: 1000 });
-      setUsers(response.data.data || response.data || []);
+      setUsers(response.data.data?.users || response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -162,12 +168,13 @@ export default function LeadActivitiesTable() {
         return;
       }
 
-      const { downloadCSV } = await import('@/lib/exportUtils');
+      // downloadCSV imported at top
       downloadCSV(response.data, 'lead-activities.csv');
       showToast('Lead activities exported successfully', 'success');
     } catch (error: any) {
       console.error('Export failed:', error);
-      showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+      showToast(errorMessage, 'error');
     }
   };
 

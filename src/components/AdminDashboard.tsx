@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/auth';
 import { Line } from 'react-chartjs-2';
 import { FileSpreadsheet } from 'lucide-react';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -140,10 +141,10 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       console.log('API params:', params);
       const response = await authAPI.getAdminDashboard(params);
       console.log('Admin Dashboard Response:', response.data);
-      setStats(response.data);
+      setStats(response.data.data);
 
       // If user is presales agent, clear filters to prevent confusion (only if filters are not already empty)
-      if (response.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId || filters.centreId)) {
+      if (response.data.data.role === 'presales_agent' && (filters.userType || filters.agentId || filters.startDate || filters.endDate || filters.sourceId || filters.centreId)) {
         console.log('Clearing filters for presales agent');
         setFilters({ userType: '', agentId: '', startDate: '', endDate: '', sourceId: '', centreId: '' });
       }
@@ -158,7 +159,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     try {
       const userType = filters.userType || 'all-users';
       const response = await authAPI.getAdminUsers(userType);
-      setUsers(response.data);
+      setUsers(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -168,7 +169,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
     try {
       if (stats.showFilters !== false) {
         const response = await authAPI.getAdminSources();
-        setSources(response.data);
+        setSources(response.data.data || response.data);
       }
     } catch (error) {
       console.error('Error fetching sources:', error);
@@ -178,8 +179,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const fetchCentres = async () => {
     try {
       if (stats.showFilters !== false) {
-        const response = await authAPI.get('/api/dashboard/admin/centres');
-        setCentres(response.data);
+        const response = await authAPI.get('/api/dashboard/centres');
+        setCentres(response.data.data || response.data);
       }
     } catch (error) {
       console.error('Error fetching centres:', error);
@@ -226,58 +227,20 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <div className="flex items-center gap-2">
               {(user.role === 'admin' || user.role === 'marketing') && (
                 <button
-                  onClick={() => {
-                    const csv = [
-                      ['Metric', 'Value'],
-                      ['Total Leads', stats.totalLeads],
-                      ['Leads MTD', stats.leadsMTD],
-                      ['Leads Today', stats.leadsToday],
-                      ['Total Calls', stats.totalCalls],
-                      ['Calls MTD', stats.callsMTD],
-                      ['Calls Today', stats.callsToday],
-                      ['Total Qualified', stats.totalQualified],
-                      ['Qualified MTD', stats.qualifiedMTD],
-                      ['Qualified Today', stats.qualifiedToday],
-                      ['Total Lost', stats.totalLost],
-                      ['Lost MTD', stats.lostMTD],
-                      ['Lost Today', stats.lostToday],
-                      ['Total Won', stats.totalWon],
-                      ['Won MTD', stats.wonMTD],
-                      ['Won Today', stats.wonToday],
-                      ['Site Visits', stats.siteVisits],
-                      ['Center Visits', stats.centerVisits],
-                      ['Virtual Meetings', stats.virtualMeetings],
-                      [''],
-                      ['Daily Leads'],
-                      ['Date', 'Count'],
-                      ...stats.dailyLeads.map((d: any) => [d.date, d.count]),
-                      [''],
-                      ['Daily Calls'],
-                      ['Date', 'Count'],
-                      ...stats.dailyCalls.map((d: any) => [d.date, d.count]),
-                      [''],
-                      ['Source Wise Leads'],
-                      ['Source', 'Count'],
-                      ...stats.sourceLeads.map((s: any) => [s._id, s.count]),
-                      [''],
-                      ['Source Wise Qualified'],
-                      ['Source', 'Count'],
-                      ...stats.sourceQualified.map((s: any) => [s._id, s.count]),
-                      [''],
-                      ['Center Won Leads'],
-                      ['Center', 'Won Count', 'Project Value'],
-                      ...stats.centerWonData.map((c: any) => [c._id, c.wonCount, c.totalValue]),
-                      [''],
-                      ['Source/Center Qualified Distribution'],
-                      ['Source', 'Center', 'Count'],
-                      ...stats.sourceCenterData.map((sc: any) => [sc._id.source, sc._id.centre, sc.count])
-                    ].map(row => row.join(',')).join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `dashboard-${new Date().toISOString().split('T')[0]}.csv`;
-                    link.click();
+                  onClick={async () => {
+                    try {
+                      const response = await authAPI.exportAdminDashboard({
+                        userType: filters.userType,
+                        agentId: filters.agentId,
+                        startDate: filters.startDate,
+                        endDate: filters.endDate,
+                        sourceId: filters.sourceId,
+                        centreId: filters.centreId
+                      });
+                      downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'dashboard-export.csv');
+                    } catch (error) {
+                      console.error('Export failed:', error);
+                    }
                   }}
                   className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
                 >

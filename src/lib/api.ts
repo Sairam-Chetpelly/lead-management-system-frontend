@@ -4,7 +4,7 @@ import axios from 'axios';
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api',
-  TIMEOUT: 10000,
+  TIMEOUT: 500000, // 500 seconds
   API_KEY: process.env.NEXT_PUBLIC_API_KEY || 'lms-secure-api-key-2024',
 };
 

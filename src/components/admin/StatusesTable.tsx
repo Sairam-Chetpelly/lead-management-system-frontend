@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Activity, Edit, Trash2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 
 interface Status {
   _id: string;
@@ -43,11 +44,17 @@ export default function StatusesTable() {
         limit: pagination.limit,
         search: debouncedSearch
       });
-      setStatuses(response.data.data);
-      updatePagination(response.data.pagination);
+      console.log('Statuses response:', response.data);
+      const data = response.data.data || response.data;
+      console.log('Extracted data:', data);
+      const statusesArray = Array.isArray(data) ? data : (data?.statuses || data?.statuss || []);
+      console.log('Statuses array:', statusesArray);
+      setStatuses(statusesArray);
+      updatePagination(data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching statuses:', error);
       showToast('Failed to fetch statuses', 'error');
+      setStatuses([]);
     } finally {
       setLoading(false);
     }
@@ -69,9 +76,10 @@ export default function StatusesTable() {
       showToast(editStatus ? 'Status updated successfully' : 'Status created successfully', 'success');
       resetForm();
       fetchStatuses();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving status:', error);
-      showToast('Failed to save status', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save status';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -82,7 +90,7 @@ export default function StatusesTable() {
       fetchStatuses();
     } catch (error: any) {
       console.error('Error deleting status:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete status';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete status';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
@@ -123,12 +131,13 @@ export default function StatusesTable() {
           <button 
             onClick={async () => {
               try {
-                const response = await authAPI.admin.exportStatuses();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'statuses.csv');
-              } catch (error) {
+                const response = await authAPI.admin.exportStatuses({ search: debouncedSearch });
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'statuses.csv');
+                showToast('Statuses exported successfully', 'success');
+              } catch (error: any) {
                 console.error('Export failed:', error);
-                showToast('Export failed. Please try again.', 'error');
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"

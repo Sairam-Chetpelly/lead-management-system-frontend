@@ -86,6 +86,8 @@ interface Lead {
   siteVisitCompletedDate?: string;
   centerVisitCompletedDate?: string;
   virtualMeetingCompletedDate?: string;
+  leadClosure?: boolean;
+  leadClosureDate?: string;
   meetingArrangedDate?: string;
   cifDate?: string;
   leadWonDate?: string;
@@ -94,6 +96,7 @@ interface Lead {
   hotDate?: string;
   warmDate?: string;
   interestedDate?: string;
+  what_is_your_estimated_budget_for_the_interiors?: string;
   files?: any[];
   createdAt: string;
   updatedAt: string;
@@ -160,11 +163,14 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
         authAPI.getLeadActivities(leadId)
       ]);
       
-      setLead(leadResponse.data.lead);
-      setCallLogs(leadResponse.data.callLogs || []);
-      setActivityLogs(leadResponse.data.activityLogs || []);
-      setLeadActivities(activitiesResponse.data.leadActivities || []);
-      setEditData(leadResponse.data.lead);
+      const leadData = leadResponse.data?.data || leadResponse.data;
+      const activitiesData = activitiesResponse.data?.data || activitiesResponse.data;
+      
+      setLead(leadData.lead);
+      setCallLogs(leadData.callLogs || []);
+      setActivityLogs(leadData.activityLogs || []);
+      setLeadActivities(activitiesData.leadActivities || []);
+      setEditData(leadData.lead);
     } catch (error) {
       console.error('Error fetching lead:', error);
       showToast('Failed to fetch lead details', 'error');
@@ -190,7 +196,8 @@ export default function LeadView({ leadId, onBack }: LeadViewProps) {
     
     try {
       const response = await authAPI.updateLead(lead._id, editData);
-      setLead(response.data.lead);
+      const updatedLead = response.data?.data?.lead || response.data?.lead;
+      setLead(updatedLead);
       setEditing(false);
       showToast('Lead updated successfully', 'success');
     } catch (error) {
@@ -616,6 +623,7 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
               <FieldDisplay label="CP User Name" value={lead?.cpUserName} icon={User} editing={editing} field="cpUserName" />
             ) : null;
           })()}
+          <FieldDisplay label="Estimated Budget for Interiors" value={lead?.what_is_your_estimated_budget_for_the_interiors} icon={IndianRupee} editing={false} field="what_is_your_estimated_budget_for_the_interiors" />
         </div>
       </div>
 
@@ -704,6 +712,8 @@ function LeadOverview({ lead, editing, editData, setEditData }: {
             <FieldDisplay label="Virtual Meeting" value={lead.virtualMeeting} icon={Users} editing={editing} field="virtualMeeting" type="checkbox" />
             <FieldDisplay label="Virtual Meeting Date" value={lead.virtualMeetingDate} icon={Calendar} editing={editing} field="virtualMeetingDate" type="date" />
             <FieldDisplay label="Virtual Meeting Completed Date" value={lead.virtualMeetingCompletedDate} icon={CheckCircle} editing={editing} field="virtualMeetingCompletedDate" type="date" />
+            <FieldDisplay label="Lead Closure" value={lead.leadClosure} icon={CheckCircle} editing={editing} field="leadClosure" type="checkbox" />
+            <FieldDisplay label="Lead Closure Date" value={lead.leadClosureDate} icon={Calendar} editing={editing} field="leadClosureDate" type="date" />
           </div>
         </div>
       )}

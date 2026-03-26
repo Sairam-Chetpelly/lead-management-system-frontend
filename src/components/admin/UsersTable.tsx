@@ -10,6 +10,7 @@ import { Search, FileSpreadsheet, Eye, Edit, Trash2, Filter, Camera } from 'luci
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/contexts/ToastContext';
 import DeleteDialog from '../DeleteDialog';
+import { downloadCSVBlob } from '@/lib/exportUtils';
 import { validateContactNumber, formatContactNumber } from '@/utils/validation';
 
 interface User {
@@ -119,14 +120,9 @@ export default function UsersTable() {
         ...debouncedFilters
       });
       
-      if (response.data.data) {
-        setUsers(response.data.data);
-        if (response.data.pagination) {
-          updatePagination(response.data.pagination);
-        }
-      } else {
-        setUsers(Array.isArray(response.data) ? response.data : []);
-      }
+      const data = response.data.data || response.data;
+      setUsers(Array.isArray(data) ? data : (data?.users || []));
+      updatePagination(data?.pagination || response.data.pagination);
     } catch (error) {
       console.error('Error fetching users:', error);
       showToast('Failed to fetch users', 'error');
@@ -145,10 +141,10 @@ export default function UsersTable() {
         authAPI.admin.getAllLanguages()
       ]);
       
-      setRoles(rolesRes.data.data);
-      setStatuses(statusesRes.data.data);
-      setCentres(centresRes.data.data);
-      setLanguages(languagesRes.data.data);
+      setRoles(rolesRes.data.data || rolesRes.data);
+      setStatuses(statusesRes.data.data || statusesRes.data);
+      setCentres(centresRes.data.data || centresRes.data);
+      setLanguages(languagesRes.data.data || languagesRes.data);
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
       showToast('Failed to fetch dropdown data', 'error');
@@ -188,9 +184,10 @@ export default function UsersTable() {
       showToast(editUser ? 'User updated successfully' : 'User created successfully', 'success');
       resetForm();
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user:', error);
-      showToast('Failed to save user', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save user';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -265,12 +262,12 @@ export default function UsersTable() {
 
   const handleDelete = async () => {
     try {
-      await authAPI.admin.deleteUser(deleteDialog.id);
+      await authAPI.deleteUser(deleteDialog.id);
       showToast('User deleted successfully', 'success');
       fetchUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete user';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete user';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({isOpen: false, id: '', name: ''});
@@ -357,12 +354,13 @@ export default function UsersTable() {
           <button 
             onClick={async () => {
               try {
-                const response = await authAPI.exportUsers();
-                const { downloadCSV } = await import('@/lib/exportUtils');
-                downloadCSV(response.data, 'users.csv');
+                const response = await authAPI.exportUsers(debouncedFilters);
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'users.csv');
+                showToast('Users exported successfully', 'success');
               } catch (error: any) {
                 console.error('Export failed:', error);
-                showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
               }
             }}
             className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"

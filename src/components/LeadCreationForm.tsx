@@ -91,16 +91,15 @@ export default function LeadCreationForm({
     try {
       const response = await authAPI.getLeadFormData();
       console.log("Form data response:", response.data);
-      setDropdownData(
-        response.data || {
-          centres: [],
-          languages: [],
-          leadSources: [],
-          projectTypes: [],
-          houseTypes: [],
-          leadValues: [],
-        }
-      );
+      const data = response.data?.data || response.data || {};
+      setDropdownData({
+        centres: data.centres || [],
+        languages: data.languages || [],
+        leadSources: data.leadSources || [],
+        projectTypes: data.projectTypes || [],
+        houseTypes: data.houseTypes || [],
+        leadValues: data.leadValues || [],
+      });
     } catch (error) {
       console.error("Error fetching form data:", error);
       showToast("Failed to load form data", "error");
@@ -145,7 +144,7 @@ export default function LeadCreationForm({
       onSuccess?.();
     } catch (error: any) {
       showToast(
-        error.response?.data?.error || "Failed to create lead",
+        error.response?.data?.message || error.response?.data?.error || "Failed to create lead",
         "error"
       );
     } finally {

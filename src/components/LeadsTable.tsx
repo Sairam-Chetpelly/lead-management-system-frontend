@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Mail, Phone, User, Building, Globe, Eye, Search, Filter, FileSpreadsheet, Edit, Trash2, PhoneCall, FileText } from 'lucide-react';
+import { Mail, Phone, Eye, Search, Filter, FileSpreadsheet, Edit, Trash2, PhoneCall, FileText } from 'lucide-react';
 import { authAPI } from '@/lib/auth';
 import { useToast } from '@/contexts/ToastContext';
 import { usePagination } from '@/hooks/usePagination';
@@ -17,6 +17,8 @@ import LeadEditModal from './LeadEditModal';
 import PresalesLeadEditModal from './PresalesLeadEditModal';
 import SearchableAgentDropdown from './SearchableAgentDropdown';
 import SearchableAdDropdown from './SearchableAdDropdown';
+import { downloadCSVBlob } from '@/lib/exportUtils';
+
 
 interface LeadsTableProps {
   user: any;
@@ -93,7 +95,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewLead, setViewLead] = useState<Lead | null>(null);
   const [showLeadView, setShowLeadView] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState<{ isOpen: boolean, leadId: string }>({ isOpen: false, leadId: '' });
@@ -120,6 +121,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     siteVisit: '',
     centerVisit: '',
     virtualMeeting: '',
+    leadClosure: '',
     dateFrom: '',
     dateTo: '',
     outOfStation: '',
@@ -224,7 +226,12 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         ...debouncedFilters
       });
 
-      if (response.data.leads) {
+      if (response.data.data?.leads) {
+        setLeads(response.data.data.leads);
+        if (response.data.data.pagination) {
+          updatePagination(response.data.data.pagination);
+        }
+      } else if (response.data.leads) {
         setLeads(response.data.leads);
         if (response.data.pagination) {
           updatePagination(response.data.pagination);
@@ -274,7 +281,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
 
       setLeadSources(sourcesRes.data.data || sourcesRes.data || []);
       setCentres(centresRes.data.data || centresRes.data || []);
-      setUsers(usersRes.data.data || usersRes.data || []);
+      setUsers(usersRes.data.data?.users || usersRes.data.data || usersRes.data || []);
 
       const statuses = statusesRes.data.data || statusesRes.data || [];
       setLeadStatuses(statuses.filter((s: any) => s.type === 'leadStatus'));
@@ -316,10 +323,6 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     handlePageChange(1);
   };
 
-  const handleView = (lead: Lead) => {
-    setViewLead(lead);
-  };
-
   const handleViewDetails = (leadId: string) => {
     setShowLeadView(leadId);
   };
@@ -331,7 +334,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       fetchLeads();
     } catch (error: any) {
       console.error('Error deleting lead:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete lead';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to delete lead';
       showToast(errorMessage, 'error');
     } finally {
       setDeleteDialog({ isOpen: false, id: '', name: '' });
@@ -368,26 +371,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
     }
   };
 
-  const exportLeads = async () => {
-    try {
-      console.log('Exporting leads with filters:', debouncedFilters);
-      const response = await authAPI.exportLeads({ sortBy, sortOrder, ...debouncedFilters });
-      console.log('Export response:', response);
-      console.log('Export response data:', response.data);
 
-      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-        showToast('No data to export', 'info');
-        return;
-      }
-
-      const { downloadCSV } = await import('@/lib/exportUtils');
-      downloadCSV(response.data, 'leads.csv');
-      showToast('Leads exported successfully', 'success');
-    } catch (error: any) {
-      console.error('Export failed:', error);
-      showToast(`Export failed: ${error.response?.data?.error || error.message}`, 'error');
-    }
-  };
 
   if (showLeadView) {
     return (
@@ -424,6 +408,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 siteVisit: '',
                 centerVisit: '',
                 virtualMeeting: '',
+                leadClosure: '',
                 dateFrom: '',
                 dateTo: '',
                 outOfStation: '',
@@ -455,6 +440,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
                 siteVisit: '',
                 centerVisit: '',
                 virtualMeeting: '',
+                leadClosure: '',
                 dateFrom: '',
                 dateTo: '',
                 outOfStation: '',
@@ -607,6 +593,17 @@ export default function LeadsTable({ user }: LeadsTableProps) {
           )}
             {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
             <select
+              value={filters.leadClosure}
+              onChange={(e) => handleFilterChange('leadClosure', e.target.value)}
+              className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
+            >
+              <option value="">Lead Closure</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            )}
+            {(isAdmin || isSalesAgent || isSalesManager || isHodSales || isMarketing) && (
+            <select
               value={filters.outOfStation}
               onChange={(e) => handleFilterChange('outOfStation', e.target.value)}
               className="px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium"
@@ -673,10 +670,19 @@ export default function LeadsTable({ user }: LeadsTableProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={exportLeads}
-            style={{ display: isSalesAgent || isPreSalesAgent ? 'none' : 'flex' }}
-            className="items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
-          >
+            onClick={async () => {
+              try {
+                const response = await authAPI.exportLeads(debouncedFilters);
+                downloadCSVBlob(new Blob([response.data], { type: 'text/csv' }), 'leads.csv');
+                showToast('Leads exported successfully', 'success');
+              } catch (error: any) {
+                console.error('Export failed:', error);
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Export failed';
+                showToast(errorMessage, 'error');
+              }
+            }}
+            className="flex items-center space-x-3 px-4 lg:px-6 py-3 bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-2xl hover:bg-emerald-50 transition-all duration-300 shadow-lg hover:shadow-xl group"
+         >
             <FileSpreadsheet size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
             <span className="text-emerald-700 font-semibold hidden sm:inline">Export</span>
           </button>
@@ -1058,109 +1064,7 @@ export default function LeadsTable({ user }: LeadsTableProps) {
         />
       </div>
 
-      {/* View Lead Modal */}
-      <Modal
-        isOpen={!!viewLead}
-        onClose={() => setViewLead(null)}
-        title="Lead Details"
-      >
-        {viewLead && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Lead ID</label>
-                <p className="text-sm text-gray-900">{viewLead.leadID}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="text-sm text-gray-900">{viewLead.name || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="text-sm text-gray-900">{viewLead.email || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <p className="text-sm text-gray-900">{viewLead.contactNumber || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Source</label>
-                <p className="text-sm text-gray-900">{viewLead.sourceId?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Lead Value</label>
-                <p className="text-sm text-gray-900">{viewLead.leadValue || 'Not set'}</p>
-              </div>
-            </div>
-            {viewLead.centreId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Centre</label>
-                <p className="text-sm text-gray-900">{viewLead.centreId.name}</p>
-              </div>
-            )}
-            {(isAdmin || isMarketing) ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
-                <p className="text-sm text-gray-900">
-                  {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
-                <p className="text-sm text-gray-900">
-                  {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
-                </p>
-              </div>
-            </div>
-            ) : (!isSalesAgent && !isSalesManager && !isHodSales) ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Presales Assigned</label>
-              <p className="text-sm text-gray-900">
-                {viewLead.presalesUserId ? viewLead.presalesUserId.name : 'Not assigned'}
-              </p>
-            </div>
-            ) : (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Sales Assigned</label>
-              <p className="text-sm text-gray-900">
-                {viewLead.salesUserId ? viewLead.salesUserId.name : 'Not assigned'}
-              </p>
-            </div>
-            )}
-            {viewLead.comment && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Comment</label>
-                <p className="text-sm text-gray-900">{viewLead.comment}</p>
-              </div>
-            )}
-            {(viewLead.leadStatusId || viewLead.leadSubStatusId) && (
-              <div className="grid grid-cols-2 gap-4">
-                {viewLead.leadStatusId && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Lead Status</label>
-                    <p className="text-sm text-gray-900">{viewLead.leadStatusId.name}</p>
-                  </div>
-                )}
-                {viewLead.leadSubStatusId && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Sub Status</label>
-                    <p className="text-sm text-gray-900">{viewLead.leadSubStatusId.name}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Created At</label>
-              <p className="text-sm text-gray-900">{new Date(viewLead.createdAt).toLocaleString()}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* View Lead Modal - Removed as unused */}
 
       {/* Create Lead Modal */}
       <LeadCreationModal

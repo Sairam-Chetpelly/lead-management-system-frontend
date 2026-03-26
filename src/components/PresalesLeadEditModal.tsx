@@ -54,23 +54,6 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // Get current user role
-  const getCurrentUserRole = () => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        return user.role;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-    return null;
-  };
-
-  const userRole = getCurrentUserRole();
-  const isPresalesAgent = userRole === 'presales_agent';
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -114,8 +97,9 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
     setLoading(true);
     try {
       const response = await authAPI.getLead(leadId);
-      const lead = response.data.lead;
-
+      console.log('Presales Lead API response:', response.data);
+      const lead = response.data.data?.lead || response.data.lead || response.data.data || response.data;
+      
       setFormData({
         name: lead.name || '',
         email: lead.email || '',
@@ -135,8 +119,9 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         cpUserName: lead.cpUserName || '',
         outOfStation: lead.outOfStation || false
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching lead:', error);
+      console.error('Error response:', error.response?.data);
       showToast('Failed to fetch lead data', 'error');
     } finally {
       setLoading(false);
