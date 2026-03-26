@@ -139,7 +139,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       ]);
 
       const statuses = statusesRes.data.data || statusesRes.data || [];
-      
+
       setDropdownData({
         leadSources: sourcesRes.data.data || sourcesRes.data || [],
         centres: centresRes.data.data || centresRes.data || [],
@@ -188,7 +188,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       showToast('Maximum 5 files allowed', 'error');
       return;
     }
-    
+
     const validFiles = selectedFiles.filter(file => {
       if (file.size > 10 * 1024 * 1024) {
         showToast(`File ${file.name} is too large (max 10MB)`, 'error');
@@ -196,7 +196,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
       }
       return true;
     });
-    
+
     setFiles(prev => [...prev, ...validFiles]);
   };
 
@@ -206,15 +206,15 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    
+
+
     // Validate contact number format
     const contactValidation = validateContactNumber(formData.contactNumber);
     if (!contactValidation.isValid) {
       showToast(contactValidation.error!, 'error');
       return;
     }
-    
+
     // Check if status is qualified and validate centre/language
     if (formData.leadStatusId) {
       const selectedStatus = dropdownData.leadStatuses.find((s: DropdownItem) => s._id === formData.leadStatusId);
@@ -225,13 +225,13 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
         }
       }
     }
-    
+
     setSubmitting(true);
 
     try {
       console.log('Submitting presales activity with data:', formData);
       console.log('Files:', files);
-      
+
       await authAPI.createPresalesActivity(leadId, formData, files);
       showToast('Lead updated successfully', 'success');
       onSuccess();
@@ -331,12 +331,12 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 ))}
               </select>
             </div>
-            
+
             {/* CP User Name - Show only when CP source is selected */}
             {(() => {
               const selectedSource = dropdownData.leadSources.find(source => source._id === formData.sourceId);
               const isCpSource = selectedSource && (selectedSource.slug === 'cp' || selectedSource.name.toLowerCase().includes('cp'));
-              
+
               return isCpSource ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">CP User Name</label>
@@ -368,7 +368,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Status</option>
-                 {dropdownData.leadStatuses.map((status: any) => (
+                {dropdownData.leadStatuses.map((status: any) => (
                   <option key={status._id} value={status._id}>{status.name}</option>
                 ))}
               </select>
@@ -569,7 +569,7 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
             </div>
-            
+
             {files.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
@@ -604,12 +604,12 @@ export default function PresalesLeadEditModal({ isOpen, onClose, leadId, onSucce
             <X size={16} />
             <span>Cancel</span>
           </button>
-          
+
           <button
             type="submit"
             disabled={submitting}
             className="px-8 py-3 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
-            style={{backgroundColor: '#0f172a'}}
+            style={{ backgroundColor: '#0f172a' }}
           >
             {submitting ? (
               <>
