@@ -1090,10 +1090,10 @@ export default function FoldersManagement() {
                           </div>
                         )}
                       </div>
-                      {/* <div className="text-xs text-slate-400 mb-1 truncate" title={doc.fileName}>{doc.fileName}</div> */}
+                      <div className="text-xs text-slate-400 mb-1 truncate" title={doc.fileName}>{doc.fileName}</div>
                       <div className="font-bold text-slate-900 truncate" title={doc.title}>{doc.title}</div>
                       {/* {doc.subtitle && <div className="text-xs text-slate-600 mt-1 truncate">{doc.subtitle}</div>} */}
-                      {/* <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div> */}
+                      <div className="text-xs text-slate-500 mt-1 capitalize">{doc.category}</div>
                       {/* {(searchKeyword || filterKeywords.length > 0) && doc.folderId && (
                         <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                           <FolderOpen size={12} />
