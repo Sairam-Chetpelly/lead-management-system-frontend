@@ -135,7 +135,8 @@ export default function FoldersManagement() {
       setDocuments(documentsData);
       setAllFoldersData(allFolders);
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to load data', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to load data';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -295,7 +296,8 @@ export default function FoldersManagement() {
       setFolderRestricted(false);
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to create folder', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to create folder';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -320,7 +322,8 @@ export default function FoldersManagement() {
       setFolderRestricted(false);
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to update folder', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to update folder';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -350,7 +353,8 @@ export default function FoldersManagement() {
       setUploadSubtitle('');
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to upload document', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to upload document';
+      showToast(errorMessage, 'error');
     } finally {
       setUploading(false);
     }
@@ -382,7 +386,8 @@ export default function FoldersManagement() {
       setUploadSubtitle('');
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to update document', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to update document';
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -563,8 +568,8 @@ export default function FoldersManagement() {
       showToast('Keyword created successfully', 'success');
       await loadKeywords();
     } catch (error: any) {
-      const errorMsg = error.response?.data?.error || 'Failed to create keyword';
-      showToast(errorMsg, 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to create keyword';
+      showToast(errorMessage, 'error');
       throw error;
     }
   };
@@ -577,7 +582,8 @@ export default function FoldersManagement() {
       setCategoryName('');
       await loadCategories();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to create category', 'error');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to create category';
+      showToast(errorMessage, 'error');
     }
   };
 
