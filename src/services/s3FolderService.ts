@@ -1,52 +1,47 @@
 import api from '@/lib/api';
-import { s3FolderService } from './s3FolderService';
 
-export const folderService = {
-  // Create folder (now with S3 support option)
-  createFolder: async (data: { name: string; parentFolderId?: string; restricted?: boolean; useS3?: boolean }) => {
-    if (data.useS3) {
-      return s3FolderService.createFolder({ ...data, createInS3: true });
-    }
-    
-    const response = await api.post('/api/folders', data);
+export const s3FolderService = {
+  // Create folder with S3 support (S3 only)
+  createFolder: async (data: { name: string; parentFolderId?: string; restricted?: boolean }) => {
+    const response = await api.post('/api/s3-folders', data);
     return response.data.data || response.data;
   },
 
   // Get folders
   getFolders: async (parentFolderId?: string) => {
     const params = parentFolderId ? `?parentFolderId=${parentFolderId}` : '';
-    const response = await api.get(`/api/folders${params}`);
+    const response = await api.get(`/api/s3-folders${params}`);
     return response.data.data?.folders || response.data.folders || response.data;
   },
 
   // Get all folders (for tree view)
   getAllFolders: async () => {
-    const response = await api.get('/api/folders/all');
+    const response = await api.get('/api/s3-folders/all');
     return response.data.data?.folders || response.data.folders || response.data;
   },
 
   // Get folder contents
   getFolderContents: async (id: string) => {
-    const response = await api.get(`/api/folders/${id}`);
+    const response = await api.get(`/api/s3-folders/${id}`);
     return response.data.data || response.data;
   },
 
   // Update folder
   updateFolder: async (id: string, data: { name: string; restricted?: boolean }) => {
-    const response = await api.put(`/api/folders/${id}`, data);
+    const response = await api.put(`/api/s3-folders/${id}`, data);
     return response.data.data || response.data;
   },
 
-  // Delete folder
+  // Delete folder (deletes from both database and S3)
   deleteFolder: async (id: string) => {
-    const response = await api.delete(`/api/folders/${id}`);
+    const response = await api.delete(`/api/s3-folders/${id}`);
     return response.data.data || response.data;
   },
 
   // Multi-download documents
   multiDownload: async (documentIds: string[]) => {
     try {
-      const response = await api.post('/api/folders/multi-download', 
+      const response = await api.post('/api/s3-folders/multi-download', 
         { documentIds },
         { responseType: 'blob' }
       );
@@ -69,7 +64,7 @@ export const folderService = {
   // Download entire folder
   downloadFolder: async (folderId: string) => {
     try {
-      const response = await api.get(`/api/folders/${folderId}/download`, 
+      const response = await api.get(`/api/s3-folders/${folderId}/download`, 
         { responseType: 'blob' }
       );
       return response.data;
@@ -88,3 +83,10 @@ export const folderService = {
     }
   }
 };
+
+// Helper function to determine if folder supports S3
+export const isS3Folder = (folder: any): boolean => {
+  return folder.storageType === 's3' && folder.s3Path;
+};
+
+export default s3FolderService;

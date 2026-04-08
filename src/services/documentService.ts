@@ -1,8 +1,13 @@
 import api from '@/lib/api';
+import { s3DocumentService } from './s3DocumentService';
 
 export const documentService = {
-  // Upload document
-  uploadDocument: async (formData: FormData) => {
+  // Upload document (now with S3 support option)
+  uploadDocument: async (formData: FormData, useS3: boolean = false) => {
+    if (useS3) {
+      return s3DocumentService.uploadDocument(formData, true);
+    }
+    
     const response = await api.post('/api/documents/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
