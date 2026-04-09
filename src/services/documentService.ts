@@ -31,6 +31,7 @@ export const documentService = {
   // Download document
   downloadDocument: async (id: string) => {
     try {
+      // For S3, the backend will redirect to signed URL
       const response = await api.get(`/api/documents/${id}/download`, {
         responseType: 'blob'
       });

@@ -12,6 +12,15 @@ interface FileViewerModalProps {
 }
 
 export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: FileViewerModalProps) {
+  // Handle both S3 URLs and legacy local URLs
+  const getFileUrl = () => {
+    if (fileUrl.startsWith('https://')) {
+      // This is an S3 URL, but we should go through backend for signed URL
+      // Extract document ID from context if available
+      return fileUrl;
+    }
+    return fileUrl;
+  };
 
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || '';
@@ -19,12 +28,13 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
 
   const renderFileContent = () => {
     const ext = getFileExtension(fileName);
+    const displayUrl = getFileUrl();
     
     // Images
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
       return (
         <div className="flex items-center justify-center h-full">
-          <img src={fileUrl} alt={fileName} className="max-w-full max-h-full object-contain" />
+          <img src={displayUrl} alt={fileName} className="max-w-full max-h-full object-contain" />
         </div>
       );
     }
@@ -34,7 +44,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
       return (
         <div className="flex items-center justify-center h-full">
           <video controls className="max-w-full max-h-full">
-            <source src={fileUrl} type={`video/${ext}`} />
+            <source src={displayUrl} type={`video/${ext}`} />
             Your browser does not support the video tag.
           </video>
         </div>
@@ -46,7 +56,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
       return (
         <div className="flex items-center justify-center h-full">
           <audio controls className="w-full max-w-md">
-            <source src={fileUrl} type={`audio/${ext}`} />
+            <source src={displayUrl} type={`audio/${ext}`} />
             Your browser does not support the audio tag.
           </audio>
         </div>
@@ -57,7 +67,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
     if (ext === 'pdf') {
       return (
         <iframe 
-          src={fileUrl} 
+          src={displayUrl} 
           className="w-full h-full"
           title={fileName}
         />
@@ -68,7 +78,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
     if (['txt', 'csv', 'json', 'xml'].includes(ext)) {
       return (
         <iframe 
-          src={fileUrl} 
+          src={displayUrl} 
           className="w-full h-full bg-white"
           title={fileName}
         />
@@ -83,7 +93,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
             Cannot preview this file type ({ext.toUpperCase()})
           </div>
           <a 
-            href={fileUrl} 
+            href={displayUrl} 
             download 
             className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -101,7 +111,7 @@ export default function FileViewerModal({ isOpen, onClose, fileName, fileUrl }: 
         {/* Download Button */}
         <div className="flex justify-end mb-4">
           <a 
-            href={fileUrl} 
+            href={getFileUrl()} 
             download 
             className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >

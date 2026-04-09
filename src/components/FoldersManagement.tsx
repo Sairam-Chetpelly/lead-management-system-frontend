@@ -452,10 +452,18 @@ export default function FoldersManagement() {
   };
 
   const getViewUrl = (filePath: string) => {
+    // For S3 URLs, use the backend view endpoint which will generate signed URLs
+    if (filePath.startsWith('https://')) {
+      // This is already an S3 URL, but we need to go through backend for signed URL
+      const documentId = viewDocument?._id;
+      if (documentId) {
+        return `${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`;
+      }
+    }
+    
+    // Legacy local file handling (for backward compatibility)
     const fileName = filePath.split('/').pop() || filePath.split('\\').pop();
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/uploads/documents/${fileName}`;
-    console.log('View URL:', url);
-    return url;
+    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/documents/${fileName}`;
   };
 
   const isImageFile = (fileType: string, fileName: string) => {
