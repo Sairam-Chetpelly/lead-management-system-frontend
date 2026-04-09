@@ -20,6 +20,13 @@ export const folderService = {
     return response.data.data?.folders || response.data.folders || response.data;
   },
 
+  // Get folder path for S3 uploads
+  getFolderPath: async (folderId?: string) => {
+    if (!folderId) return '';
+    const response = await api.get(`/api/folders/${folderId}/path`);
+    return response.data.data?.path || response.data.path || '';
+  },
+
   // Get folder contents
   getFolderContents: async (id: string) => {
     const response = await api.get(`/api/folders/${id}`);

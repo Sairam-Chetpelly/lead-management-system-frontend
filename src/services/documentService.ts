@@ -1,11 +1,19 @@
 import api from '@/lib/api';
 
 export const documentService = {
-  // Upload document
-  uploadDocument: async (formData: FormData) => {
-    const response = await api.post('/api/documents/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+  // Create document record (after S3 upload)
+  createDocument: async (data: {
+    folderId?: string;
+    fileName: string;
+    title?: string;
+    subtitle?: string;
+    s3Key: string;
+    fileType: string;
+    fileSize: number;
+    category: string;
+    keywords?: string[];
+  }) => {
+    const response = await api.post('/api/documents/create', data);
     return response.data.data || response.data;
   },
 
@@ -25,6 +33,12 @@ export const documentService = {
   // Get single document
   getDocument: async (id: string) => {
     const response = await api.get(`/api/documents/${id}`);
+    return response.data.data || response.data;
+  },
+
+  // Get file URL (presigned URL for S3 access)
+  getFileUrl: async (id: string) => {
+    const response = await api.get(`/api/documents/${id}/url`);
     return response.data.data || response.data;
   },
 

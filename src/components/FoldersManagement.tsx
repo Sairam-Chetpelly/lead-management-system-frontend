@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FolderOpen, Plus, Edit2, Trash2, Upload, Download, Search, ArrowLeft, File, Eye, X, Grid3x3, List, CheckSquare, Square, Package, MoreVertical } from 'lucide-react';
 import { folderService } from '@/services/folderService';
 import { documentService } from '@/services/documentService';
+import { uploadFileToS3 } from '@/services/s3Service';
 import { keywordService } from '@/services/keywordService';
 import { categoryService } from '@/services/categoryService';
 import { useToast } from '@/contexts/ToastContext';
@@ -12,10 +13,173 @@ import Modal from './Modal';
 import ModernLoader from './ModernLoader';
 import DeleteDialog from './DeleteDialog';
 import PowerPointViewer from './PowerPointViewer';
+import DocumentReader from './DocumentReader';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import PizZip from 'pizzip';
+
+// Component for images that loads S3 URLs
+const ImageWithS3Url = ({ documentId, fileName, className }: { documentId: string, fileName: string, className: string }) => {
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const loadImageUrl = async () => {
+      try {
+        const urlData = await documentService.getFileUrl(documentId);
+        setImageUrl(urlData.url);
+      } catch (err) {
+        console.error('Failed to get S3 URL for image:', err);
+        // Fallback to backend endpoint
+        setImageUrl(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadImageUrl();
+  }, [documentId]);
+
+  if (loading) {
+    return <div className={`${className} bg-slate-300 animate-pulse`} />;
+  }
+
+  if (error || !imageUrl) {
+    return <File className="text-white" size={20} />;
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={fileName}
+      className={className}
+      onError={() => setError(true)}
+      onContextMenu={(e) => e.preventDefault()}
+      draggable={false}
+    />
+  );
+};
+
+// Component for videos that loads S3 URLs
+const VideoWithS3Url = ({ documentId, fileName, className }: { documentId: string, fileName: string, className: string }) => {
+  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadVideoUrl = async () => {
+      try {
+        const urlData = await documentService.getFileUrl(documentId);
+        setVideoUrl(urlData.url);
+      } catch (err) {
+        console.error('Failed to get S3 URL for video:', err);
+        setVideoUrl(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVideoUrl();
+  }, [documentId]);
+
+  if (loading) {
+    return <div className={`${className} bg-slate-300 animate-pulse flex items-center justify-center`}>
+      <div className="text-slate-500">Loading video...</div>
+    </div>;
+  }
+
+  return (
+    <video
+      src={videoUrl}
+      controls
+      controlsList="nodownload"
+      className={className}
+      onContextMenu={(e) => e.preventDefault()}
+    />
+  );
+};
+
+// Component for audio that loads S3 URLs
+const AudioWithS3Url = ({ documentId, fileName, className }: { documentId: string, fileName: string, className: string }) => {
+  const [audioUrl, setAudioUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAudioUrl = async () => {
+      try {
+        const urlData = await documentService.getFileUrl(documentId);
+        setAudioUrl(urlData.url);
+      } catch (err) {
+        console.error('Failed to get S3 URL for audio:', err);
+        setAudioUrl(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAudioUrl();
+  }, [documentId]);
+
+  if (loading) {
+    return <div className={`${className} bg-slate-300 animate-pulse flex items-center justify-center`}>
+      <div className="text-slate-500">Loading audio...</div>
+    </div>;
+  }
+
+  return (
+    <audio
+      src={audioUrl}
+      controls
+      controlsList="nodownload"
+      className={className}
+      onContextMenu={(e) => e.preventDefault()}
+      style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}
+    />
+  );
+};
+
+// Component for iframes (PDFs) that loads S3 URLs
+const IframeWithS3Url = ({ documentId, fileName, className }: { documentId: string, fileName: string, className: string }) => {
+  const [iframeUrl, setIframeUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadIframeUrl = async () => {
+      try {
+        const urlData = await documentService.getFileUrl(documentId);
+        setIframeUrl(`${urlData.url}#toolbar=0&navpanes=0&scrollbar=0`);
+      } catch (err) {
+        console.error('Failed to get S3 URL for iframe:', err);
+        setIframeUrl(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view#toolbar=0&navpanes=0&scrollbar=0`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadIframeUrl();
+  }, [documentId]);
+
+  if (loading) {
+    return <div className={`${className} bg-slate-300 animate-pulse flex items-center justify-center`}>
+      <div className="text-slate-500">Loading document...</div>
+    </div>;
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      <iframe
+        src={iframeUrl}
+        className={className}
+        title={fileName}
+      />
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        onContextMenu={(e) => e.preventDefault()}
+      />
+    </div>
+  );
+};
 
 export default function FoldersManagement() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -40,6 +204,7 @@ export default function FoldersManagement() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadKeywords, setUploadKeywords] = useState<string[]>([]);
   const [uploadCategory, setUploadCategory] = useState('other');
   const [uploadTitle, setUploadTitle] = useState('');
@@ -334,16 +499,38 @@ export default function FoldersManagement() {
     }
 
     setUploading(true);
+    setUploadProgress(0);
+    
     try {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      if (currentFolder) formData.append('folderId', currentFolder);
-      formData.append('category', uploadCategory);
-      if (uploadTitle) formData.append('title', uploadTitle);
-      if (uploadSubtitle) formData.append('subtitle', uploadSubtitle);
-      if (uploadKeywords.length > 0) formData.append('keywords', uploadKeywords.join(','));
+      // Get folder path for S3 upload
+      const folderPath = currentFolder ? await folderService.getFolderPath(currentFolder) : '';
+      
+      // Upload file directly to S3
+      const s3Result = await uploadFileToS3(
+        uploadFile,
+        folderPath,
+        (progress) => {
+          setUploadProgress(progress.percentage);
+        }
+      );
 
-      await documentService.uploadDocument(formData);
+      if (!s3Result.success) {
+        throw new Error(s3Result.error || 'S3 upload failed');
+      }
+
+      // Create document record in backend
+      await documentService.createDocument({
+        folderId: currentFolder || undefined,
+        fileName: uploadFile.name,
+        title: uploadTitle,
+        subtitle: uploadSubtitle,
+        s3Key: s3Result.s3Key,
+        fileType: uploadFile.type,
+        fileSize: uploadFile.size,
+        category: uploadCategory,
+        keywords: uploadKeywords
+      });
+
       showToast('Document uploaded successfully', 'success');
       setShowUploadModal(false);
       setUploadFile(null);
@@ -351,12 +538,14 @@ export default function FoldersManagement() {
       setUploadCategory('other');
       setUploadTitle('');
       setUploadSubtitle('');
+      setUploadProgress(0);
       loadData();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to upload document';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to upload document';
       showToast(errorMessage, 'error');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -451,11 +640,26 @@ export default function FoldersManagement() {
     }
   };
 
-  const getViewUrl = (filePath: string) => {
-    const fileName = filePath.split('/').pop() || filePath.split('\\').pop();
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/uploads/documents/${fileName}`;
-    console.log('View URL:', url);
-    return url;
+  const getViewUrl = async (documentId: string) => {
+    try {
+      const urlData = await documentService.getFileUrl(documentId);
+      return urlData.url;
+    } catch (error) {
+      console.error('Failed to get S3 URL:', error);
+      // Fallback to backend endpoint if S3 URL fails
+      return `${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`;
+    }
+  };
+
+  const getImageUrl = async (documentId: string) => {
+    try {
+      const urlData = await documentService.getFileUrl(documentId);
+      return urlData.url;
+    } catch (error) {
+      console.error('Failed to get S3 URL for image:', error);
+      // Fallback to backend endpoint
+      return `${process.env.NEXT_PUBLIC_API_URL}/api/documents/${documentId}/view`;
+    }
   };
 
   const isImageFile = (fileType: string, fileName: string) => {
@@ -474,85 +678,49 @@ export default function FoldersManagement() {
            fileType === 'application/pdf' || 
            fileType.startsWith('video/') || 
            fileType.startsWith('audio/') ||
-           isPowerPointFile(fileType, fileName);
+           isPowerPointFile(fileType, fileName) ||
+           isTextFile(fileType, fileName) ||
+           isCsvFile(fileType, fileName) ||
+           isExcelFile(fileType, fileName) ||
+           isWordFile(fileType, fileName);
+  };
+
+  const isTextFile = (fileType: string, fileName: string) => {
+    return fileType.includes('text/plain') || 
+           fileName.match(/\.(txt|rtf|log)$/i);
+  };
+
+  const isCsvFile = (fileType: string, fileName: string) => {
+    return fileType.includes('text/csv') || 
+           fileName.match(/\.(csv|tsv)$/i);
+  };
+
+  const isExcelFile = (fileType: string, fileName: string) => {
+    return fileType.includes('spreadsheet') || 
+           fileType.includes('excel') ||
+           fileName.match(/\.(xlsx|xls|xlsm|xlsb|xltx|xltm|xlt)$/i);
+  };
+
+  const isWordFile = (fileType: string, fileName: string) => {
+    return fileType.includes('word') || 
+           fileType.includes('document') ||
+           fileType.includes('msword') ||
+           fileType.includes('wordprocessingml') ||
+           fileName.match(/\.(docx|doc|docm|dotx|dotm|dot|odt)$/i);
   };
 
   const handleViewDocument = async (doc: any) => {
-    // Check if it's a PowerPoint file first
+    // Check if it's a PowerPoint file first - use legacy viewer for now
     if (isPowerPointFile(doc.fileType, doc.fileName)) {
       setPowerPointDocument(doc);
       setShowPowerPointViewer(true);
       return;
     }
 
+    // For all other file types, use the new DocumentReader
     setViewDocument(doc);
     setPreviewContent('');
     setPreviewType(null);
-
-    // Handle TXT
-    if (doc.fileType === 'text/plain' || doc.fileName.endsWith('.txt')) {
-      try {
-        const response = await fetch(getViewUrl(doc.filePath));
-        const text = await response.text();
-        setPreviewContent(`<pre class="whitespace-pre-wrap p-4">${text}</pre>`);
-        setPreviewType('csv');
-      } catch (error) {
-        console.error('TXT parse error:', error);
-      }
-    }
-    // Handle CSV
-    else if (doc.fileType === 'text/csv' || doc.fileName.endsWith('.csv')) {
-      try {
-        const response = await fetch(getViewUrl(doc.filePath));
-        const text = await response.text();
-        Papa.parse(text, {
-          complete: (result) => {
-            const html = `<table class="min-w-full border-collapse border border-gray-300">
-              ${result.data.map((row: any, i: number) => `
-                <tr class="${i === 0 ? 'bg-gray-100 font-bold' : ''}">
-                  ${row.map((cell: any) => `<td class="border border-gray-300 px-4 py-2">${cell}</td>`).join('')}
-                </tr>
-              `).join('')}
-            </table>`;
-            setPreviewContent(html);
-            setPreviewType('csv');
-          }
-        });
-      } catch (error) {
-        console.error('CSV parse error:', error);
-      }
-    }
-    // Handle Excel
-    else if (doc.fileType.includes('sheet') || doc.fileType.includes('excel') || doc.fileType.includes('spreadsheet') || doc.fileName.match(/\.(xlsx|xls|xlsm|xlsb|xltx|xltm|xlt|csv)$/)) {
-      try {
-        const response = await fetch(getViewUrl(doc.filePath));
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const html = XLSX.utils.sheet_to_html(firstSheet, { header: '', footer: '' });
-        // Add Tailwind classes to the generated table
-        const styledHtml = html
-          .replace('<table', '<table class="min-w-full border-collapse border border-gray-300"')
-          .replace(/<td/g, '<td class="border border-gray-300 px-3 py-2 text-sm"')
-          .replace(/<th/g, '<th class="border border-gray-300 px-3 py-2 text-sm font-bold bg-gray-100"');
-        setPreviewContent(styledHtml);
-        setPreviewType('excel');
-      } catch (error) {
-        console.error('Excel parse error:', error);
-      }
-    }
-    // Handle Word
-    else if (doc.fileType.includes('word') || doc.fileType.includes('document') || doc.fileType.includes('msword') || doc.fileType.includes('wordprocessingml') || doc.fileName.match(/\.(docx|doc|docm|dotx|dotm|dot|rtf|odt)$/)) {
-      try {
-        const response = await fetch(getViewUrl(doc.filePath));
-        const arrayBuffer = await response.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        setPreviewContent(result.value);
-        setPreviewType('doc');
-      } catch (error) {
-        console.error('Word parse error:', error);
-      }
-    }
   };
 
   const handleCreateKeyword = async (name: string) => {
@@ -1027,16 +1195,7 @@ export default function FoldersManagement() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="w-20 h-20 bg-gradient-to-br from-slate-400 to-slate-600 rounded-xl flex items-center justify-center overflow-hidden">
                           {isImageFile(doc.fileType, doc.fileName) ? (
-                            <img
-                              src={getViewUrl(doc.filePath)}
-                              alt={doc.fileName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                target.nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
+                            <ImageWithS3Url documentId={doc._id} fileName={doc.fileName} className="w-full h-full object-cover" />
                           ) : null}
                           <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={20} />
                         </div>
@@ -1166,16 +1325,7 @@ export default function FoldersManagement() {
                       )}
                       <div className="w-20 h-20 bg-gradient-to-br from-slate-400 to-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {isImageFile(doc.fileType, doc.fileName) ? (
-                          <img
-                            src={getViewUrl(doc.filePath)}
-                            alt={doc.fileName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
+                          <ImageWithS3Url documentId={doc._id} fileName={doc.fileName} className="w-full h-full object-cover" />
                         ) : null}
                         <File className={`text-white ${isImageFile(doc.fileType, doc.fileName) ? 'hidden' : ''}`} size={24} />
                       </div>
@@ -1470,6 +1620,20 @@ export default function FoldersManagement() {
               placeholder="Type 3+ characters to search keywords..."
             />
           </div>
+          {uploading && (
+            <div>
+              <div className="flex justify-between text-sm text-slate-600 mb-2">
+                <span>Uploading to S3...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
           <div className="flex space-x-4 pt-8">
             <button
               type="submit"
@@ -1482,7 +1646,7 @@ export default function FoldersManagement() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Uploading...
+                  Uploading... {uploadProgress}%
                 </span>
               ) : (
                 '📤 Upload Document'
@@ -1615,74 +1779,10 @@ export default function FoldersManagement() {
           <div className="h-full" onContextMenu={(e) => e.preventDefault()}>
             {viewDocument.subtitle && <p className="text-sm text-slate-600 mb-4">{viewDocument.subtitle}</p>}
             <div className="bg-slate-50 rounded-2xl overflow-hidden" style={{ height: 'calc(90vh - 200px)' }}>
-              {canPreview(viewDocument.fileType, viewDocument.fileName) ? (
-                viewDocument.fileType.startsWith('image/') ? (
-                  <img
-                    src={getViewUrl(viewDocument.filePath)}
-                    alt={viewDocument.fileName}
-                    className="w-full h-full object-contain"
-                    onContextMenu={(e) => e.preventDefault()}
-                    draggable={false}
-                  />
-                ) : viewDocument.fileType.startsWith('video/') ? (
-                  <video
-                    src={getViewUrl(viewDocument.filePath)}
-                    controls
-                    controlsList="nodownload"
-                    className="w-full h-full"
-                    onContextMenu={(e) => e.preventDefault()}
-                  />
-                ) : viewDocument.fileType.startsWith('audio/') ? (
-                  <div className="flex flex-col items-center justify-center h-full p-8 space-y-6">
-                    <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center shadow-2xl">
-                      <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                      </svg>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{viewDocument.title || viewDocument.fileName}</h3>
-                      <p className="text-sm text-slate-600">Audio File</p>
-                    </div>
-                    <audio
-                      src={getViewUrl(viewDocument.filePath)}
-                      controls
-                      controlsList="nodownload"
-                      className="w-full max-w-2xl shadow-lg rounded-2xl"
-                      onContextMenu={(e) => e.preventDefault()}
-                      style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}
-                    />
-                  </div>
-                ) : (
-                  <div className="relative w-full h-full">
-                    <iframe
-                      src={`${getViewUrl(viewDocument.filePath)}#toolbar=0&navpanes=0&scrollbar=0`}
-                      className="w-full h-full"
-                      title={viewDocument.fileName}
-                    />
-                    <div 
-                      className="absolute inset-0 pointer-events-none"
-                      onContextMenu={(e) => e.preventDefault()}
-                    />
-                  </div>
-                )
-              ) : previewType ? (
-                <div className="w-full h-full overflow-auto p-4" onContextMenu={(e) => e.preventDefault()}>
-                  <div dangerouslySetInnerHTML={{ __html: previewContent }} />
-                  </div>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <File size={64} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">Preview not available for this file type</p>
-                    <button
-                      onClick={() => handleDownload(viewDocument._id, viewDocument.fileName)}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center gap-2 mx-auto font-semibold hover:opacity-80 transition-all shadow-lg"
-                    >
-                      <Download size={20} /> Download to view
-                    </button>
-                  </div>
-                </div>
-              )}
+              <DocumentReader 
+                document={viewDocument}
+                onDownload={handleDownload}
+              />
             </div>
           </div>
         </Modal>
