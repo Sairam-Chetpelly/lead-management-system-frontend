@@ -30,7 +30,7 @@ export default function PowerPointViewer({ isOpen, onClose, document, onDownload
       
       // Construct the file URL
       const fileName = document.filePath.split('/').pop() || document.filePath.split('\\\\').pop();
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/uploads/documents/${fileName}`;
+      const url = `${process.env.NEXT_PUBLIC_S3_BASE_URL}${document.filePath}`;
       setFileUrl(url);
       
       // Check if file is accessible
