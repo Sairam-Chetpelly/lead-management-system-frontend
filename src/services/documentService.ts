@@ -222,24 +222,38 @@ export const documentService = {
 
   // Download document
   downloadDocument: async (id: string) => {
-    try {
-      const response = await api.get(`/api/documents/${id}/download`, {
-        responseType: 'blob'
-      });
-      return response.data;
-    } catch (error: any) {
-      // Handle blob error responses
-      if (error.response?.data instanceof Blob) {
-        const text = await error.response.data.text();
-        try {
-          const jsonError = JSON.parse(text);
-          throw { ...error, response: { ...error.response, data: jsonError } };
-        } catch {
-          throw error;
-        }
+    const response = await api.get(`/api/documents/${id}/download`, {
+      responseType: 'blob'
+    });
+    
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'download';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
       }
-      throw error;
     }
+    
+    // Create download URL from blob
+    const url = window.URL.createObjectURL(response.data);
+    
+    // Create temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    // Add to DOM, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up blob URL
+    window.URL.revokeObjectURL(url);
+    
+    return response.data;
   },
 
   // Delete document

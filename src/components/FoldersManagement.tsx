@@ -502,13 +502,7 @@ export default function FoldersManagement() {
   const handleDownload = async (id: string, fileName: string) => {
     setDownloadingId(id);
     try {
-      const blob = await documentService.downloadDocument(id);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      await documentService.downloadDocument(id);
       showToast('Document downloaded successfully', 'success');
     } catch (error: any) {
       console.log('Download error:', error);
