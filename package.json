@@ -16,6 +16,7 @@
     "mammoth": "^1.11.0",
     "next": "14.0.4",
     "papaparse": "^5.5.3",
+    "pdf-lib": "^1.17.1",
     "pizzip": "^3.2.0",
     "pptx2json": "^0.0.10",
     "pptxjs": "^0.0.0",

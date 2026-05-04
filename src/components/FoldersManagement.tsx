@@ -15,7 +15,9 @@ import PowerPointViewer from './PowerPointViewer';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
-import PizZip from 'pizzip';
+import { uploadService } from '@/services/uploadService';
+import FileUploadZone from './FileUploadZone';
+import UploadProgress from './UploadProgress';
 
 export default function FoldersManagement() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -332,8 +334,8 @@ export default function FoldersManagement() {
     }
 
     // Validate file size
-    if (uploadFile.size > 500 * 1024 * 1024) {
-      showToast('File size exceeds 500MB limit', 'error');
+    if (uploadFile.size > 2 * 1024 * 1024 * 1024) {
+      showToast('File size exceeds 2GB limit', 'error');
       return;
     }
 
@@ -353,74 +355,24 @@ export default function FoldersManagement() {
         type: uploadFile.type
       });
       
-      // Check file size and use appropriate upload method
-      if (uploadFile.size > 50 * 1024 * 1024) { // Lowered threshold to 50MB for testing
-        console.log('Using large file upload method (S3 multipart)');
-        // Large file upload with progress
-        const document = await documentService.uploadLargeFile(
-          uploadFile,
-          {
-            folderId: currentFolder || undefined,
-            category: uploadCategory,
-            title: uploadTitle,
-            subtitle: uploadSubtitle,
-            keywords: uploadKeywords.length > 0 ? uploadKeywords : undefined
-          },
-          (progress) => {
-            console.log(`Large file progress: ${progress}%`);
-            setUploadProgress(Math.round(progress));
-          }
-        );
-        showToast('Large document uploaded successfully', 'success');
-      } else {
-        console.log('Using regular upload method with manual progress simulation');
-        
-        // Create FormData
-        const formData = new FormData();
-        formData.append('file', uploadFile);
-        if (currentFolder) formData.append('folderId', currentFolder);
-        formData.append('category', uploadCategory);
-        if (uploadTitle) formData.append('title', uploadTitle);
-        if (uploadSubtitle) formData.append('subtitle', uploadSubtitle);
-        if (uploadKeywords.length > 0) formData.append('keywords', uploadKeywords.join(','));
-        
-        // Start manual progress simulation
-        let currentProgress = 1;
-        setUploadProgress(1);
-        
-        const progressInterval = setInterval(() => {
-          if (currentProgress < 80) {
-            currentProgress += Math.random() * 8 + 2; // 2-10% increments
-            const newProgress = Math.min(Math.round(currentProgress), 80);
-            setUploadProgress(newProgress);
-            console.log(`Simulated progress: ${newProgress}%`);
-          }
-        }, 400); // Update every 400ms
-        
-        try {
-          // Use documentService.uploadDocument for regular uploads
-          const result = await documentService.uploadDocument(formData);
-          
-          // Clear interval and show processing
-          clearInterval(progressInterval);
-          setUploadProgress(85);
-          console.log('Upload completed, processing...');
-          
-          // Simulate processing time
-          await new Promise(resolve => setTimeout(resolve, 500));
-          setUploadProgress(95);
-          
-          await new Promise(resolve => setTimeout(resolve, 300));
-          setUploadProgress(100);
-          
-          console.log('Upload successful:', result);
-        } catch (error) {
-          clearInterval(progressInterval);
-          throw error;
+      // Use new upload service for direct S3 upload
+      const document = await uploadService.uploadDocument(
+        uploadFile,
+        {
+          folderId: currentFolder || undefined,
+          category: uploadCategory,
+          title: uploadTitle,
+          subtitle: uploadSubtitle,
+          keywords: uploadKeywords.length > 0 ? uploadKeywords : undefined
+        },
+        (progress) => {
+          console.log(`Upload progress: ${progress}%`);
+          setUploadProgress(Math.round(progress));
         }
-        
-        showToast('Document uploaded successfully', 'success');
-      }
+      );
+      
+      console.log('Upload successful:', document);
+      showToast('Document uploaded successfully', 'success');
       
       // Reset form and reload data
       setShowUploadModal(false);
@@ -1476,38 +1428,24 @@ export default function FoldersManagement() {
         size="md"
       >
         <form onSubmit={(e) => { e.preventDefault(); handleUpload(); }} className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">Select File <span className="text-xs text-red-500">*</span></label>
-            <input
-              type="file"
-              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              className="w-full px-4 py-3 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-200 font-medium file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              required
+          <FileUploadZone
+            onFileSelect={setUploadFile}
+            selectedFile={uploadFile}
+            maxSize={2048}
+            accept="*/*"
+            disabled={uploading}
+          />
+          
+          {/* Upload progress */}
+          {uploading && (
+            <UploadProgress
+              progress={uploadProgress}
+              fileName={uploadFile?.name}
+              fileSize={uploadFile?.size}
+              status={uploadProgress < 95 ? 'uploading' : 'processing'}
             />
-            {uploadFile && (
-              <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-blue-600">📎</span>
-                    <span className="text-sm font-medium text-blue-900">{uploadFile.name}</span>
-                  </div>
-                  <div className="text-xs text-blue-600 font-medium">
-                    {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB
-                    {uploadFile.size > 100 * 1024 * 1024 && (
-                      <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                        Large File - Chunked Upload
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {uploadFile.size > 500 * 1024 * 1024 && (
-                  <div className="mt-2 text-xs text-red-600">
-                    ⚠️ File exceeds 500MB limit. Please choose a smaller file.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
+          
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-3">Title <span className="text-xs text-slate-500">(optional)</span></label>
             <input
@@ -1573,34 +1511,7 @@ export default function FoldersManagement() {
               className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-2xl hover:opacity-80 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {uploading ? (
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {uploadProgress < 5 ? 'Preparing...' : 
-                     uploadProgress < 85 ? 'Uploading...' : 
-                     uploadProgress < 95 ? 'Processing...' : 'Finalizing...'}
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-2.5">
-                    <div 
-                      className="bg-white h-2.5 rounded-full transition-all duration-500 ease-out" 
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between w-full text-sm">
-                    <span>{uploadProgress}%</span>
-                    {uploadFile && (
-                      <span className="text-xs opacity-75">
-                        {uploadFile.size > 50 * 1024 * 1024 ? 
-                          `Large file (${(uploadFile.size / (1024 * 1024)).toFixed(1)}MB) - S3 multipart` : 
-                          `Standard upload (${(uploadFile.size / (1024 * 1024)).toFixed(1)}MB) - Direct S3`
-                        }
-                      </span>
-                    )}
-                  </div>
-                </div>
+                'Uploading...'
               ) : (
                 '📤 Upload Document'
               )}

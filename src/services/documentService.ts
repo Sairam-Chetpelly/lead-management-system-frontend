@@ -88,7 +88,7 @@ export const documentService = {
     },
     onProgress?: (progress: number) => void
   ) => {
-    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for better progress tracking
+    const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB chunks for better performance with large files
     
     try {
       console.log('Starting large file upload:', file.name, file.size, 'bytes');
