@@ -14,7 +14,7 @@ interface PowerPointViewerProps {
     filePath: string;
     fileType: string;
   } | null;
-  onDownload: (id: string, fileName: string) => void;
+  onDownload: (id: string, fileName: string, s3Key?: string, fileType?: string) => void;
 }
 
 export default function PowerPointViewer({ isOpen, onClose, document, onDownload }: PowerPointViewerProps) {
@@ -81,7 +81,12 @@ export default function PowerPointViewer({ isOpen, onClose, document, onDownload
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Presentation</h3>
                 <p className="text-gray-600 mb-4">{error}</p>
-
+                <button
+                  onClick={() => onDownload(document._id, document.fileName, document.filePath, document.fileType)}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center gap-2 mx-auto font-semibold hover:opacity-80 transition-all shadow-lg"
+                >
+                  <Download size={20} /> Download to view
+                </button>
               </div>
             </div>
           ) : (

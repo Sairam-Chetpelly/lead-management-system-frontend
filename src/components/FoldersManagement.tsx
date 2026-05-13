@@ -16,8 +16,10 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import { uploadService } from '@/services/uploadService';
+import { downloadService } from '@/services/downloadService';
 import FileUploadZone from './FileUploadZone';
 import UploadProgress from './UploadProgress';
+import DownloadProgressModal from './DownloadProgressModal';
 
 export default function FoldersManagement() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -60,10 +62,24 @@ export default function FoldersManagement() {
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [bulkDownloadProgress, setBulkDownloadProgress] = useState(0);
+  const [bulkDownloadStatus, setBulkDownloadStatus] = useState('');
   const [downloadingFolderId, setDownloadingFolderId] = useState<string | null>(null);
+  const [folderDownloadProgress, setFolderDownloadProgress] = useState(0);
+  const [folderDownloadStatus, setFolderDownloadStatus] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showPowerPointViewer, setShowPowerPointViewer] = useState(false);
   const [powerPointDocument, setPowerPointDocument] = useState<any>(null);
+  
+  // Download progress modal states
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadStatus, setDownloadStatus] = useState('');
+  const [downloadFileName, setDownloadFileName] = useState('');
+  const [downloadComplete, setDownloadComplete] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+  const [downloadErrorMessage, setDownloadErrorMessage] = useState('');
+  
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -451,28 +467,33 @@ export default function FoldersManagement() {
     }
   };
 
-  const handleDownload = async (id: string, fileName: string) => {
+  const handleDownload = async (id: string, fileName: string, s3Key?: string, fileType?: string) => {
     setDownloadingId(id);
+    setShowDownloadModal(true);
+    setDownloadProgress(0);
+    setDownloadStatus('Preparing download...');
+    setDownloadFileName(fileName);
+    setDownloadComplete(false);
+    setDownloadError(false);
+    setDownloadErrorMessage('');
+    
     try {
-      await documentService.downloadDocument(id);
+      await downloadService.downloadDocument(id, fileName, s3Key, { 
+        method: 'auto',
+        onProgress: (progress, status) => {
+          setDownloadProgress(progress);
+          setDownloadStatus(status);
+        }
+      });
+      setDownloadComplete(true);
+      setDownloadStatus('Download completed successfully!');
       showToast('Document downloaded successfully', 'success');
     } catch (error: any) {
       console.log('Download error:', error);
-      let errorMessage = 'Failed to download document';
-      
-      if (error.response?.data instanceof Blob) {
-        try {
-          const text = await error.response.data.text();
-          const json = JSON.parse(text);
-          errorMessage = json.message || json.error || errorMessage;
-        } catch (e) {
-          // If parsing fails, use default message
-        }
-      } else {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      
-      showToast(errorMessage, 'error');
+      setDownloadError(true);
+      setDownloadErrorMessage(error.message || 'Failed to download document');
+      setDownloadStatus('Download failed');
+      showToast(error.message || 'Failed to download document', 'error');
     } finally {
       setDownloadingId(null);
     }
@@ -651,66 +672,79 @@ export default function FoldersManagement() {
     }
 
     setBulkDownloading(true);
+    setShowDownloadModal(true);
+    setDownloadProgress(0);
+    setDownloadStatus('Preparing bulk download...');
+    setDownloadFileName(`${selectedDocuments.size} documents`);
+    setDownloadComplete(false);
+    setDownloadError(false);
+    setDownloadErrorMessage('');
+    
     try {
-      const blob = await folderService.multiDownload(Array.from(selectedDocuments));
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `documents_${Date.now()}.zip`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      await downloadService.downloadMultipleDocuments(
+        Array.from(selectedDocuments),
+        {
+          zipMethod: 'frontend', // Use frontend ZIP for better progress tracking
+          onProgress: (progress, status) => {
+            setDownloadProgress(progress);
+            setDownloadStatus(status);
+            setBulkDownloadProgress(progress);
+            setBulkDownloadStatus(status);
+          }
+        }
+      );
+      setDownloadComplete(true);
+      setDownloadStatus('Bulk download completed successfully!');
       showToast(`${selectedDocuments.size} documents downloaded successfully`, 'success');
       clearSelection();
     } catch (error: any) {
-      let errorMessage = 'Failed to download documents';
-      
-      if (error.response?.data instanceof Blob) {
-        try {
-          const text = await error.response.data.text();
-          const json = JSON.parse(text);
-          errorMessage = json.message || json.error || errorMessage;
-        } catch (e) {
-          // If parsing fails, use default message
-        }
-      } else {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      
-      showToast(errorMessage, 'error');
+      setDownloadError(true);
+      setDownloadErrorMessage(error.message || 'Failed to download documents');
+      setDownloadStatus('Bulk download failed');
+      showToast(error.message || 'Failed to download documents', 'error');
     } finally {
       setBulkDownloading(false);
+      setBulkDownloadProgress(0);
+      setBulkDownloadStatus('');
     }
   };
 
   const handleFolderDownload = async (folderId: string, folderName: string) => {
     setDownloadingFolderId(folderId);
+    setShowDownloadModal(true);
+    setDownloadProgress(0);
+    setDownloadStatus('Preparing folder download...');
+    setDownloadFileName(`Folder: ${folderName}`);
+    setDownloadComplete(false);
+    setDownloadError(false);
+    setDownloadErrorMessage('');
+    
     try {
-      const blob = await folderService.downloadFolder(folderId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${folderName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.zip`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      await downloadService.downloadFolder(
+        folderId, 
+        folderName,
+        {
+          zipMethod: 'frontend', // Use frontend ZIP for better progress tracking
+          onProgress: (progress, status) => {
+            setDownloadProgress(progress);
+            setDownloadStatus(status);
+            setFolderDownloadProgress(progress);
+            setFolderDownloadStatus(status);
+          }
+        }
+      );
+      setDownloadComplete(true);
+      setDownloadStatus('Folder download completed successfully!');
       showToast(`Folder "${folderName}" downloaded successfully`, 'success');
     } catch (error: any) {
-      let errorMessage = 'Failed to download folder';
-      
-      if (error.response?.data instanceof Blob) {
-        try {
-          const text = await error.response.data.text();
-          const json = JSON.parse(text);
-          errorMessage = json.message || json.error || errorMessage;
-        } catch (e) {
-          // If parsing fails, use default message
-        }
-      } else {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      
-      showToast(errorMessage, 'error');
+      setDownloadError(true);
+      setDownloadErrorMessage(error.message || 'Failed to download folder');
+      setDownloadStatus('Folder download failed');
+      showToast(error.message || 'Failed to download folder', 'error');
     } finally {
       setDownloadingFolderId(null);
+      setFolderDownloadProgress(0);
+      setFolderDownloadStatus('');
     }
   };
 
@@ -885,11 +919,14 @@ export default function FoldersManagement() {
                     >
                       {downloadingFolderId === currentFolder ? (
                         <>
-                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Downloading...
+                          <div className="flex flex-col items-center gap-1">
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <div className="text-xs">{Math.round(folderDownloadProgress)}%</div>
+                          </div>
+                          <span className="text-xs truncate">{folderDownloadStatus}</span>
                         </>
                       ) : folderPath[folderPath.length - 1]?.restricted ? (
                         <>
@@ -982,11 +1019,14 @@ export default function FoldersManagement() {
                       >
                         {bulkDownloading ? (
                           <>
-                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Downloading...
+                            <div className="flex flex-col items-center gap-1">
+                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <div className="text-xs">{Math.round(bulkDownloadProgress)}%</div>
+                            </div>
+                            <span className="text-xs">{bulkDownloadStatus}</span>
                           </>
                         ) : (
                           <>
@@ -1093,7 +1133,7 @@ export default function FoldersManagement() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDownload(doc._id, doc.fileName);
+                                    handleDownload(doc._id, doc.fileName, doc.s3Key, doc.fileType);
                                     setOpenMenuId(null);
                                   }}
                                   disabled={downloadingId === doc._id}
@@ -1254,7 +1294,7 @@ export default function FoldersManagement() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDownload(doc._id, doc.fileName);
+                                  handleDownload(doc._id, doc.fileName, doc.s3Key, doc.fileType);
                                   setOpenMenuId(null);
                                 }}
                                 disabled={downloadingId === doc._id}
@@ -1703,7 +1743,7 @@ export default function FoldersManagement() {
                     <File size={64} className="mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600 mb-4">Preview not available for this file type</p>
                     <button
-                      onClick={() => handleDownload(viewDocument._id, viewDocument.fileName)}
+                      onClick={() => handleDownload(viewDocument._id, viewDocument.fileName, viewDocument.s3Key, viewDocument.fileType)}
                       className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center gap-2 mx-auto font-semibold hover:opacity-80 transition-all shadow-lg"
                     >
                       <Download size={20} /> Download to view
@@ -1762,6 +1802,28 @@ export default function FoldersManagement() {
         }}
         document={powerPointDocument}
         onDownload={handleDownload}
+      />
+
+      {/* Download Progress Modal */}
+      <DownloadProgressModal
+        isOpen={showDownloadModal}
+        onClose={() => {
+          if (downloadComplete || downloadError) {
+            setShowDownloadModal(false);
+            setDownloadProgress(0);
+            setDownloadStatus('');
+            setDownloadFileName('');
+            setDownloadComplete(false);
+            setDownloadError(false);
+            setDownloadErrorMessage('');
+          }
+        }}
+        progress={downloadProgress}
+        status={downloadStatus}
+        fileName={downloadFileName}
+        isComplete={downloadComplete}
+        hasError={downloadError}
+        errorMessage={downloadErrorMessage}
       />
     </div>
   );
